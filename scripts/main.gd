@@ -168,6 +168,8 @@ func _process(_delta: float) -> void:
 	var prompt := current_target.prompt_text if current_target != null else ""
 	if current_target != null and current_target.object_id == "car" and _ready_for_store():
 		prompt = "开车去社区超市"
+	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
+		prompt = "出发接人"
 	if current_target != null and current_target.object_id == "day_planner":
 		if GameState.phase_id == "pre_rain_day_3_after_first_shop":
 			prompt = "安排今天下午"
@@ -255,6 +257,9 @@ func _inspect_object(object_id: String) -> void:
 	if object_id == "radio" and GameState.phase_id == "pre_rain_day_2_morning":
 		_open_day_two_weather_event()
 		return
+	if object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
+		_open_database_event("d1_dispatch")
+		return
 	if GameState.phase_id == "pre_rain_day_2_clues":
 		var clue_events := {
 			"radio": "d2_clue_radio",
@@ -296,6 +301,8 @@ func _on_choice_selected(index: int) -> void:
 		pending_action.clear()
 		if processing_day_one_morning:
 			_process_day_one_morning_queue()
+		else:
+			_check_phase_scheduled_event()
 		return
 	if action_type == "travel_to_store":
 		hud.hide_dialogue()
@@ -571,6 +578,10 @@ func _update_hud() -> void:
 				objective = "清晨：家人分散在学校和社区，先确认昨天的准备是否到位。"
 			"pre_rain_day_1_dispatch":
 				objective = "到车库准备出发接人：先接伴侣还是先接大孩子。"
+			"pre_rain_day_1_first_route":
+				objective = "选择前往目的地的路线：安全主干道或排水河近路。"
+			"pre_rain_day_1_en_route":
+				objective = "已出发前往第一个接人点。接人过程将在下个版本继续。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,
@@ -1038,6 +1049,12 @@ func _process_day_one_morning_queue() -> void:
 		return
 	processing_day_one_morning = false
 	_open_database_event("d1_morning_start", true)
+
+
+func _check_phase_scheduled_event() -> void:
+	var scheduled_event_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
+	if not scheduled_event_id.is_empty():
+		_open_database_event(scheduled_event_id)
 
 
 func _open_day_two_weather_event() -> void:

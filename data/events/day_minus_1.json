@@ -26,6 +26,94 @@
         }
       ],
       "merge": "d1_dispatch"
+    },
+    {
+      "id": "d1_dispatch",
+      "title": "出发接人",
+      "type": "fixed",
+      "day": "暴雨前第1天",
+      "phase": "pre_rain_day_1_dispatch",
+      "location": "车库",
+      "once": false,
+      "conditions": {"phase": "pre_rain_day_1_dispatch"},
+      "clues": ["油箱只剩三分之一", "大孩子在学校", "伴侣在社区"],
+      "text": "汽车仍朝向出口，油箱只剩三分之一，足够跑一圈但不够兜远路。大孩子在学校，伴侣在社区，两边都可能在雨变大时需要接送。今天先接谁？",
+      "choices": [
+        {
+          "id": "teen_first",
+          "label": "先去学校接大孩子",
+          "result": "学校离得远，但大孩子那边放学时间可能提前。你决定先去学校。",
+          "effects": [
+            {"type": "set_flag", "id": "first_pickup_teen"},
+            {"type": "set_phase", "value": "pre_rain_day_1_first_route"},
+            {"type": "schedule_event", "event_id": "d1_first_route", "trigger_phase": "pre_rain_day_1_first_route"}
+          ]
+        },
+        {
+          "id": "partner_first",
+          "label": "先去社区接伴侣",
+          "result": "社区靠近排水河，雨一大可能更难出来。你决定先去社区。",
+          "effects": [
+            {"type": "set_flag", "id": "first_pickup_partner"},
+            {"type": "set_phase", "value": "pre_rain_day_1_first_route"},
+            {"type": "schedule_event", "event_id": "d1_first_route", "trigger_phase": "pre_rain_day_1_first_route"}
+          ]
+        },
+        {
+          "id": "wait",
+          "label": "再准备一下家里",
+          "result": "雨点还零星。你可以先检查家里，但越晚出发路况越难预料。",
+          "effects": []
+        }
+      ],
+      "merge": "d1_first_route"
+    },
+    {
+      "id": "d1_first_route",
+      "title": "选择路线",
+      "type": "fixed",
+      "day": "暴雨前第1天",
+      "phase": "pre_rain_day_1_first_route",
+      "location": "车库",
+      "once": true,
+      "conditions": {"phase": "pre_rain_day_1_first_route"},
+      "clues": ["安全主干道绕远但地势高", "排水河近路短但可能积水"],
+      "text": "两条路都能到。安全主干道绕远，但地势高，目前没有积水报告。排水河近路要短得多，但经过低洼路段，雨一大就可能封路。",
+      "text_variants": [
+        {
+          "required_flags": ["first_pickup_teen"],
+          "text": "学校在住宅区另一头。两条路都能到：安全主干道绕远但地势高，排水河近路短但经过低洼路段。"
+        },
+        {
+          "required_flags": ["first_pickup_partner"],
+          "text": "社区靠近排水河。安全主干道绕远但地势高，排水河近路几乎贴着河边，雨一大可能最先封路。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "safe_road",
+          "label": "走安全主干道",
+          "result": "绕远一些，但路面至今干燥。油量会多用一点，换来的是更稳的路况。",
+          "effects": [
+            {"type": "set_flag", "id": "first_route_safe"},
+            {"type": "set_phase", "value": "pre_rain_day_1_en_route"},
+            {"type": "set_time", "label": "上午07:35", "segment": "morning"},
+            {"type": "set_weather", "value": "小雨 · 路面渐湿"}
+          ]
+        },
+        {
+          "id": "river_road",
+          "label": "走排水河近路",
+          "result": "近路贴着河边。现在还能走，但低洼处已经能看到积水。省下的是时间，赌上的是路况。",
+          "effects": [
+            {"type": "set_flag", "id": "first_route_river"},
+            {"type": "set_phase", "value": "pre_rain_day_1_en_route"},
+            {"type": "set_time", "label": "上午07:35", "segment": "morning"},
+            {"type": "set_weather", "value": "小雨 · 低洼处见积水"}
+          ]
+        }
+      ],
+      "merge": "d1_first_arrival"
     }
   ]
 }
