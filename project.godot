@@ -1,10 +1,5 @@
 ; Engine configuration file.
-; It's best edited using the editor UI and not directly,
-; since the parameters that go here are not all obvious.
-;
-; Format:
-;   [section] ; section goes between []
-;   param=value ; assign values to parameters
+; 暴雨100天 Godot正式工程
 
 config_version=5
 
@@ -17,6 +12,7 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 GameState="*res://scripts/game_state.gd"
+EventManager="*res://scripts/event_manager.gd"
 
 [display]
 
@@ -28,6 +24,11 @@ window/stretch/mode="canvas_items"
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/canvas_textures/default_texture_filter=0
+
+[physics]
+
+common/physics_ticks_per_second=60

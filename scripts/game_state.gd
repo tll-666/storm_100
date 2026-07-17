@@ -59,6 +59,14 @@ var water_supply_state: String = "normal"
 var power_supply_state: String = "normal"
 var loose_water_liters: float = 0.0
 var family_states: Dictionary = {}
+var prepared_power_units: int = 0
+var completed_events: Dictionary = {}
+var event_choices: Dictionary = {}
+var clues: Dictionary = {}
+var scheduled_events: Array = []
+var event_log: Array = []
+var day_two_preparation: String = ""
+var last_day_two_summary: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -90,6 +98,14 @@ func reset_prologue() -> void:
 	power_supply_state = "normal"
 	loose_water_liters = 0.0
 	family_states = _default_family_states()
+	prepared_power_units = 0
+	completed_events.clear()
+	event_choices.clear()
+	clues.clear()
+	scheduled_events.clear()
+	event_log.clear()
+	day_two_preparation = ""
+	last_day_two_summary.clear()
 
 
 func apply_afternoon_plan(plan_id: String) -> String:
@@ -175,6 +191,65 @@ func begin_day_two() -> void:
 	flags["day_two_started"] = true
 
 
+func day_two_preparation_label() -> String:
+	match day_two_preparation:
+		"water":
+			return "提前储水"
+		"power":
+			return "设备充电"
+		"route":
+			return "车辆与路线检查"
+	return "没有完成重点准备"
+
+
+func settle_day_two() -> Dictionary:
+	if has_flag("day_two_settled"):
+		return last_day_two_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 16
+	if _consume_item_anywhere("vegetables", 1) > 0:
+		meal_parts.append("蔬菜")
+		nutrition_gain += 6
+	if _consume_item_anywhere("eggs", 2) > 0:
+		meal_parts.append("鸡蛋")
+		nutrition_gain += 7
+	elif _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 4
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
+	var water_result := _settle_family_needs(nutrition_gain)
+	var note := "夜里仍没有正式下雨，但远处的雷声比昨天更密。"
+	match day_two_preparation:
+		"water":
+			note = "储水容器沿墙摆好。夜里水压正常，但这份准备会留到真正需要的时候。"
+		"power":
+			note = "备用设备保持满电。天气提醒整夜都在更新，通信暂时没有中断。"
+		"route":
+			note = "汽车和路线已经检查过。真正的路况仍要等明天出发时判断。"
+	last_day_two_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"preparation": day_two_preparation_label(),
+		"clues": "今日获得%d条线索" % clues.size(),
+		"note": note,
+	}
+	flags["day_two_settled"] = true
+	return last_day_two_summary
+
+
+func begin_day_one() -> void:
+	phase_id = "pre_rain_day_1_morning"
+	day_label = "暴雨前第1天"
+	time_label = "上午07:00"
+	time_segment = "morning"
+	weather_label = "零星小雨 · 风势增强"
+	flags["day_one_started"] = true
+
+
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
 	var available := int(storage.get(item_id, 0))
 	var consumed := mini(available, requested)
@@ -239,7 +314,7 @@ func total_water_reserve_liters() -> float:
 
 
 func backup_power_units() -> int:
-	var total := int(utility_storage.get("batteries", 0)) * 4
+	var total := prepared_power_units + int(utility_storage.get("batteries", 0)) * 4
 	total += int(utility_storage.get("power_bank", 0)) * 20
 	for item_id in inventory:
 		if item_id == "batteries":
@@ -409,6 +484,26 @@ func _adjust_member_stat(member_id: String, stat_id: String, delta: int) -> void
 	family_states[member_id] = state
 
 
+func adjust_member_stat(member_id: String, stat_id: String, delta: int) -> void:
+	_adjust_member_stat(member_id, stat_id, delta)
+
+
+func schedule_event(event_id: String, trigger_phase: String) -> void:
+	if event_id.is_empty() or trigger_phase.is_empty():
+		return
+	for raw_entry in scheduled_events:
+		if raw_entry is Dictionary and str(raw_entry.get("event_id", "")) == event_id:
+			return
+	scheduled_events.append({"event_id": event_id, "trigger_phase": trigger_phase})
+
+
+func remove_scheduled_event(event_id: String) -> void:
+	for index in range(scheduled_events.size() - 1, -1, -1):
+		var raw_entry: Variant = scheduled_events[index]
+		if raw_entry is Dictionary and str(raw_entry.get("event_id", "")) == event_id:
+			scheduled_events.remove_at(index)
+
+
 func record_dialogue_choice(
 	character_id: String, choice_index: int, relation_delta: int, flag_id: String
 ) -> void:
@@ -542,6 +637,14 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"power_supply_state": power_supply_state,
 		"loose_water_liters": loose_water_liters,
 		"family_states": family_states,
+		"prepared_power_units": prepared_power_units,
+		"completed_events": completed_events,
+		"event_choices": event_choices,
+		"clues": clues,
+		"scheduled_events": scheduled_events,
+		"event_log": event_log,
+		"day_two_preparation": day_two_preparation,
+		"last_day_two_summary": last_day_two_summary,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -586,5 +689,13 @@ func load_checkpoint() -> Dictionary:
 	power_supply_state = str(payload.get("power_supply_state", power_supply_state))
 	loose_water_liters = float(payload.get("loose_water_liters", loose_water_liters))
 	family_states = payload.get("family_states", family_states)
+	prepared_power_units = int(payload.get("prepared_power_units", prepared_power_units))
+	completed_events = payload.get("completed_events", {})
+	event_choices = payload.get("event_choices", {})
+	clues = payload.get("clues", {})
+	scheduled_events.assign(payload.get("scheduled_events", []))
+	event_log.assign(payload.get("event_log", []))
+	day_two_preparation = str(payload.get("day_two_preparation", day_two_preparation))
+	last_day_two_summary = payload.get("last_day_two_summary", last_day_two_summary)
 	_ensure_family_states()
 	return payload

@@ -125,6 +125,7 @@ var current_floor: int = 1
 var current_target: InteractionObject
 var pending_action: Dictionary = {}
 var game_started: bool = false
+var pending_day_transition: String = ""
 
 @onready var world: HouseWorld = $World
 @onready var player: StormPlayer = $Player
@@ -150,6 +151,8 @@ func _ready() -> void:
 	hud.day_transition_finished.connect(_on_day_transition_finished)
 	hud.quick_travel_selected.connect(_on_quick_travel_selected)
 	hud.debug_action_selected.connect(_on_debug_action_selected)
+	hud.event_browser_preview_requested.connect(_on_event_browser_preview_requested)
+	hud.event_browser_reset_requested.connect(_on_event_browser_reset_requested)
 	_update_hud()
 
 
@@ -167,8 +170,14 @@ func _process(_delta: float) -> void:
 	if current_target != null and current_target.object_id == "day_planner":
 		if GameState.phase_id == "pre_rain_day_3_after_first_shop":
 			prompt = "安排今天下午"
+		elif GameState.phase_id == "pre_rain_day_2_clues":
+			prompt = "根据线索安排重点准备"
+		elif GameState.phase_id == "pre_rain_day_2_notices":
+			prompt = "查看学校和社区通知"
+		elif GameState.phase_id == "pre_rain_day_2_evening":
+			prompt = "和家人讨论明天"
 	if current_target != null and current_target.object_id == "master_bed":
-		if GameState.phase_id == "pre_rain_day_3_evening":
+		if GameState.phase_id in ["pre_rain_day_3_evening", "pre_rain_day_2_bedtime"]:
 			prompt = "结束今天"
 	hud.set_prompt(prompt)
 
@@ -245,6 +254,16 @@ func _inspect_object(object_id: String) -> void:
 	if object_id == "radio" and GameState.phase_id == "pre_rain_day_2_morning":
 		_open_day_two_weather_event()
 		return
+	if GameState.phase_id == "pre_rain_day_2_clues":
+		var clue_events := {
+			"radio": "d2_clue_radio",
+			"balcony_view": "d2_clue_balcony",
+			"front_yard": "d2_clue_street",
+			"garage_drain": "d2_clue_garage",
+		}
+		if clue_events.has(object_id) and EventManager.is_available(str(clue_events[object_id])):
+			_open_database_event(str(clue_events[object_id]))
+			return
 	if object_id == "car" and _ready_for_store():
 		pending_action = {"type": "travel_to_store"}
 		hud.show_dialogue(
@@ -310,6 +329,29 @@ func _on_choice_selected(index: int) -> void:
 		hud.hide_dialogue()
 		pending_action.clear()
 		return
+	if action_type == "database_event":
+		var event_id := str(pending_action.get("event_id", ""))
+		var force := bool(pending_action.get("force", false))
+		var result: Dictionary = EventManager.apply_choice(event_id, index, force)
+		if not bool(result.get("ok", false)):
+			hud.hide_dialogue()
+			pending_action.clear()
+			hud.show_toast(str(result.get("error", "事件无法执行。")))
+			return
+		pending_action = {"type": "close"}
+		hud.show_dialogue(
+			str(EventManager.event_data(event_id).get("title", "事件结果")),
+			str(result.get("result", "")),
+			["继续"]
+		)
+		_update_hud()
+		return
+	if action_type == "end_day_two":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_show_day_two_summary()
+		return
 	if action_type != "npc_choice":
 		return
 	var character_id := str(pending_action.character_id)
@@ -369,8 +411,20 @@ func _on_debug_action_selected(action_id: String) -> void:
 			hud.show_toast("测试：已跳到晚上，并来到主卧床边。")
 		"day_two":
 			_debug_skip_to_day_two()
+		"event_browser":
+			hud.show_event_browser(EventManager.debug_entries())
 		"reset":
 			_debug_reset_run()
+
+
+func _on_event_browser_preview_requested(event_id: String) -> void:
+	_open_database_event(event_id, true)
+
+
+func _on_event_browser_reset_requested(event_id: String) -> void:
+	EventManager.debug_reset_event(event_id)
+	hud.show_event_browser(EventManager.debug_entries())
+	hud.show_toast("已允许事件重新触发；已经产生的资源和人物后果不会自动回滚。", 3.5)
 
 
 func _debug_unlock_car() -> void:
@@ -440,6 +494,7 @@ func _debug_reset_run() -> void:
 	hud.hide_family_status()
 	hud.hide_quick_travel()
 	hud.hide_debug_menu()
+	hud.hide_event_browser()
 	GameState.reset_prologue()
 	current_floor = 1
 	world.build_floor(current_floor)
@@ -501,8 +556,16 @@ func _update_hud() -> void:
 				objective = "今天的行动结束：到二楼主卧床铺旁结束今天。"
 			"pre_rain_day_2_morning":
 				objective = "第二天清晨：到客厅检查收音机，确认最新天气提醒。"
-			"pre_rain_day_2_warning":
-				objective = "天气提醒已确认。下一阶段将接入第二次采购与接人。"
+			"pre_rain_day_2_clues":
+				objective = "从收音机、阳台、住宅街或车库取得至少两条额外线索。"
+			"pre_rain_day_2_notices":
+				objective = "重点准备已完成：到客厅餐桌查看学校和社区通知。"
+			"pre_rain_day_2_evening":
+				objective = "通知已经确认：到客厅餐桌和家人讨论明天。"
+			"pre_rain_day_2_bedtime":
+				objective = "今天的准备已经结束：到二楼主卧睡觉。"
+			"pre_rain_day_1_morning":
+				objective = "零星小雨已经开始。接人和第二次购物将在v0.7继续。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,
@@ -518,7 +581,12 @@ func _update_hud() -> void:
 				segment_text = "晚上"
 			"night":
 				segment_text = "夜间"
-		hud.set_progress_text("%s阶段 · 剩余 ¥%d" % [segment_text, GameState.money])
+		if GameState.phase_id == "pre_rain_day_2_clues":
+			hud.set_progress_text("已知线索 %d/3 · 再调查房屋或外部环境" % mini(GameState.clues.size(), 3))
+		elif GameState.phase_id.begins_with("pre_rain_day_2") and not GameState.day_two_preparation.is_empty():
+			hud.set_progress_text("%s阶段 · 今日准备：%s" % [segment_text, GameState.day_two_preparation_label()])
+		else:
+			hud.set_progress_text("%s阶段 · 剩余 ¥%d" % [segment_text, GameState.money])
 	else:
 		hud.set_progress(talked_count, inspected_count)
 
@@ -788,6 +856,24 @@ func _handle_time_action(object_id: String) -> void:
 
 
 func _open_day_planner() -> void:
+	match GameState.phase_id:
+		"pre_rain_day_2_clues":
+			if not EventManager.is_available("d2_preparation"):
+				pending_action = {"type": "close"}
+				hud.show_dialogue(
+					"餐桌上的便签",
+					"目前的信息还太少。再检查收音机、阳台、住宅街或车库，至少获得三条线索后再决定。",
+					["继续调查"]
+				)
+				return
+			_open_database_event("d2_preparation")
+			return
+		"pre_rain_day_2_notices":
+			_open_database_event("d2_school_notice")
+			return
+		"pre_rain_day_2_evening":
+			_open_database_event("d2_evening_discussion")
+			return
 	if not GameState.has_flag("first_shopping_complete"):
 		pending_action = {"type": "close"}
 		hud.show_dialogue("餐桌", "购物清单还没有处理完，现在安排下午还太早。", ["离开"])
@@ -869,6 +955,14 @@ func _open_master_bed() -> void:
 			["结束今天", "再等等"]
 		)
 		return
+	if GameState.phase_id == "pre_rain_day_2_bedtime":
+		pending_action = {"type": "end_day_two"}
+		hud.show_dialogue(
+			"主卧",
+			"第二天的重要准备已经结束。睡觉会结算今晚的食物、饮水、供电和家庭状态。",
+			["结束今天", "再等等"]
+		)
+		return
 	pending_action = {"type": "close"}
 	var text := "现在还不准备休息。白天的重要事情需要先处理完。"
 	if GameState.phase_id.begins_with("pre_rain_day_2"):
@@ -877,6 +971,7 @@ func _open_master_bed() -> void:
 
 
 func _show_night_summary() -> void:
+	pending_day_transition = "day_two"
 	GameState.time_label = "晚上22:35"
 	GameState.time_segment = "night"
 	var summary := GameState.settle_day_three()
@@ -898,11 +993,18 @@ func _show_night_summary() -> void:
 
 func _on_day_summary_confirmed() -> void:
 	hud.hide_day_summary()
-	hud.play_day_transition("暴雨前第2天", "上午07:10", "距离预报中的强降雨，还有两天。")
+	if pending_day_transition == "day_one":
+		hud.play_day_transition("暴雨前第1天", "上午07:00", "窗外终于开始落下零星雨点。")
+	else:
+		pending_day_transition = "day_two"
+		hud.play_day_transition("暴雨前第2天", "上午07:10", "距离预报中的强降雨，还有两天。")
 
 
 func _on_day_transition_blackout() -> void:
-	GameState.begin_day_two()
+	if pending_day_transition == "day_one":
+		GameState.begin_day_one()
+	else:
+		GameState.begin_day_two()
 	current_floor = 1
 	world.build_floor(current_floor)
 	player.global_position = Vector2(790.0, 735.0)
@@ -910,6 +1012,20 @@ func _on_day_transition_blackout() -> void:
 
 
 func _on_day_transition_finished() -> void:
+	if pending_day_transition == "day_one":
+		var scheduled_event_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
+		pending_day_transition = ""
+		if not scheduled_event_id.is_empty():
+			_open_database_event(scheduled_event_id)
+		else:
+			pending_action = {"type": "close"}
+			hud.show_dialogue(
+				"暴雨前第1天",
+				"窗外开始落下零星雨点。今天的接人路线与第二次购物将在v0.7继续。",
+				["结束当前版本"]
+			)
+		return
+	pending_day_transition = ""
 	pending_action = {"type": "day_two_morning"}
 	hud.show_dialogue(
 		"第二天清晨",
@@ -919,27 +1035,45 @@ func _on_day_transition_finished() -> void:
 
 
 func _open_day_two_weather_event() -> void:
-	GameState.flags["day_two_weather_checked"] = true
-	GameState.phase_id = "pre_rain_day_2_warning"
-	GameState.time_label = "上午08:00"
-	GameState.time_segment = "morning"
-	GameState.weather_label = "低云 · 强降雨提醒"
-	var payoff := "昨天的准备让家里没有立刻乱起来。"
-	match GameState.afternoon_plan:
-		"organize_supplies":
-			payoff = "昨天整理的物资清单就在柜门内侧，缺少什么一眼就能看见。"
-		"inspect_house":
-			payoff = "你想起昨天已经检查过排水口和配电箱，至少暂时不必重复。"
-		"family_time":
-			payoff = "家人昨天下午得到休息，面对提醒时没有立刻互相催促。"
-	pending_action = {"type": "close"}
+	_open_database_event("d2_weather_warning")
+
+
+func _open_database_event(event_id: String, force: bool = false) -> void:
+	var data: Dictionary = EventManager.event_data(event_id)
+	if data.is_empty():
+		hud.show_toast("找不到事件：%s" % event_id)
+		return
+	if not force and not EventManager.is_available(event_id):
+		hud.show_toast("这个事件现在不能触发，或已经完成。")
+		return
+	pending_action = {"type": "database_event", "event_id": event_id, "force": force}
 	hud.show_dialogue(
-		"最新天气提醒",
-		"气象台预计明晚开始出现持续强降雨，累计雨量可能超过往年同期。学校和社区正在讨论临时安排。\n\n%s"
-		% payoff,
-		["记下提醒"]
+		str(data.get("title", event_id)),
+		EventManager.resolved_text(event_id),
+		EventManager.choice_labels(event_id)
 	)
+
+
+func _show_day_two_summary() -> void:
+	pending_day_transition = "day_one"
+	GameState.time_label = "晚上22:20"
+	GameState.time_segment = "night"
+	var summary := GameState.settle_day_two()
 	_update_hud()
+	var rows := [
+		{"name": "晚饭", "value": str(summary.get("meal", "已完成"))},
+		{"name": "饮用水", "value": str(summary.get("water", "正常"))},
+		{"name": "供电", "value": str(summary.get("power", "正常"))},
+		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "重点准备", "value": str(summary.get("preparation", "无"))},
+		{"name": "信息", "value": str(summary.get("clues", "0条线索"))},
+	]
+	hud.show_day_summary(
+		"暴雨前第2天 · 夜间结算",
+		"今天的选择会在明天接人、通信或供水事件中继续产生影响。",
+		rows,
+		str(summary.get("note", "夜里暂时平静。"))
+	)
 
 
 func _apply_shopping_reactions() -> String:

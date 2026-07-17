@@ -2,6 +2,7 @@ class_name StormHUD
 extends CanvasLayer
 
 const ITEM_ICON_SCRIPT = preload("res://scripts/item_icon.gd")
+const EVENT_BROWSER_SCRIPT = preload("res://scripts/event_browser.gd")
 
 signal intro_started
 signal choice_selected(index: int)
@@ -13,6 +14,8 @@ signal day_transition_blackout
 signal day_transition_finished
 signal quick_travel_selected(location_id: String)
 signal debug_action_selected(action_id: String)
+signal event_browser_preview_requested(event_id: String)
+signal event_browser_reset_requested(event_id: String)
 
 var root: Control
 var top_date_label: Label
@@ -52,6 +55,7 @@ var family_household_label: Label
 var family_cards: HBoxContainer
 var quick_travel_overlay: ColorRect
 var debug_overlay: ColorRect
+var event_browser: StormEventBrowser
 
 
 func _ready() -> void:
@@ -174,6 +178,7 @@ func _build_interface() -> void:
 	_build_family_overlay()
 	_build_quick_travel_overlay()
 	_build_debug_overlay()
+	_build_event_browser()
 	_build_intro()
 
 
@@ -509,6 +514,7 @@ func _build_debug_overlay() -> void:
 		["after_shop", "跳到第一次购物回家后"],
 		["evening_bed", "跳到当天晚上并传送到主卧"],
 		["day_two", "直接进入暴雨前第2天"],
+		["event_browser", "打开事件浏览器（查看全部分支）"],
 		["reset", "重置本次测试"],
 	]
 	for entry in actions:
@@ -524,6 +530,13 @@ func _build_debug_overlay() -> void:
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_button.pressed.connect(hide_debug_menu)
 	content.add_child(close_button)
+
+
+func _build_event_browser() -> void:
+	event_browser = EVENT_BROWSER_SCRIPT.new()
+	event_browser.preview_event_requested.connect(_on_event_browser_preview_requested)
+	event_browser.reset_event_requested.connect(_on_event_browser_reset_requested)
+	root.add_child(event_browser)
 
 
 func _build_intro() -> void:
@@ -548,7 +561,7 @@ func _build_intro() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 15)
 	panel.add_child(box)
-	var kicker := _make_label("GODOT正式工程 · 流程测试工具 0.5.0", 13, Color("90bccc"))
+	var kicker := _make_label("GODOT正式工程 · 事件系统 0.6.0", 13, Color("90bccc"))
 	box.add_child(kicker)
 	var title := _make_label("暴雨100天", 36, Color("f4eee1"))
 	box.add_child(title)
@@ -797,6 +810,16 @@ func hide_debug_menu() -> void:
 	debug_overlay.visible = false
 
 
+func show_event_browser(entries: Array) -> void:
+	hide_debug_menu()
+	event_browser.show_entries(entries)
+
+
+func hide_event_browser() -> void:
+	if event_browser != null:
+		event_browser.hide_browser()
+
+
 func _on_quick_travel_pressed(location_id: String) -> void:
 	hide_quick_travel()
 	quick_travel_selected.emit(location_id)
@@ -805,6 +828,14 @@ func _on_quick_travel_pressed(location_id: String) -> void:
 func _on_debug_action_pressed(action_id: String) -> void:
 	hide_debug_menu()
 	debug_action_selected.emit(action_id)
+
+
+func _on_event_browser_preview_requested(event_id: String) -> void:
+	event_browser_preview_requested.emit(event_id)
+
+
+func _on_event_browser_reset_requested(event_id: String) -> void:
+	event_browser_reset_requested.emit(event_id)
 
 
 func is_item_grid_open() -> bool:
@@ -905,6 +936,9 @@ func close_top_overlay() -> void:
 		return
 	if transition_overlay != null and transition_overlay.visible:
 		return
+	if event_browser != null and event_browser.visible:
+		hide_event_browser()
+		return
 	if debug_overlay != null and debug_overlay.visible:
 		hide_debug_menu()
 		return
@@ -931,6 +965,7 @@ func is_blocking() -> bool:
 		or (family_overlay != null and family_overlay.visible)
 		or (quick_travel_overlay != null and quick_travel_overlay.visible)
 		or (debug_overlay != null and debug_overlay.visible)
+		or (event_browser != null and event_browser.visible)
 	)
 
 
