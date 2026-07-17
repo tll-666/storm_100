@@ -80,6 +80,43 @@ func get_nearest_interactable(origin: Vector2, maximum_distance: float = 92.0) -
 	return nearest
 
 
+func reposition_npcs(phase_id: String) -> void:
+	var npc_positions := _npc_positions_for_phase(phase_id)
+	for child in interaction_root.get_children():
+		if not child is InteractionObject:
+			continue
+		var obj: InteractionObject = child
+		if obj.category != "npc":
+			continue
+		if npc_positions.has(obj.object_id):
+			obj.position = npc_positions[obj.object_id]
+
+
+func _npc_positions_for_phase(phase_id: String) -> Dictionary:
+	if phase_id.begins_with("rain_day_3") or phase_id.begins_with("rain_day_4"):
+		return {
+			"partner": Vector2(825.0, 580.0),
+			"elder": Vector2(1000.0, 600.0),
+			"teen": Vector2(820.0, 480.0),
+			"child": Vector2(700.0, 600.0),
+		}
+	if phase_id.begins_with("rain_day_2") or phase_id.begins_with("rain_day_1"):
+		return {
+			"partner": Vector2(825.0, 580.0),
+			"elder": Vector2(1260.0, 585.0),
+			"teen": Vector2(820.0, 480.0),
+			"child": Vector2(700.0, 600.0),
+		}
+	if phase_id == "pre_rain_day_2_evening" or phase_id == "pre_rain_day_2_bedtime":
+		return {
+			"partner": Vector2(825.0, 580.0),
+			"elder": Vector2(1180.0, 480.0),
+			"teen": Vector2(890.0, 520.0),
+			"child": Vector2(760.0, 620.0),
+		}
+	return {}
+
+
 func spawn_position(floor_number: int) -> Vector2:
 	if floor_number == 3:
 		return Vector2(800.0, 810.0)
@@ -576,7 +613,7 @@ func _interactions_for_floor(floor_number: int) -> Array:
 			},
 		]
 	if floor_number == 2:
-		return [
+		var floor2_npcs := [
 			{
 				"id": "teen",
 				"position": Vector2(940, 245),
@@ -593,7 +630,25 @@ func _interactions_for_floor(floor_number: int) -> Array:
 				"name": "小孩子",
 				"color": Color("d1a15e")
 			},
-			{
+		]
+		if GameState and (GameState.phase_id.begins_with("rain_day_3") or GameState.phase_id.begins_with("rain_day_4")):
+			floor2_npcs.append({
+				"id": "elder",
+				"position": Vector2(1000, 600),
+				"prompt": "和老人聊聊",
+				"category": "npc",
+				"name": "老人",
+				"color": Color("929c86")
+			})
+			floor2_npcs.append({
+				"id": "partner",
+				"position": Vector2(825, 580),
+				"prompt": "和伴侣聊聊",
+				"category": "npc",
+				"name": "伴侣",
+				"color": Color("cc716b")
+			})
+		return floor2_npcs + [
 				"id": "stairs_down",
 				"position": Vector2(1010, 620),
 				"prompt": "下一楼",

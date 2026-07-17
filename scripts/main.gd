@@ -664,6 +664,7 @@ func _load_checkpoint() -> void:
 
 
 func _update_hud() -> void:
+	world.reposition_npcs(GameState.phase_id)
 	if current_floor == 3:
 		var shop_objective := "在220元和10格后备箱限制下购物，最后到收银台确认。"
 		if GameState.is_third_shopping():
