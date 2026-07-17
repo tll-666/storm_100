@@ -10,6 +10,10 @@ var animation_time: float = 0.0
 var collision_root: Node2D
 var interaction_root: Node2D
 var active_interactable: InteractionObject
+var rain_drops: Array[Vector2] = []
+var rain_velocities: Array[float] = []
+var darkness_overlay: ColorRect
+var darkness_tween
 
 
 func _ready() -> void:
@@ -21,6 +25,22 @@ func _ready() -> void:
 	interaction_root.name = "GeneratedInteractions"
 	interaction_root.y_sort_enabled = true
 	add_child(interaction_root)
+	_init_rain()
+	_init_darkness()
+
+
+func _init_rain() -> void:
+	for i in range(120):
+		rain_drops.append(Vector2(randf() * WORLD_SIZE.x, randf() * WORLD_SIZE.y))
+		rain_velocities.append(400.0 + randf() * 200.0)
+
+
+func _init_darkness() -> void:
+	darkness_overlay = ColorRect.new()
+	darkness_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	darkness_overlay.color = Color(0.0, 0.0, 0.0, 0.0)
+	darkness_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(darkness_overlay)
 
 
 func build_floor(floor_number: int) -> void:
@@ -70,7 +90,47 @@ func spawn_position(floor_number: int) -> Vector2:
 
 func _process(delta: float) -> void:
 	animation_time += delta
+	_update_rain(delta)
+	_update_darkness()
 	queue_redraw()
+
+
+func _rain_intensity() -> float:
+	if not GameState:
+		return 0.0
+	var weather := GameState.weather_label
+	if weather.begins_with("暴雨"):
+		return 1.0
+	if weather.begins_with("中雨"):
+		return 0.6
+	if weather.begins_with("小雨") or weather.begins_with("零星"):
+		return 0.3
+	if weather.begins_with("阴"):
+		return 0.0
+	return 0.0
+
+
+func _update_rain(delta: float) -> void:
+	var intensity := _rain_intensity()
+	if intensity <= 0.0:
+		return
+	for i in range(rain_drops.size()):
+		rain_drops[i].y += rain_velocities[i] * delta * intensity
+		rain_drops[i].x += 30.0 * delta * intensity
+		if rain_drops[i].y > WORLD_SIZE.y:
+			rain_drops[i].y = -20.0
+			rain_drops[i].x = randf() * WORLD_SIZE.x
+
+
+func _update_darkness() -> void:
+	if darkness_overlay == null:
+		return
+	var target_alpha := 0.0
+	if GameState and GameState.power_supply_state == "off":
+		target_alpha = 0.72
+	elif GameState and GameState.power_supply_state == "unstable":
+		target_alpha = 0.35 + sin(animation_time * 3.0) * 0.12
+	darkness_overlay.color.a = lerp(darkness_overlay.color.a, target_alpha, 0.05)
 
 
 func _draw() -> void:
@@ -88,6 +148,72 @@ func _draw() -> void:
 	for furniture in _furniture_for_floor(current_floor):
 		_draw_furniture(furniture)
 	_draw_floor_details()
+	_draw_weather_effects()
+
+
+func _draw_weather_effects() -> void:
+	_draw_rain()
+	_draw_flood_water()
+
+
+func _draw_rain() -> void:
+	var intensity := _rain_intensity()
+	if intensity <= 0.0:
+		return
+	var alpha := 0.4 * intensity
+	var rain_color := Color(0.7, 0.78, 0.85, alpha)
+	var drop_len := 12.0 + 8.0 * intensity
+	for i in range(rain_drops.size()):
+		var step := float(i) / float(rain_drops.size())
+		if step > intensity:
+			break
+		var pos: Vector2 = rain_drops[i]
+		draw_line(pos, pos + Vector2(8.0, drop_len), rain_color, 1.0)
+
+
+func _flood_level() -> int:
+	if not GameState:
+		return 0
+	if GameState.has_flag("rain_day_three_started") or GameState.has_flag("rain_day_four_started"):
+		return 3
+	if GameState.has_flag("rain_day_two_started"):
+		return 2
+	if GameState.has_flag("rain_day_one_started"):
+		return 1
+	return 0
+
+
+func _draw_flood_water() -> void:
+	var flood := _flood_level()
+	if flood <= 0:
+		return
+	if current_floor == 1:
+		var garage_water_height := 20.0 + float(flood) * 25.0
+		var water_rect := Rect2(180.0, 840.0 - garage_water_height, 320.0, garage_water_height)
+		draw_rect(water_rect, Color(0.15, 0.22, 0.30, 0.55), true)
+		for x in range(190, 480, 20):
+			var ripple := sin(animation_time * 2.0 + x * 0.1) * 2.0
+			draw_line(
+				Vector2(float(x), water_rect.position.y + ripple),
+				Vector2(float(x) + 15.0, water_rect.position.y + ripple),
+				Color(0.3, 0.45, 0.55, 0.4),
+				1.0
+			)
+	if current_floor == 1 or current_floor == 2:
+		var street_water_y := 970.0 - float(flood) * 15.0
+		draw_rect(
+			Rect2(0.0, street_water_y, 1600.0, 1100.0 - street_water_y),
+			Color(0.18, 0.25, 0.32, 0.45),
+			true
+		)
+		for x in range(0, 1600, 30):
+			var ripple := sin(animation_time * 1.5 + x * 0.08) * 3.0
+			draw_line(
+				Vector2(float(x), street_water_y + ripple),
+				Vector2(float(x) + 25.0, street_water_y + ripple),
+				Color(0.35, 0.5, 0.6, 0.35),
+				1.0
+			)
 
 
 func _draw_ground_exterior() -> void:
