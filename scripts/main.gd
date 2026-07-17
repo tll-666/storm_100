@@ -489,6 +489,12 @@ func _on_debug_action_selected(action_id: String) -> void:
 		"day_one":
 			_debug_skip_to_day_one()
 			hud.show_toast("测试：已跳到暴雨前第1天清晨。")
+		"rain_day_one":
+			_debug_skip_to_rain_day_one()
+			hud.show_toast("测试：已跳到暴雨第1天。")
+		"rain_day_two":
+			_debug_skip_to_rain_day_two()
+			hud.show_toast("测试：已跳到暴雨第2天。")
 		"event_browser":
 			hud.show_event_browser(EventManager.debug_entries())
 		"reset":
@@ -580,6 +586,44 @@ func _debug_skip_to_day_one() -> void:
 	processing_day_one_morning = true
 	_update_hud()
 	_process_day_one_morning_queue()
+
+
+func _debug_skip_to_rain_day_one() -> void:
+	_debug_skip_to_day_one()
+	EventManager.apply_choice("d1_morning_start", 0, true)
+	EventManager.apply_choice("d1_dispatch", 0, true)
+	EventManager.apply_choice("d1_first_route", 0, true)
+	EventManager.apply_choice("d1_first_arrival", 0, true)
+	EventManager.apply_choice("d1_second_route", 0, true)
+	EventManager.apply_choice("d1_second_arrival", 0, true)
+	GameState.flags["second_shopping_complete"] = true
+	GameState.settle_day_one()
+	GameState.begin_rain_day_one()
+	current_floor = 1
+	world.build_floor(current_floor)
+	player.global_position = Vector2(790.0, 735.0)
+	pending_action.clear()
+	_update_hud()
+	_open_database_event("r1_morning_start", true)
+
+
+func _debug_skip_to_rain_day_two() -> void:
+	_debug_skip_to_rain_day_one()
+	EventManager.apply_choice("r1_morning_start", 0, true)
+	GameState.flags["third_shopping_complete"] = true
+	GameState.settle_rain_day_one()
+	GameState.phase_id = "rain_day_2_morning"
+	GameState.day_label = "暴雨第2天"
+	GameState.time_label = "上午07:00"
+	GameState.time_segment = "morning"
+	GameState.weather_label = "暴雨 · 水压偏低"
+	GameState.flags["rain_day_two_started"] = true
+	current_floor = 1
+	world.build_floor(current_floor)
+	player.global_position = Vector2(790.0, 735.0)
+	pending_action.clear()
+	_update_hud()
+	_open_database_event("r2_morning_start", true)
 
 
 func _debug_reset_run() -> void:
