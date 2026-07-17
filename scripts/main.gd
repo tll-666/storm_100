@@ -126,6 +126,7 @@ var current_target: InteractionObject
 var pending_action: Dictionary = {}
 var game_started: bool = false
 var pending_day_transition: String = ""
+var processing_day_one_morning: bool = false
 
 @onready var world: HouseWorld = $World
 @onready var player: StormPlayer = $Player
@@ -293,6 +294,8 @@ func _on_choice_selected(index: int) -> void:
 	if action_type == "close":
 		hud.hide_dialogue()
 		pending_action.clear()
+		if processing_day_one_morning:
+			_process_day_one_morning_queue()
 		return
 	if action_type == "travel_to_store":
 		hud.hide_dialogue()
@@ -565,7 +568,9 @@ func _update_hud() -> void:
 			"pre_rain_day_2_bedtime":
 				objective = "今天的准备已经结束：到二楼主卧睡觉。"
 			"pre_rain_day_1_morning":
-				objective = "零星小雨已经开始。接人和第二次购物将在v0.7继续。"
+				objective = "清晨：家人分散在学校和社区，先确认昨天的准备是否到位。"
+			"pre_rain_day_1_dispatch":
+				objective = "到车库准备出发接人：先接伴侣还是先接大孩子。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,
@@ -1013,17 +1018,9 @@ func _on_day_transition_blackout() -> void:
 
 func _on_day_transition_finished() -> void:
 	if pending_day_transition == "day_one":
-		var scheduled_event_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
 		pending_day_transition = ""
-		if not scheduled_event_id.is_empty():
-			_open_database_event(scheduled_event_id)
-		else:
-			pending_action = {"type": "close"}
-			hud.show_dialogue(
-				"暴雨前第1天",
-				"窗外开始落下零星雨点。今天的接人路线与第二次购物将在v0.7继续。",
-				["结束当前版本"]
-			)
+		processing_day_one_morning = true
+		_process_day_one_morning_queue()
 		return
 	pending_day_transition = ""
 	pending_action = {"type": "day_two_morning"}
@@ -1032,6 +1029,15 @@ func _on_day_transition_finished() -> void:
 		"夜里没有下雨。清晨的窗玻璃蒙着一层水汽，街道比昨天安静。客厅方向传来手机连续震动的声音。",
 		["起床查看"]
 	)
+
+
+func _process_day_one_morning_queue() -> void:
+	var scheduled_event_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
+	if not scheduled_event_id.is_empty():
+		_open_database_event(scheduled_event_id)
+		return
+	processing_day_one_morning = false
+	_open_database_event("d1_morning_start", true)
 
 
 func _open_day_two_weather_event() -> void:
