@@ -410,6 +410,12 @@ func _on_choice_selected(index: int) -> void:
 		if index == 0:
 			_show_rain_day_one_summary()
 		return
+	if action_type == "end_rain_day_two":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_show_rain_day_two_summary()
+		return
 	if action_type != "npc_choice":
 		return
 	var character_id := str(pending_action.character_id)
@@ -669,7 +675,13 @@ func _update_hud() -> void:
 			"rain_day_1_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第1夜结算。"
 			"rain_day_2_morning":
-				objective = "暴雨第2天。短暂停电与车库渗水将在后续版本继续。"
+				objective = "暴雨第2天：供电不稳定，收音机需要电池。"
+			"rain_day_2_ready":
+				objective = "停电发生了：决定如何使用有限的备用电力。"
+			"rain_day_2_evening":
+				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第2夜结算。"
+			"rain_day_3_morning":
+				objective = "暴雨第3天：车库方向传来不妙的声音。去一楼检查。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,
@@ -1187,6 +1199,14 @@ func _open_master_bed() -> void:
 			["结束今天", "再等等"]
 		)
 		return
+	if GameState.phase_id == "rain_day_2_evening":
+		pending_action = {"type": "end_rain_day_two"}
+		hud.show_dialogue(
+			"主卧",
+			"暴雨第2天的行动已经结束。睡觉会进行暴雨第2夜结算——供水和供电可能继续恶化。",
+			["结束今天", "再等等"]
+		)
+		return
 	pending_action = {"type": "close"}
 	var text := "现在还不准备休息。白天的重要事情需要先处理完。"
 	if GameState.phase_id.begins_with("pre_rain_day_2"):
@@ -1222,7 +1242,9 @@ func _on_day_summary_confirmed() -> void:
 	elif pending_day_transition == "rain_day_one":
 		hud.play_day_transition("暴雨第1天", "上午07:00", "持续的暴雨正式开始。窗外一片灰白，排水河方向传来连续的水声。")
 	elif pending_day_transition == "rain_day_two":
-		hud.play_day_transition("暴雨第2天", "上午07:00", "雨没有停。水压偏低，电力不稳定。短暂停电与车库渗水将在后续版本继续。")
+		hud.play_day_transition("暴雨第2天", "上午07:00", "雨没有停。水压偏低，电力不稳定。")
+	elif pending_day_transition == "rain_day_three":
+		hud.play_day_transition("暴雨第3天", "上午07:00", "雨还在下。水质出现异常。车库方向传来不妙的声音。")
 	else:
 		pending_day_transition = "day_two"
 		hud.play_day_transition("暴雨前第2天", "上午07:10", "距离预报中的强降雨，还有两天。")
@@ -1240,6 +1262,13 @@ func _on_day_transition_blackout() -> void:
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 水压偏低"
 		GameState.flags["rain_day_two_started"] = true
+	elif pending_day_transition == "rain_day_three":
+		GameState.phase_id = "rain_day_3_morning"
+		GameState.day_label = "暴雨第3天"
+		GameState.time_label = "上午07:00"
+		GameState.time_segment = "morning"
+		GameState.weather_label = "暴雨 · 水质异常"
+		GameState.flags["rain_day_three_started"] = true
 	else:
 		GameState.begin_day_two()
 	current_floor = 1
@@ -1260,12 +1289,11 @@ func _on_day_transition_finished() -> void:
 		return
 	if pending_day_transition == "rain_day_two":
 		pending_day_transition = ""
-		pending_action = {"type": "close"}
-		hud.show_dialogue(
-			"暴雨第2天",
-			"雨没有停。水压偏低，电力不稳定。短暂停电与车库渗水将在后续版本继续。",
-			["结束当前版本"]
-		)
+		_open_database_event("r2_morning_start", true)
+		return
+	if pending_day_transition == "rain_day_three":
+		pending_day_transition = ""
+		_open_database_event("r3_morning_start", true)
 		return
 	pending_day_transition = ""
 	pending_action = {"type": "day_two_morning"}
@@ -1370,6 +1398,27 @@ func _show_rain_day_one_summary() -> void:
 	hud.show_day_summary(
 		"暴雨第1天 · 夜间结算",
 		"供水和供电开始出现问题。后续几天情况可能继续恶化。",
+		rows,
+		str(summary.get("note", "夜里暴雨没有停。"))
+	)
+
+
+func _show_rain_day_two_summary() -> void:
+	pending_day_transition = "rain_day_three"
+	GameState.time_label = "晚上23:20"
+	GameState.time_segment = "night"
+	var summary := GameState.settle_rain_day_two()
+	_update_hud()
+	var rows := [
+		{"name": "晚饭", "value": str(summary.get("meal", "已完成"))},
+		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
+		{"name": "供电", "value": str(summary.get("power", "未知"))},
+		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
+	]
+	hud.show_day_summary(
+		"暴雨第2天 · 夜间结算",
+		"水质出现异常，停电后恢复但不稳定。车库渗水可能在明天发生。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。"))
 	)

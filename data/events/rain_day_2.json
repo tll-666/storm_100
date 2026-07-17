@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "id": "r2_morning_start",
+      "title": "暴雨第2天清晨",
+      "type": "fixed",
+      "day": "暴雨第2天",
+      "phase": "rain_day_2_morning",
+      "location": "家中",
+      "once": true,
+      "conditions": {"phase": "rain_day_2_morning"},
+      "clues": ["供电不稳定", "水压偏低", "收音机需要电池"],
+      "text": "雨整夜没停。清晨灯亮了几秒又灭了，电力明显不稳定。水压也比昨晚更低，龙头只能放出细细的水流。收音机没有电池，暂时无法收听最新消息。",
+      "text_variants": [
+        {
+          "required_items": ["batteries"],
+          "text": "雨整夜没停。清晨灯亮了几秒又灭了。你想起昨天买回来的电池还在储物柜里，换上之后收音机应该能响。"
+        },
+        {
+          "required_items": ["power_bank"],
+          "text": "雨整夜没停。清晨灯亮了几秒又灭了。充电宝还满着电，至少手机能撑一阵。但市电什么时候恢复谁也说不准。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "begin",
+          "label": "开始今天的安排",
+          "result": "上午还有一点时间准备。停电随时可能变得更严重，需要决定怎么使用有限的备用电力。",
+          "effects": [
+            {"type": "set_flag", "id": "rain_day_two_started"},
+            {"type": "set_phase", "value": "rain_day_2_ready"},
+            {"type": "set_time", "label": "上午07:30", "segment": "morning"},
+            {"type": "set_weather", "value": "暴雨 · 供电不稳定"}
+          ]
+        }
+      ],
+      "merge": "r2_power_outage"
+    },
+    {
+      "id": "r2_power_outage",
+      "title": "短暂停电",
+      "type": "fixed",
+      "day": "暴雨第2天",
+      "phase": "rain_day_2_ready",
+      "location": "客厅",
+      "once": true,
+      "conditions": {"phase": "rain_day_2_ready"},
+      "clues": ["停电影响了照明、冰箱和通信", "备用电力有限"],
+      "text": "上午十点左右，灯突然全灭了。冰箱停止嗡鸣，屋里一下子安静得不正常。停电了。你只有有限的备用电力，需要决定优先用来做什么。",
+      "text_variants": [
+        {
+          "required_items": ["batteries"],
+          "text": "上午十点，灯全灭了。冰箱停止嗡鸣。但你还有电池——可以给收音机供电，收听最新的天气和救灾消息。"
+        },
+        {
+          "required_items": ["power_bank"],
+          "text": "上午十点，灯全灭了。冰箱停止嗡鸣。但你还有充电宝——可以给手机充电，保持和外面的联系。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "use_radio",
+          "label": "用电池给收音机供电",
+          "result": "你给收音机换上电池。沙沙声后传来断续播报：暴雨至少还要持续三天，低洼住户应做好停水停电准备。",
+          "effects": [
+            {"type": "set_flag", "id": "used_radio_during_outage"},
+            {"type": "add_clue", "id": "storm_lasts_three_days"},
+            {"type": "add_clue", "id": "utilities_will_fail"},
+            {"type": "set_phase", "value": "rain_day_2_evening"},
+            {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
+            {"type": "set_weather", "value": "暴雨 · 停电中"}
+          ]
+        },
+        {
+          "id": "use_phone",
+          "label": "用充电宝给手机充电",
+          "result": "你给手机接上充电宝。社区群说附近几条街都停了电，社区中心正在统计需要帮助的住户。大孩子用手机查到了应急避难所的位置。",
+          "effects": [
+            {"type": "set_flag", "id": "used_phone_during_outage"},
+            {"type": "add_clue", "id": "neighborhood_wide_outage"},
+            {"type": "add_clue", "id": "shelter_location_known"},
+            {"type": "relationship", "member": "teen", "amount": 1},
+            {"type": "set_phase", "value": "rain_day_2_evening"},
+            {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
+            {"type": "set_weather", "value": "暴雨 · 停电中"}
+          ]
+        },
+        {
+          "id": "save_power",
+          "label": "什么都不开，节省备用电力",
+          "result": "屋里又暗又安静。你决定把电池和充电宝留到更需要的时候。家人各自找事做，但没人说话——停电让屋子显得格外空。",
+          "effects": [
+            {"type": "set_flag", "id": "saved_power_during_outage"},
+            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -3},
+            {"type": "member_stat", "member": "elder", "stat": "morale", "amount": -2},
+            {"type": "set_phase", "value": "rain_day_2_evening"},
+            {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
+            {"type": "set_weather", "value": "暴雨 · 停电中"}
+          ]
+        }
+      ],
+      "merge": "rain_day_2_evening"
+    }
+  ]
+}

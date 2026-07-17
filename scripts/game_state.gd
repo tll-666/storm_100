@@ -96,6 +96,7 @@ var day_two_preparation: String = ""
 var last_day_two_summary: Dictionary = {}
 var last_day_one_summary: Dictionary = {}
 var last_rain_day_one_summary: Dictionary = {}
+var last_rain_day_two_summary: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -137,6 +138,7 @@ func reset_prologue() -> void:
 	last_day_two_summary.clear()
 	last_day_one_summary.clear()
 	last_rain_day_one_summary.clear()
+	last_rain_day_two_summary.clear()
 
 
 func apply_afternoon_plan(plan_id: String) -> String:
@@ -376,6 +378,44 @@ func settle_rain_day_one() -> Dictionary:
 	}
 	flags["rain_day_one_settled"] = true
 	return last_rain_day_one_summary
+
+
+func settle_rain_day_two() -> Dictionary:
+	if has_flag("rain_day_two_settled"):
+		return last_rain_day_two_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 14
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 8
+	if _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 5
+	elif _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 4
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
+	water_supply_state = "unsafe"
+	var water_result := _settle_family_needs(nutrition_gain)
+	if has_flag("used_radio_during_outage"):
+		_adjust_member_stat("elder", "morale", 2)
+	if has_flag("used_phone_during_outage"):
+		_adjust_member_stat("teen", "morale", 1)
+	var note := "雨整夜没停。停电持续了大约四小时后恢复，但电压明显不稳。水质开始出现问题，龙头放出来的水带着异味。"
+	if has_flag("saved_power_during_outage"):
+		note = "雨整夜没停。停电持续了大约四小时。因为白天没有开收音机或手机，家里在黑暗和沉默中度过了最长的几个小时。水质也开始出现问题。"
+	last_rain_day_two_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"changes": "供水降至水质异常 · 停电后恢复但仍不稳定",
+		"note": note,
+	}
+	flags["rain_day_two_settled"] = true
+	return last_rain_day_two_summary
 
 
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
@@ -818,6 +858,7 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"last_day_two_summary": last_day_two_summary,
 		"last_day_one_summary": last_day_one_summary,
 		"last_rain_day_one_summary": last_rain_day_one_summary,
+		"last_rain_day_two_summary": last_rain_day_two_summary,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -872,5 +913,6 @@ func load_checkpoint() -> Dictionary:
 	last_day_two_summary = payload.get("last_day_two_summary", last_day_two_summary)
 	last_day_one_summary = payload.get("last_day_one_summary", last_day_one_summary)
 	last_rain_day_one_summary = payload.get("last_rain_day_one_summary", last_rain_day_one_summary)
+	last_rain_day_two_summary = payload.get("last_rain_day_two_summary", last_rain_day_two_summary)
 	_ensure_family_states()
 	return payload
