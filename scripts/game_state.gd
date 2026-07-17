@@ -97,6 +97,7 @@ var last_day_two_summary: Dictionary = {}
 var last_day_one_summary: Dictionary = {}
 var last_rain_day_one_summary: Dictionary = {}
 var last_rain_day_two_summary: Dictionary = {}
+var last_rain_day_three_summary: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -139,6 +140,7 @@ func reset_prologue() -> void:
 	last_day_one_summary.clear()
 	last_rain_day_one_summary.clear()
 	last_rain_day_two_summary.clear()
+	last_rain_day_three_summary.clear()
 
 
 func apply_afternoon_plan(plan_id: String) -> String:
@@ -416,6 +418,48 @@ func settle_rain_day_two() -> Dictionary:
 	}
 	flags["rain_day_two_settled"] = true
 	return last_rain_day_two_summary
+
+
+func settle_rain_day_three() -> Dictionary:
+	if has_flag("rain_day_three_settled"):
+		return last_rain_day_three_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 12
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 6
+	if _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 4
+	elif _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 5
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
+	var water_result := _settle_family_needs(nutrition_gain)
+	var garage_status := "车库有少量积水"
+	if has_flag("garage_ignored"):
+		garage_status = "车库积水严重，部分物资受损"
+	elif has_flag("garage_moved_supplies"):
+		garage_status = "车库积水但物资已转移"
+	elif has_flag("garage_sealed_door"):
+		garage_status = "车库进水被延缓但仍在上涨"
+	elif has_flag("garage_bailed_water"):
+		garage_status = "车库水位暂时控制"
+	var note := "雨整夜没停。车库的水又涨了一些。一楼的味道开始变得潮湿。"
+	if has_flag("garage_ignored"):
+		note = "雨整夜没停。今早车库的水已经没过脚踝，受潮的工具和物资散发出霉味。"
+	last_rain_day_three_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"garage": garage_status,
+		"note": note,
+	}
+	flags["rain_day_three_settled"] = true
+	return last_rain_day_three_summary
 
 
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
@@ -859,6 +903,7 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"last_day_one_summary": last_day_one_summary,
 		"last_rain_day_one_summary": last_rain_day_one_summary,
 		"last_rain_day_two_summary": last_rain_day_two_summary,
+		"last_rain_day_three_summary": last_rain_day_three_summary,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -914,5 +959,6 @@ func load_checkpoint() -> Dictionary:
 	last_day_one_summary = payload.get("last_day_one_summary", last_day_one_summary)
 	last_rain_day_one_summary = payload.get("last_rain_day_one_summary", last_rain_day_one_summary)
 	last_rain_day_two_summary = payload.get("last_rain_day_two_summary", last_rain_day_two_summary)
+	last_rain_day_three_summary = payload.get("last_rain_day_three_summary", last_rain_day_three_summary)
 	_ensure_family_states()
 	return payload
