@@ -12,8 +12,7 @@ var interaction_root: Node2D
 var active_interactable: InteractionObject
 var rain_drops: Array[Vector2] = []
 var rain_velocities: Array[float] = []
-var darkness_overlay: ColorRect
-var darkness_tween
+var darkness_alpha: float = 0.0
 
 
 func _ready() -> void:
@@ -26,21 +25,12 @@ func _ready() -> void:
 	interaction_root.y_sort_enabled = true
 	add_child(interaction_root)
 	_init_rain()
-	_init_darkness()
 
 
 func _init_rain() -> void:
 	for i in range(120):
 		rain_drops.append(Vector2(randf() * WORLD_SIZE.x, randf() * WORLD_SIZE.y))
 		rain_velocities.append(400.0 + randf() * 200.0)
-
-
-func _init_darkness() -> void:
-	darkness_overlay = ColorRect.new()
-	darkness_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	darkness_overlay.color = Color(0.0, 0.0, 0.0, 0.0)
-	darkness_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(darkness_overlay)
 
 
 func build_floor(floor_number: int) -> void:
@@ -160,14 +150,12 @@ func _update_rain(delta: float) -> void:
 
 
 func _update_darkness() -> void:
-	if darkness_overlay == null:
-		return
 	var target_alpha := 0.0
 	if GameState and GameState.power_supply_state == "off":
 		target_alpha = 0.72
 	elif GameState and GameState.power_supply_state == "unstable":
 		target_alpha = 0.35 + sin(animation_time * 3.0) * 0.12
-	darkness_overlay.color.a = lerp(darkness_overlay.color.a, target_alpha, 0.05)
+	darkness_alpha = lerp(darkness_alpha, target_alpha, 0.05)
 
 
 func _draw() -> void:
@@ -191,6 +179,8 @@ func _draw() -> void:
 func _draw_weather_effects() -> void:
 	_draw_rain()
 	_draw_flood_water()
+	if darkness_alpha > 0.01:
+		draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color(0.0, 0.0, 0.0, darkness_alpha), true)
 
 
 func _draw_rain() -> void:
@@ -649,6 +639,7 @@ func _interactions_for_floor(floor_number: int) -> Array:
 				"color": Color("cc716b")
 			})
 		return floor2_npcs + [
+			{
 				"id": "stairs_down",
 				"position": Vector2(1010, 620),
 				"prompt": "下一楼",
