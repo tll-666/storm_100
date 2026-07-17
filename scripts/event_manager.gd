@@ -54,24 +54,24 @@ func _load_single_file(path: String) -> void:
 		if not (raw_event is Dictionary):
 			validation_errors.append("事件列表中存在非对象数据：%s" % path)
 			continue
-		var event_data: Dictionary = raw_event
-		var event_id := str(event_data.get("id", ""))
+		var raw_event_dict: Dictionary = raw_event
+		var event_id := str(raw_event_dict.get("id", ""))
 		if event_id.is_empty():
 			validation_errors.append("存在没有ID的事件：%s" % path)
 			continue
 		if events_by_id.has(event_id):
 			validation_errors.append("事件ID重复：%s" % event_id)
 			continue
-		if not event_data.has("title") or not event_data.has("choices"):
+		if not raw_event_dict.has("title") or not raw_event_dict.has("choices"):
 			validation_errors.append("事件缺少标题或选项：%s" % event_id)
 			continue
-		events_by_id[event_id] = event_data
+		events_by_id[event_id] = raw_event_dict
 
 
 func _validate_references() -> void:
 	for raw_id in events_by_id:
-		var event_data: Dictionary = events_by_id[raw_id]
-		var choices: Array = event_data.get("choices", [])
+		var ref_data: Dictionary = events_by_id[raw_id]
+		var choices: Array = ref_data.get("choices", [])
 		if choices.is_empty():
 			validation_errors.append("事件没有任何选项：%s" % str(raw_id))
 		for raw_choice in choices:
