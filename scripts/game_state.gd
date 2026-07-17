@@ -31,6 +31,21 @@ const SECOND_SHOP_OVERRIDES := {
 	"canned_fish": {"price": 24, "limit": 3},
 }
 
+const THIRD_SHOP_OVERRIDES := {
+	"rice": {"price": 68, "limit": 1},
+	"vegetables": {"available": false},
+	"milk": {"available": false},
+	"chocolate": {"available": false},
+	"bottled_water": {"price": 30, "limit": 1},
+	"batteries": {"price": 42, "limit": 1},
+	"power_bank": {"available": false},
+	"toilet_paper": {"price": 48, "limit": 1},
+	"canned_fish": {"price": 32, "limit": 2},
+	"noodles": {"price": 16, "limit": 3},
+	"cleaner": {"price": 30, "limit": 1},
+	"basic_medicine": {"price": 45, "limit": 1},
+}
+
 const FAMILY_ORDER := ["player", "partner", "teen", "child", "elder"]
 const FAMILY_NAMES := {
 	"player": "玩家",
@@ -80,6 +95,7 @@ var event_log: Array = []
 var day_two_preparation: String = ""
 var last_day_two_summary: Dictionary = {}
 var last_day_one_summary: Dictionary = {}
+var last_rain_day_one_summary: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -120,6 +136,7 @@ func reset_prologue() -> void:
 	day_two_preparation = ""
 	last_day_two_summary.clear()
 	last_day_one_summary.clear()
+	last_rain_day_one_summary.clear()
 
 
 func apply_afternoon_plan(plan_id: String) -> String:
@@ -319,6 +336,46 @@ func begin_rain_day_one() -> void:
 	time_segment = "morning"
 	weather_label = "暴雨 · 红色预警"
 	flags["rain_day_one_started"] = true
+
+
+func settle_rain_day_one() -> Dictionary:
+	if has_flag("rain_day_one_settled"):
+		return last_rain_day_one_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 16
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 10
+	if _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 6
+	elif _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 4
+	if meal_parts.is_empty() and _consume_item_anywhere("vegetables", 1) > 0:
+		meal_parts.append("蔬菜")
+		nutrition_gain += 6
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
+	water_supply_state = "low"
+	var water_result := _settle_family_needs(nutrition_gain)
+	power_supply_state = "unstable"
+	for member_id in FAMILY_ORDER:
+		_adjust_member_stat(member_id, "morale", -2)
+	var note := "暴雨整夜没停。凌晨时分水压开始下降，电力也出现短暂闪烁。这只是开始。"
+	if has_flag("rain_day_one_stayed_home"):
+		note = "暴雨整夜没停。你庆幸今天没有出门，但物资消耗比预期更快。水压开始下降，电力出现闪烁。"
+	last_rain_day_one_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"changes": "供水降至水压偏低 · 供电出现不稳定",
+		"note": note,
+	}
+	flags["rain_day_one_settled"] = true
+	return last_rain_day_one_summary
 
 
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
@@ -596,9 +653,15 @@ func has_flag(flag_id: String) -> bool:
 
 func shop_item(item_id: String) -> Dictionary:
 	var base: Dictionary = SHOP_ITEMS.get(item_id, {})
-	if base.is_empty() or not is_second_shopping():
+	if base.is_empty():
 		return base
-	var override: Dictionary = SECOND_SHOP_OVERRIDES.get(item_id, {})
+	var override: Dictionary = {}
+	if is_third_shopping():
+		override = THIRD_SHOP_OVERRIDES.get(item_id, {})
+	elif is_second_shopping():
+		override = SECOND_SHOP_OVERRIDES.get(item_id, {})
+	else:
+		return base
 	if override.is_empty():
 		return base
 	var merged: Dictionary = base.duplicate()
@@ -609,6 +672,10 @@ func shop_item(item_id: String) -> Dictionary:
 
 func is_second_shopping() -> bool:
 	return has_flag("second_shopping_active")
+
+
+func is_third_shopping() -> bool:
+	return has_flag("third_shopping_active")
 
 
 func item_available(item_id: String) -> bool:
@@ -750,6 +817,7 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"day_two_preparation": day_two_preparation,
 		"last_day_two_summary": last_day_two_summary,
 		"last_day_one_summary": last_day_one_summary,
+		"last_rain_day_one_summary": last_rain_day_one_summary,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -803,5 +871,6 @@ func load_checkpoint() -> Dictionary:
 	day_two_preparation = str(payload.get("day_two_preparation", day_two_preparation))
 	last_day_two_summary = payload.get("last_day_two_summary", last_day_two_summary)
 	last_day_one_summary = payload.get("last_day_one_summary", last_day_one_summary)
+	last_rain_day_one_summary = payload.get("last_rain_day_one_summary", last_rain_day_one_summary)
 	_ensure_family_states()
 	return payload

@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "id": "r1_morning_start",
+      "title": "暴雨第1天",
+      "type": "fixed",
+      "day": "暴雨第1天",
+      "phase": "rain_day_1_morning",
+      "location": "家中",
+      "once": true,
+      "conditions": {"phase": "rain_day_1_morning"},
+      "clues": ["红色预警", "学校停课", "社区暂停办公", "暴雨正式开始"],
+      "text": "持续的暴雨整夜没停。气象台已经发布红色预警，雨量远超往年同期。学校停课，社区暂停办公，街道上几乎没有人。家里五口人都在，物资还算够撑几天。今天可能是最后一次能相对安全地外出购物。",
+      "text_variants": [
+        {
+          "required_flags": ["prep_water"],
+          "text": "储水容器仍然排在墙边，水压暂时正常。持续的暴雨整夜没停，气象台已经发布红色预警。学校停课，社区暂停办公。今天可能是最后一次能相对安全地外出购物。"
+        },
+        {
+          "required_flags": ["prep_power"],
+          "text": "充满电的设备仍然亮着，但窗外一片灰白。持续的暴雨整夜没停，气象台已经发布红色预警。学校停课，社区暂停办公。今天可能是最后一次能相对安全地外出购物。"
+        },
+        {
+          "required_flags": ["prep_route"],
+          "text": "地图上标好的路线还在手机里，但路况已经无法保证。持续的暴雨整夜没停，气象台已经发布红色预警。学校停课，社区暂停办公。今天可能是最后一次能相对安全地外出购物。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "go_shopping",
+          "label": "趁雨稍小时去最后一次超市",
+          "result": "雨势有短暂的减弱窗口。你决定现在出发，之后情况只会更差。",
+          "effects": [
+            {"type": "set_flag", "id": "rain_day_one_shopping"},
+            {"type": "set_phase", "value": "rain_day_1_dispatch"},
+            {"type": "set_time", "label": "上午07:30", "segment": "morning"},
+            {"type": "set_weather", "value": "暴雨 · 短暂减弱窗口"}
+          ]
+        },
+        {
+          "id": "stay_home",
+          "label": "今天不再出门",
+          "result": "外面的雨已经太大。你决定留在家中，依靠现有物资撑过去。这个选择更安全，但物资可能不够持久。",
+          "effects": [
+            {"type": "set_flag", "id": "rain_day_one_stayed_home"},
+            {"type": "set_phase", "value": "rain_day_1_evening"},
+            {"type": "set_time", "label": "下午17:00", "segment": "evening"},
+            {"type": "set_weather", "value": "暴雨 · 持续中"}
+          ]
+        }
+      ],
+      "merge": "rain_day_1_evening"
+    }
+  ]
+}
