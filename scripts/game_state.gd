@@ -79,6 +79,7 @@ var scheduled_events: Array = []
 var event_log: Array = []
 var day_two_preparation: String = ""
 var last_day_two_summary: Dictionary = {}
+var last_day_one_summary: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -118,6 +119,7 @@ func reset_prologue() -> void:
 	event_log.clear()
 	day_two_preparation = ""
 	last_day_two_summary.clear()
+	last_day_one_summary.clear()
 
 
 func apply_afternoon_plan(plan_id: String) -> String:
@@ -253,6 +255,54 @@ func settle_day_two() -> Dictionary:
 	return last_day_two_summary
 
 
+func settle_day_one() -> Dictionary:
+	if has_flag("day_one_settled"):
+		return last_day_one_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 18
+	if _consume_item_anywhere("vegetables", 1) > 0:
+		meal_parts.append("蔬菜")
+		nutrition_gain += 6
+	if _consume_item_anywhere("eggs", 2) > 0:
+		meal_parts.append("鸡蛋")
+		nutrition_gain += 7
+	elif _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 4
+	if meal_parts.is_empty() and _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 8
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
+	var water_result := _settle_family_needs(nutrition_gain)
+	var note := "雨整夜没停。凌晨时雨声变得更密，远处能听见排水河方向的水声。"
+	if has_flag("second_route_river"):
+		note = "雨整夜没停。回程走过近路的人鞋袜还没干透，家里弥漫着潮湿的气味。"
+		_adjust_member_stat("teen", "morale", -2)
+		_adjust_member_stat("partner", "morale", -2)
+	if has_flag("second_shopping_complete"):
+		note += "买回来的东西已经归位，但雨势让窗外的能见度越来越差。"
+	last_day_one_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"pickup": "接人顺序：%s" % _pickup_order_label(),
+		"note": note,
+	}
+	flags["day_one_settled"] = true
+	return last_day_one_summary
+
+
+func _pickup_order_label() -> String:
+	if has_flag("first_pickup_teen"):
+		return "先接大孩子"
+	if has_flag("first_pickup_partner"):
+		return "先接伴侣"
+	return "未明确"
+
+
 func begin_day_one() -> void:
 	phase_id = "pre_rain_day_1_morning"
 	day_label = "暴雨前第1天"
@@ -260,6 +310,15 @@ func begin_day_one() -> void:
 	time_segment = "morning"
 	weather_label = "零星小雨 · 风势增强"
 	flags["day_one_started"] = true
+
+
+func begin_rain_day_one() -> void:
+	phase_id = "rain_day_1_morning"
+	day_label = "暴雨第1天"
+	time_label = "上午07:00"
+	time_segment = "morning"
+	weather_label = "暴雨 · 红色预警"
+	flags["rain_day_one_started"] = true
 
 
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
@@ -690,6 +749,7 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"event_log": event_log,
 		"day_two_preparation": day_two_preparation,
 		"last_day_two_summary": last_day_two_summary,
+		"last_day_one_summary": last_day_one_summary,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -742,5 +802,6 @@ func load_checkpoint() -> Dictionary:
 	event_log.assign(payload.get("event_log", []))
 	day_two_preparation = str(payload.get("day_two_preparation", day_two_preparation))
 	last_day_two_summary = payload.get("last_day_two_summary", last_day_two_summary)
+	last_day_one_summary = payload.get("last_day_one_summary", last_day_one_summary)
 	_ensure_family_states()
 	return payload
