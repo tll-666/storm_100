@@ -19,6 +19,18 @@ const SHOP_ITEMS := {
 	"eggs": {"name": "鸡蛋", "price": 0, "slots": 1, "food": 1},
 }
 
+const SECOND_SHOP_OVERRIDES := {
+	"rice": {"price": 52},
+	"vegetables": {"price": 28, "limit": 2},
+	"milk": {"price": 22, "limit": 2},
+	"bottled_water": {"price": 20, "limit": 2},
+	"batteries": {"price": 32, "limit": 2},
+	"power_bank": {"price": 85, "limit": 1},
+	"toilet_paper": {"price": 35},
+	"chocolate": {"available": false},
+	"canned_fish": {"price": 24, "limit": 3},
+}
+
 const FAMILY_ORDER := ["player", "partner", "teen", "child", "elder"]
 const FAMILY_NAMES := {
 	"player": "玩家",
@@ -524,7 +536,35 @@ func has_flag(flag_id: String) -> bool:
 
 
 func shop_item(item_id: String) -> Dictionary:
-	return SHOP_ITEMS.get(item_id, {})
+	var base: Dictionary = SHOP_ITEMS.get(item_id, {})
+	if base.is_empty() or not is_second_shopping():
+		return base
+	var override: Dictionary = SECOND_SHOP_OVERRIDES.get(item_id, {})
+	if override.is_empty():
+		return base
+	var merged: Dictionary = base.duplicate()
+	for key in override:
+		merged[key] = override[key]
+	return merged
+
+
+func is_second_shopping() -> bool:
+	return has_flag("second_shopping_active")
+
+
+func item_available(item_id: String) -> bool:
+	var item := shop_item(item_id)
+	if item.is_empty():
+		return false
+	return bool(item.get("available", true))
+
+
+func cart_item_count(item_id: String) -> int:
+	var count := 0
+	for raw_id in shopping_cart:
+		if str(raw_id) == item_id:
+			count += 1
+	return count
 
 
 func cart_total() -> int:
@@ -545,6 +585,11 @@ func try_add_shop_item(item_id: String) -> String:
 	var item := shop_item(item_id)
 	if item.is_empty():
 		return "这个商品暂时无法购买。"
+	if not bool(item.get("available", true)):
+		return "这个商品今天缺货。"
+	var limit := int(item.get("limit", 0))
+	if limit > 0 and cart_item_count(item_id) >= limit:
+		return "这件商品今天限购%d件。" % limit
 	var required_slots := int(item.get("slots", 1))
 	if cart_slots() + required_slots > trunk_capacity:
 		return "后备箱放不下了。可以去收银台拿出最后一件商品。"

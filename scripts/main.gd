@@ -170,6 +170,8 @@ func _process(_delta: float) -> void:
 		prompt = "开车去社区超市"
 	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
 		prompt = "出发接人"
+	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_after_pickup":
+		prompt = "再去一次超市"
 	if current_target != null and current_target.object_id == "day_planner":
 		if GameState.phase_id == "pre_rain_day_3_after_first_shop":
 			prompt = "安排今天下午"
@@ -260,6 +262,14 @@ func _inspect_object(object_id: String) -> void:
 	if object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
 		_open_database_event("d1_dispatch")
 		return
+	if object_id == "car" and GameState.phase_id == "pre_rain_day_1_after_pickup":
+		pending_action = {"type": "travel_to_second_store"}
+		hud.show_dialogue(
+			"汽车",
+			"油箱接近见底，还能跑一趟。超市还没关门，但雨天商品可能开始限购或缺货。要再去一次吗？",
+			["开车去超市", "今天不再出门"]
+		)
+		return
 	if GameState.phase_id == "pre_rain_day_2_clues":
 		var clue_events := {
 			"radio": "d2_clue_radio",
@@ -309,6 +319,14 @@ func _on_choice_selected(index: int) -> void:
 		pending_action.clear()
 		if index == 0:
 			_enter_supermarket()
+		return
+	if action_type == "travel_to_second_store":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_enter_second_supermarket()
+		else:
+			_skip_second_shopping()
 		return
 	if action_type == "store_exit":
 		hud.hide_dialogue()
@@ -537,11 +555,14 @@ func _load_checkpoint() -> void:
 
 func _update_hud() -> void:
 	if current_floor == 3:
+		var shop_objective := "在220元和10格后备箱限制下购物，最后到收银台确认。"
+		if GameState.is_second_shopping():
+			shop_objective = "雨天部分商品限购或缺货。预算和后备箱仍有限制，到收银台确认。"
 		hud.set_context(
 			"%s · %s" % [GameState.day_label, GameState.time_label],
 			GameState.weather_label,
 			"社区超市",
-			"在220元和10格后备箱限制下购物，最后到收银台确认。"
+			shop_objective
 		)
 		hud.set_progress_text(
 			"预算 ¥%d · 后备箱 %d/%d格 · 购物篮 ¥%d"
@@ -588,6 +609,8 @@ func _update_hud() -> void:
 				objective = "接上第二个人，回家。"
 			"pre_rain_day_1_after_pickup":
 				objective = "接人完成：可以去车库开车去超市，或到主卧等待晚上。"
+			"pre_rain_day_1_evening":
+				objective = "今天的接人和购物已经结束：到二楼主卧睡觉。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,
@@ -634,6 +657,28 @@ func _enter_supermarket() -> void:
 	_update_hud()
 
 
+func _enter_second_supermarket() -> void:
+	current_floor = 3
+	GameState.flags["second_shopping_active"] = true
+	GameState.phase_id = "pre_rain_day_1_second_shop"
+	GameState.time_label = "上午09:40"
+	GameState.time_segment = "daytime"
+	GameState.weather_label = "中雨 · 货架开始空"
+	world.build_floor(current_floor)
+	player.global_position = world.spawn_position(current_floor)
+	hud.show_toast("社区超市：部分商品开始限购或缺货，瓶装水和电池最明显。", 3.2)
+	_update_hud()
+
+
+func _skip_second_shopping() -> void:
+	GameState.phase_id = "pre_rain_day_1_evening"
+	GameState.time_label = "下午16:30"
+	GameState.time_segment = "evening"
+	GameState.weather_label = "中雨 · 雨势持续"
+	hud.show_toast("今天不再出门。")
+	_update_hud()
+
+
 func _open_shop_shelf(shelf_id: String) -> void:
 	if not STORE_SHELVES.has(shelf_id):
 		return
@@ -643,12 +688,18 @@ func _open_shop_shelf(shelf_id: String) -> void:
 	var entries: Array = []
 	for item_id in item_ids:
 		var item := GameState.shop_item(item_id)
+		if not bool(item.get("available", true)):
+			continue
+		var meta := "¥%d · %s" % [int(item.get("price", 0)), _survival_item_meta(item)]
+		var limit := int(item.get("limit", 0))
+		if limit > 0:
+			meta += " · 限购%d件" % limit
 		entries.append(
 			{
 				"id": item_id,
 				"name": str(item.get("name", item_id)),
 				"count": 1,
-				"meta": "¥%d · %s" % [int(item.get("price", 0)), _survival_item_meta(item)],
+				"meta": meta,
 			}
 		)
 	pending_action = {"type": "shop_grid", "shelf_id": shelf_id}
@@ -733,7 +784,10 @@ func _on_item_grid_primary() -> void:
 	if str(pending_action.get("type", "")) != "cart_grid":
 		return
 	hud.hide_item_grid()
-	_finish_first_shopping()
+	if GameState.is_second_shopping():
+		_finish_second_shopping()
+	else:
+		_finish_first_shopping()
 
 
 func _on_item_grid_closed() -> void:
@@ -869,6 +923,30 @@ func _finish_first_shopping() -> void:
 	)
 
 
+func _finish_second_shopping() -> void:
+	var spent := GameState.cart_total()
+	if not GameState.complete_shopping():
+		hud.show_toast("结账没有完成。")
+		return
+	current_floor = 1
+	GameState.phase_id = "pre_rain_day_1_evening"
+	GameState.time_label = "下午16:30"
+	GameState.time_segment = "evening"
+	GameState.weather_label = "中雨 · 雨势持续"
+	GameState.flags["second_shopping_complete"] = true
+	GameState.flags.erase("second_shopping_active")
+	world.build_floor(current_floor)
+	player.global_position = Vector2(340.0, 735.0)
+	_update_hud()
+	pending_action = {"type": "close"}
+	hud.show_dialogue(
+		"回到家",
+		"雨比来时更大。你把东西搬进屋，这次花了¥%d，剩余¥%d。油箱基本空了，今天不适合再出门。"
+		% [spent, GameState.money],
+		["继续"]
+	)
+
+
 func _handle_time_action(object_id: String) -> void:
 	match object_id:
 		"day_planner":
@@ -983,6 +1061,14 @@ func _open_master_bed() -> void:
 			"主卧",
 			"第二天的重要准备已经结束。睡觉会结算今晚的食物、饮水、供电和家庭状态。",
 			["结束今天", "再等等"]
+		)
+		return
+	if GameState.phase_id == "pre_rain_day_1_evening":
+		pending_action = {"type": "close"}
+		hud.show_dialogue(
+			"主卧",
+			"今天的接人和购物已经结束。雨还在下。睡觉会进行夜间结算，进入暴雨第1天（下个版本继续）。",
+			["结束当前版本"]
 		)
 		return
 	pending_action = {"type": "close"}
