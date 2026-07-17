@@ -1,6 +1,6 @@
 extends Node
 
-const DATABASE_PATH := "res://data/events/day_minus_2.json"
+const DATABASE_DIR := "res://data/events"
 
 var database_version: int = 0
 var events_by_id: Dictionary = {}
@@ -14,25 +14,50 @@ func _ready() -> void:
 func load_database() -> bool:
 	events_by_id.clear()
 	validation_errors.clear()
-	var file := FileAccess.open(DATABASE_PATH, FileAccess.READ)
-	if file == null:
-		validation_errors.append("无法打开事件数据库：%s" % DATABASE_PATH)
+	var dir := DirAccess.open(DATABASE_DIR)
+	if dir == null:
+		validation_errors.append("无法打开事件数据库目录：%s" % DATABASE_DIR)
 		return false
+	var file_paths: Array[String] = []
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while not file_name.is_empty():
+		if not dir.current_is_dir() and file_name.ends_with(".json"):
+			file_paths.append("%s/%s" % [DATABASE_DIR, file_name])
+		file_name = dir.get_next()
+	dir.list_dir_end()
+	file_paths.sort()
+	if file_paths.is_empty():
+		validation_errors.append("事件数据库目录中没有JSON文件：%s" % DATABASE_DIR)
+		return false
+	for path in file_paths:
+		_load_single_file(path)
+	_validate_references()
+	return validation_errors.is_empty()
+
+
+func _load_single_file(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		validation_errors.append("无法打开事件数据库：%s" % path)
+		return
 	var parsed: Variant = JSON.parse_string(file.get_as_text())
 	if not (parsed is Dictionary):
-		validation_errors.append("事件数据库不是有效的JSON对象。")
-		return false
+		validation_errors.append("事件数据库不是有效的JSON对象：%s" % path)
+		return
 	var root_data: Dictionary = parsed
-	database_version = int(root_data.get("version", 0))
+	var file_version := int(root_data.get("version", 0))
+	if file_version > database_version:
+		database_version = file_version
 	var raw_events: Array = root_data.get("events", [])
 	for raw_event in raw_events:
 		if not (raw_event is Dictionary):
-			validation_errors.append("事件列表中存在非对象数据。")
+			validation_errors.append("事件列表中存在非对象数据：%s" % path)
 			continue
 		var event_data: Dictionary = raw_event
 		var event_id := str(event_data.get("id", ""))
 		if event_id.is_empty():
-			validation_errors.append("存在没有ID的事件。")
+			validation_errors.append("存在没有ID的事件：%s" % path)
 			continue
 		if events_by_id.has(event_id):
 			validation_errors.append("事件ID重复：%s" % event_id)
@@ -41,8 +66,6 @@ func load_database() -> bool:
 			validation_errors.append("事件缺少标题或选项：%s" % event_id)
 			continue
 		events_by_id[event_id] = event_data
-	_validate_references()
-	return validation_errors.is_empty()
 
 
 func _validate_references() -> void:
