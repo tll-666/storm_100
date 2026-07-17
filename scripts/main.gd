@@ -445,6 +445,9 @@ func _on_debug_action_selected(action_id: String) -> void:
 			hud.show_toast("测试：已跳到晚上，并来到主卧床边。")
 		"day_two":
 			_debug_skip_to_day_two()
+		"day_one":
+			_debug_skip_to_day_one()
+			hud.show_toast("测试：已跳到暴雨前第1天清晨。")
 		"event_browser":
 			hud.show_event_browser(EventManager.debug_entries())
 		"reset":
@@ -520,6 +523,22 @@ func _debug_skip_to_day_two() -> void:
 		"已经绕过前一天的重复流程。现在可以直接测试第二天的天气提醒。",
 		["开始测试第二天"]
 	)
+
+
+func _debug_skip_to_day_one() -> void:
+	_debug_skip_after_shop()
+	GameState.flags["day_three_settled"] = true
+	GameState.flags["day_two_settled"] = true
+	GameState.begin_day_one()
+	GameState.flags["prep_water"] = true
+	GameState.schedule_event("d1_water_prepared", "pre_rain_day_1_morning")
+	current_floor = 1
+	world.build_floor(current_floor)
+	player.global_position = Vector2(790.0, 735.0)
+	pending_action.clear()
+	processing_day_one_morning = true
+	_update_hud()
+	_process_day_one_morning_queue()
 
 
 func _debug_reset_run() -> void:

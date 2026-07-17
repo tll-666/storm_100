@@ -514,6 +514,7 @@ func _build_debug_overlay() -> void:
 		["after_shop", "跳到第一次购物回家后"],
 		["evening_bed", "跳到当天晚上并传送到主卧"],
 		["day_two", "直接进入暴雨前第2天"],
+		["day_one", "直接进入暴雨前第1天"],
 		["event_browser", "打开事件浏览器（查看全部分支）"],
 		["reset", "重置本次测试"],
 	]
