@@ -581,7 +581,13 @@ func _update_hud() -> void:
 			"pre_rain_day_1_first_route":
 				objective = "选择前往目的地的路线：安全主干道或排水河近路。"
 			"pre_rain_day_1_en_route":
-				objective = "已出发前往第一个接人点。接人过程将在下个版本继续。"
+				objective = "前往第一个接人点。"
+			"pre_rain_day_1_second_route":
+				objective = "前往第二个接人点。"
+			"pre_rain_day_1_second_arrival":
+				objective = "接上第二个人，回家。"
+			"pre_rain_day_1_after_pickup":
+				objective = "接人完成：可以去车库开车去超市，或到主卧等待晚上。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,

@@ -98,7 +98,8 @@
             {"type": "set_flag", "id": "first_route_safe"},
             {"type": "set_phase", "value": "pre_rain_day_1_en_route"},
             {"type": "set_time", "label": "上午07:35", "segment": "morning"},
-            {"type": "set_weather", "value": "小雨 · 路面渐湿"}
+            {"type": "set_weather", "value": "小雨 · 路面渐湿"},
+            {"type": "schedule_event", "event_id": "d1_first_arrival", "trigger_phase": "pre_rain_day_1_en_route"}
           ]
         },
         {
@@ -109,11 +110,143 @@
             {"type": "set_flag", "id": "first_route_river"},
             {"type": "set_phase", "value": "pre_rain_day_1_en_route"},
             {"type": "set_time", "label": "上午07:35", "segment": "morning"},
-            {"type": "set_weather", "value": "小雨 · 低洼处见积水"}
+            {"type": "set_weather", "value": "小雨 · 低洼处见积水"},
+            {"type": "schedule_event", "event_id": "d1_first_arrival", "trigger_phase": "pre_rain_day_1_en_route"}
           ]
         }
       ],
       "merge": "d1_first_arrival"
+    },
+    {
+      "id": "d1_first_arrival",
+      "title": "接到第一个人",
+      "type": "fixed",
+      "day": "暴雨前第1天",
+      "phase": "pre_rain_day_1_en_route",
+      "location": "途中",
+      "once": true,
+      "conditions": {"phase": "pre_rain_day_1_en_route"},
+      "clues": ["路线选择会影响时间和淋湿程度"],
+      "text": "你到达目的地，接上了第一个人。雨还在下，但还没有大到无法通行。",
+      "text_variants": [
+        {
+          "required_flags": ["first_pickup_teen", "first_route_safe"],
+          "text": "主干道一路干燥，你顺利到校。大孩子冲出校门上车，说学校已经通知提前放学。绕远路多花了时间，但路况让人安心。"
+        },
+        {
+          "required_flags": ["first_pickup_teen", "first_route_river"],
+          "text": "近路低洼处已经积水，你放慢速度通过。到校时大孩子已经在门口等，上车时鞋底湿了一片。省了时间，但路况开始让人担心。"
+        },
+        {
+          "required_flags": ["first_pickup_partner", "first_route_safe"],
+          "text": "主干道绕远但干燥，你顺利到社区。伴侣上车时说社区那边已经开始登记低洼住户，河边的风比早上更大。"
+        },
+        {
+          "required_flags": ["first_pickup_partner", "first_route_river"],
+          "text": "近路贴着河边，低洼处积水已经漫过路沿。你小心通过，到社区接上伴侣时，两人都注意到河水比早上高涨。伴侣上车时外套淋湿了一片。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "go_second",
+          "label": "继续去接第二个人",
+          "result": "车上多了一个人，雨也在变大。还有一个人在等着。",
+          "effects": [
+            {"type": "set_phase", "value": "pre_rain_day_1_second_route"},
+            {"type": "set_time", "label": "上午08:10", "segment": "morning"},
+            {"type": "schedule_event", "event_id": "d1_second_route", "trigger_phase": "pre_rain_day_1_second_route"}
+          ]
+        }
+      ],
+      "merge": "d1_second_route"
+    },
+    {
+      "id": "d1_second_route",
+      "title": "去接第二个人",
+      "type": "fixed",
+      "day": "暴雨前第1天",
+      "phase": "pre_rain_day_1_second_route",
+      "location": "途中",
+      "once": true,
+      "conditions": {"phase": "pre_rain_day_1_second_route"},
+      "clues": ["雨在变大", "油量持续下降"],
+      "text": "雨比出发时更大了。还有一个人没接回来，你需要再选一次路线。",
+      "text_variants": [
+        {
+          "required_flags": ["first_pickup_teen"],
+          "text": "大孩子已经在车上。现在要去社区接伴侣，社区靠近排水河，雨一大可能更难出来。"
+        },
+        {
+          "required_flags": ["first_pickup_partner"],
+          "text": "伴侣已经在车上。现在要去学校接大孩子，学校在住宅区另一头，放学时间已经提前。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "safe_road",
+          "label": "走安全主干道",
+          "result": "主干道仍然没有积水，但雨越来越大，能见度在下降。油量又少了一些。",
+          "effects": [
+            {"type": "set_flag", "id": "second_route_safe"},
+            {"type": "set_phase", "value": "pre_rain_day_1_second_arrival"},
+            {"type": "set_time", "label": "上午08:40", "segment": "morning"},
+            {"type": "set_weather", "value": "中雨 · 主干道仍可通行"},
+            {"type": "schedule_event", "event_id": "d1_second_arrival", "trigger_phase": "pre_rain_day_1_second_arrival"}
+          ]
+        },
+        {
+          "id": "river_road",
+          "label": "走排水河近路",
+          "result": "近路积水明显比刚才更深。你仍能通过，但车速很慢，河水已经漫到路肩。",
+          "effects": [
+            {"type": "set_flag", "id": "second_route_river"},
+            {"type": "set_phase", "value": "pre_rain_day_1_second_arrival"},
+            {"type": "set_time", "label": "上午08:40", "segment": "morning"},
+            {"type": "set_weather", "value": "中雨 · 近路积水加深"},
+            {"type": "schedule_event", "event_id": "d1_second_arrival", "trigger_phase": "pre_rain_day_1_second_arrival"}
+          ]
+        }
+      ],
+      "merge": "d1_second_arrival"
+    },
+    {
+      "id": "d1_second_arrival",
+      "title": "接完所有人回家",
+      "type": "fixed",
+      "day": "暴雨前第1天",
+      "phase": "pre_rain_day_1_second_arrival",
+      "location": "途中",
+      "once": true,
+      "conditions": {"phase": "pre_rain_day_1_second_arrival"},
+      "clues": ["两次路线选择都会在后续产生影响"],
+      "text": "第二个人也接上了。一家五口都在车上，雨还在下。你把车开回车库，大家陆续进屋。",
+      "text_variants": [
+        {
+          "required_flags": ["second_route_river"],
+          "text": "回程近路积水已经很深，你勉强通过。到家时不止一个人鞋袜湿透，老人听见门口的动静出来查看，什么也没说。"
+        },
+        {
+          "required_flags": ["second_route_safe"],
+          "text": "回程主干道仍然通畅，只是雨声更大。到家时大家基本干燥，老人在门口等着，松了一口气。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "home",
+          "label": "进屋安顿",
+          "result": "一家五口都在家里了。雨还在下，油箱已经接近见底。今天还可以再去一次超市，也可以直接等晚上。",
+          "effects": [
+            {"type": "set_flag", "id": "pickups_complete"},
+            {"type": "set_flag", "id": "all_family_home"},
+            {"type": "set_phase", "value": "pre_rain_day_1_after_pickup"},
+            {"type": "set_time", "label": "上午09:15", "segment": "morning"},
+            {"type": "set_weather", "value": "中雨 · 黄色预警"},
+            {"type": "relationship", "member": "partner", "amount": 1},
+            {"type": "relationship", "member": "teen", "amount": 1}
+          ]
+        }
+      ],
+      "merge": "pre_rain_day_1_after_pickup"
     }
   ]
 }
