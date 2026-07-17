@@ -725,9 +725,15 @@ func _update_hud() -> void:
 			"pre_rain_day_1_evening":
 				objective = "今天的接人和购物已经结束：到二楼主卧睡觉。"
 			"rain_day_1_morning":
-				objective = "暴雨正式开始。到车库决定是否冒雨去最后一次购物，或留在家中。"
+				objective = "暴雨第1天：到车库决定是否冒雨去购物。"
 			"rain_day_1_dispatch":
-				objective = "雨有短暂减弱窗口。到车库开车去超市，或选择不出门。"
+				objective = "雨有短暂减弱。到车库开车去超市。"
+			"rain_day_1_home":
+				objective = "有人敲门。去玄关看看。"
+			"rain_day_1_noise":
+				objective = "客厅天花板有滴水声。去看看。"
+			"rain_day_1_family":
+				objective = "小孩子情绪不好。去客厅。"
 			"rain_day_1_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第1夜结算。"
 			"rain_day_2_morning":

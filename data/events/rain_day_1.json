@@ -10,43 +10,156 @@
       "location": "家中",
       "once": true,
       "conditions": {"phase": "rain_day_1_morning"},
-      "clues": ["红色预警", "学校停课", "社区暂停办公", "暴雨正式开始"],
-      "text": "持续的暴雨整夜没停。气象台已经发布红色预警，雨量远超往年同期。学校停课，社区暂停办公，街道上几乎没有人。家里五口人都在，物资还算够撑几天。今天可能是最后一次能相对安全地外出购物。",
-      "text_variants": [
-        {
-          "required_flags": ["prep_water"],
-          "text": "储水容器仍然排在墙边，水压暂时正常。持续的暴雨整夜没停，气象台已经发布红色预警。学校停课，社区暂停办公。今天可能是最后一次能相对安全地外出购物。"
-        },
-        {
-          "required_flags": ["prep_power"],
-          "text": "充满电的设备仍然亮着，但窗外一片灰白。持续的暴雨整夜没停，气象台已经发布红色预警。学校停课，社区暂停办公。今天可能是最后一次能相对安全地外出购物。"
-        },
-        {
-          "required_flags": ["prep_route"],
-          "text": "地图上标好的路线还在手机里，但路况已经无法保证。持续的暴雨整夜没停，气象台已经发布红色预警。学校停课，社区暂停办公。今天可能是最后一次能相对安全地外出购物。"
-        }
-      ],
+      "clues": ["红色预警", "学校停课"],
+      "text": "雨整夜没停。红色预警。学校停课，社区关门。家里五口人都在。",
       "choices": [
         {
           "id": "go_shopping",
-          "label": "趁雨稍小时去最后一次超市",
-          "result": "雨势有短暂的减弱窗口。你决定现在出发，之后情况只会更差。",
+          "label": "趁雨小去超市",
+          "result": "雨有短暂减弱。现在不去，之后更难。",
           "effects": [
             {"type": "set_flag", "id": "rain_day_one_shopping"},
             {"type": "set_phase", "value": "rain_day_1_dispatch"},
             {"type": "set_time", "label": "上午07:30", "segment": "morning"},
-            {"type": "set_weather", "value": "暴雨 · 短暂减弱窗口"}
+            {"type": "set_weather", "value": "暴雨 · 短暂减弱"}
           ]
         },
         {
           "id": "stay_home",
-          "label": "今天不再出门",
-          "result": "外面的雨已经太大。你决定留在家中，依靠现有物资撑过去。这个选择更安全，但物资可能不够持久。",
+          "label": "不出门",
+          "result": "雨太大。留在家，靠现有物资撑。",
           "effects": [
             {"type": "set_flag", "id": "rain_day_one_stayed_home"},
+            {"type": "set_phase", "value": "rain_day_1_home"},
+            {"type": "set_time", "label": "上午08:00", "segment": "morning"},
+            {"type": "set_weather", "value": "暴雨 · 持续"},
+            {"type": "schedule_event", "event_id": "r1_knock", "trigger_phase": "rain_day_1_home"}
+          ]
+        }
+      ],
+      "merge": "r1_knock"
+    },
+    {
+      "id": "r1_knock",
+      "title": "敲门声",
+      "type": "community",
+      "day": "暴雨第1天",
+      "phase": "rain_day_1_home",
+      "location": "玄关",
+      "once": true,
+      "conditions": {"phase": "rain_day_1_home"},
+      "clues": ["邻居在求助"],
+      "text": "上午有人敲门。隔壁的老张浑身湿透，说他家一楼开始进水了，问有没有多余的沙袋或胶带。",
+      "choices": [
+        {
+          "id": "share",
+          "label": "分一些胶带给他",
+          "result": "老张千恩万谢走了。伴侣觉得你做得对。",
+          "effects": [
+            {"type": "set_flag", "id": "helped_neighbor"},
+            {"type": "relationship", "member": "partner", "amount": 1},
+            {"type": "set_phase", "value": "rain_day_1_noise"},
+            {"type": "set_time", "label": "上午10:00", "segment": "morning"},
+            {"type": "schedule_event", "event_id": "r1_noise", "trigger_phase": "rain_day_1_noise"}
+          ]
+        },
+        {
+          "id": "refuse",
+          "label": "拒绝了，自己也不够",
+          "result": "老张点点头，说理解。门关上后屋里安静了一会。",
+          "effects": [
+            {"type": "set_flag", "id": "refused_neighbor"},
+            {"type": "set_phase", "value": "rain_day_1_noise"},
+            {"type": "set_time", "label": "上午10:00", "segment": "morning"},
+            {"type": "schedule_event", "event_id": "r1_noise", "trigger_phase": "rain_day_1_noise"}
+          ]
+        }
+      ],
+      "merge": "r1_noise"
+    },
+    {
+      "id": "r1_noise",
+      "title": "天花板的声音",
+      "type": "room",
+      "day": "暴雨第1天",
+      "phase": "rain_day_1_noise",
+      "location": "客厅",
+      "once": true,
+      "conditions": {"phase": "rain_day_1_noise"},
+      "clues": ["屋顶可能漏水"],
+      "text": "客厅天花板角落传来滴水声。抬头看，水渍正在慢慢扩大。",
+      "choices": [
+        {
+          "id": "check_roof",
+          "label": "搬梯子上去看",
+          "result": "屋顶防水层裂了一道缝。你用胶带临时补上，暂时止住了。但你知道这不是长久之计。",
+          "effects": [
+            {"type": "set_flag", "id": "roof_patch_done"},
+            {"type": "add_clue", "id": "roof_leak_known"},
+            {"type": "set_phase", "value": "rain_day_1_family"},
+            {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
+            {"type": "schedule_event", "event_id": "r1_family", "trigger_phase": "rain_day_1_family"}
+          ]
+        },
+        {
+          "id": "ignore",
+          "label": "先不管，放个桶接着",
+          "result": "你把一个桶放在滴水下面。水滴进桶里的声音整晚都在响。",
+          "effects": [
+            {"type": "set_flag", "id": "roof_leak_ignored"},
+            {"type": "set_phase", "value": "rain_day_1_family"},
+            {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
+            {"type": "schedule_event", "event_id": "r1_family", "trigger_phase": "rain_day_1_family"}
+          ]
+        }
+      ],
+      "merge": "r1_family"
+    },
+    {
+      "id": "r1_family",
+      "title": "小孩子在哭",
+      "type": "family",
+      "day": "暴雨第1天",
+      "phase": "rain_day_1_family",
+      "location": "客厅",
+      "once": true,
+      "conditions": {"phase": "rain_day_1_family"},
+      "clues": ["家人情绪开始受影响"],
+      "text": "小孩子缩在沙发角落，抱着枕头不说话。老人在旁边拍他的背，但自己也一脸疲惫。伴侣在厨房默默收拾东西。",
+      "choices": [
+        {
+          "id": "comfort",
+          "label": "过去陪小孩子坐一会",
+          "result": "小孩子靠在你身上，慢慢不抖了。老人看了你一眼，点了点头。",
+          "effects": [
+            {"type": "set_flag", "id": "comforted_child_rain"},
+            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 3},
+            {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 1},
             {"type": "set_phase", "value": "rain_day_1_evening"},
-            {"type": "set_time", "label": "下午17:00", "segment": "evening"},
-            {"type": "set_weather", "value": "暴雨 · 持续中"}
+            {"type": "set_time", "label": "下午17:00", "segment": "evening"}
+          ]
+        },
+        {
+          "id": "assign_task",
+          "label": "让小孩子帮忙整理物资",
+          "result": "小孩子开始数罐头，注意力被分散了一些。但他还是时不时看窗外。",
+          "effects": [
+            {"type": "set_flag", "id": "child_helping"},
+            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 1},
+            {"type": "set_phase", "value": "rain_day_1_evening"},
+            {"type": "set_time", "label": "下午17:00", "segment": "evening"}
+          ]
+        },
+        {
+          "id": "leave_alone",
+          "label": "让他自己待一会",
+          "result": "小孩子没再出声。伴侣看了你一眼，没说什么。",
+          "effects": [
+            {"type": "set_flag", "id": "child_left_alone"},
+            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
+            {"type": "relationship", "member": "partner", "amount": -1},
+            {"type": "set_phase", "value": "rain_day_1_evening"},
+            {"type": "set_time", "label": "下午17:00", "segment": "evening"}
           ]
         }
       ],
