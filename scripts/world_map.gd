@@ -154,7 +154,7 @@ func _update_darkness() -> void:
 	if GameState and GameState.power_supply_state == "off":
 		target_alpha = 0.72
 	elif GameState and GameState.power_supply_state == "unstable":
-		target_alpha = 0.35 + sin(animation_time * 3.0) * 0.12
+		target_alpha = 0.35
 	darkness_alpha = lerp(darkness_alpha, target_alpha, 0.05)
 
 
