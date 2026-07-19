@@ -1953,6 +1953,7 @@ func _show_rain_day_four_summary() -> void:
 		{"name": "供电", "value": str(summary.get("power", "未知"))},
 		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
 		{"name": "一楼", "value": str(summary.get("onef", "未知"))},
+		{"name": "食物分配", "value": str(summary.get("rationing", "自动平均分配"))},
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
@@ -1974,6 +1975,7 @@ func _show_rain_day_five_summary() -> void:
 		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
 		{"name": "供电", "value": str(summary.get("power", "未知"))},
 		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "食物分配", "value": str(summary.get("rationing", "自动平均分配"))},
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
@@ -1995,6 +1997,7 @@ func _show_rain_day_six_summary() -> void:
 		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
 		{"name": "供电", "value": str(summary.get("power", "未知"))},
 		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "食物分配", "value": str(summary.get("rationing", "自动平均分配"))},
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
@@ -2016,6 +2019,7 @@ func _show_rain_day_seven_summary() -> void:
 		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
 		{"name": "供电", "value": str(summary.get("power", "未知"))},
 		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "食物分配", "value": str(summary.get("rationing", "自动平均分配"))},
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(

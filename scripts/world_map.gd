@@ -334,7 +334,32 @@ func _draw_floor_details() -> void:
 
 func _draw_room(room: Dictionary) -> void:
 	var rect: Rect2 = room.rect
-	draw_rect(rect, room.color, true)
+	var room_color: Color = room.color as Color
+	var room_id: String = str(room.get("id", ""))
+	if GameState and not room_id.is_empty():
+		var state := GameState.get_room_state(room_id)
+		match state:
+			"damp":
+				room_color = (room.color as Color).darkened(0.15)
+			"leaking":
+				room_color = (room.color as Color).darkened(0.28)
+			"flooded":
+				room_color = Color(0.3, 0.42, 0.55, 1.0)
+			"unusable":
+				room_color = Color(0.18, 0.2, 0.22, 1.0)
+	draw_rect(rect, room_color, true)
+	if GameState and not room_id.is_empty():
+		var state := GameState.get_room_state(room_id)
+		if state == "leaking":
+			for y in range(int(rect.position.y + 30.0), int(rect.end.y), 40):
+				draw_line(
+					Vector2(rect.position.x + randf_range(40.0, rect.size.x - 40.0), float(y)),
+					Vector2(rect.position.x + randf_range(40.0, rect.size.x - 40.0), float(y) + 8.0),
+					Color(0.5, 0.65, 0.8, 0.35), 2.0
+				)
+		if state == "flooded" or state == "unusable":
+			draw_rect(rect, Color(0.2, 0.35, 0.5, 0.4), true)
+			draw_rect(Rect2(rect.position, Vector2(rect.size.x, 6.0)), Color(0.3, 0.5, 0.7, 0.6), true)
 	for y in range(int(rect.position.y + 18.0), int(rect.end.y), 30):
 		draw_line(
 			Vector2(rect.position.x, float(y)),
@@ -427,15 +452,15 @@ func _rooms_for_floor(floor_number: int) -> Array:
 			{"rect": Rect2(1120, 650, 300, 200), "label": "储物角", "color": Color("8f8775")},
 		]
 	return [
-		{"rect": Rect2(180, 500, 320, 350), "label": "车库 · 地面较低", "color": Color("717b7d")},
-		{"rect": Rect2(500, 100, 400, 240), "label": "厨房 / 食品柜", "color": Color("8ca093")},
-		{"rect": Rect2(900, 100, 220, 240), "label": "厕所 / 洗衣", "color": Color("86aaac")},
+		{"id": "garage", "rect": Rect2(180, 500, 320, 350), "label": "车库 · 地面较低", "color": Color("717b7d")},
+		{"id": "kitchen", "rect": Rect2(500, 100, 400, 240), "label": "厨房 / 食品柜", "color": Color("8ca093")},
+		{"id": "bathroom", "rect": Rect2(900, 100, 220, 240), "label": "厕所 / 洗衣", "color": Color("86aaac")},
 		{"rect": Rect2(1120, 100, 300, 240), "label": "后侧储物", "color": Color("938b78")},
-		{"rect": Rect2(500, 340, 400, 310), "label": "客厅 / 餐厅", "color": Color("b7946c")},
-		{"rect": Rect2(900, 340, 220, 310), "label": "楼梯间", "color": Color("aa9b80")},
+		{"id": "living_room", "rect": Rect2(500, 340, 400, 310), "label": "客厅 / 餐厅", "color": Color("b7946c")},
+		{"id": "stairway", "rect": Rect2(900, 340, 220, 310), "label": "楼梯间", "color": Color("aa9b80")},
 		{"rect": Rect2(500, 650, 250, 200), "label": "玄关", "color": Color("9a8872")},
 		{"rect": Rect2(750, 650, 370, 200), "label": "过道", "color": Color("ae9f84")},
-		{"rect": Rect2(1120, 340, 300, 510), "label": "老人卧室", "color": Color("9d8388")},
+		{"id": "elder_bedroom", "rect": Rect2(1120, 340, 300, 510), "label": "老人卧室", "color": Color("9d8388")},
 	]
 
 
