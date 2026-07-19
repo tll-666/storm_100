@@ -3,6 +3,7 @@ extends CanvasLayer
 
 const ITEM_ICON_SCRIPT = preload("res://scripts/item_icon.gd")
 const EVENT_BROWSER_SCRIPT = preload("res://scripts/event_browser.gd")
+const MINIMAP_SCRIPT = preload("res://scripts/minimap.gd")
 
 signal intro_started
 signal choice_selected(index: int)
@@ -60,6 +61,8 @@ var manual_records_label: Label
 var quick_travel_overlay: ColorRect
 var debug_overlay: ColorRect
 var event_browser: StormEventBrowser
+var minimap: HouseMiniMap
+var minimap_room_label: Label
 
 
 func _ready() -> void:
@@ -176,6 +179,7 @@ func _build_interface() -> void:
 	add_child(toast_timer)
 
 	_build_utility_controls()
+	_build_minimap()
 	_build_item_grid_overlay()
 	_build_day_summary_overlay()
 	_build_day_transition_overlay()
@@ -214,6 +218,43 @@ func _build_utility_controls() -> void:
 		debug_button.tooltip_text = "仅调试版本显示，不会进入正式发行版"
 		debug_button.pressed.connect(toggle_debug_menu)
 		utility_bar.add_child(debug_button)
+
+
+func _build_minimap() -> void:
+	var panel := PanelContainer.new()
+	panel.anchor_left = 1.0
+	panel.anchor_right = 1.0
+	panel.offset_left = -266.0
+	panel.offset_right = -16.0
+	panel.offset_top = 170.0
+	panel.offset_bottom = 365.0
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color(0.025, 0.04, 0.048, 0.90), Color("53636b"), 10)
+	)
+	root.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(box)
+	var heading := _make_label("房屋简图 · 非实时信息", 12, Color("d8b86f"))
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(heading)
+	minimap_room_label = _make_label("当前位置：未知", 11, Color("aebdc1"))
+	minimap_room_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(minimap_room_label)
+	minimap = MINIMAP_SCRIPT.new()
+	minimap.custom_minimum_size = Vector2(218.0, 125.0)
+	minimap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(minimap)
+
+
+func set_minimap(floor_number: int, active_room_id: String, active_room_name: String, rooms: Array) -> void:
+	if minimap == null:
+		return
+	minimap_room_label.text = "%d楼 · %s" % [floor_number, active_room_name]
+	minimap.configure(floor_number, active_room_id, rooms)
 
 
 func _build_item_grid_overlay() -> void:
@@ -469,6 +510,13 @@ func _build_survival_manual_overlay() -> void:
 	manual_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	manual_objective_label.custom_minimum_size.y = 54.0
 	content.add_child(manual_objective_label)
+	var navigation_note := _make_label(
+		"探索提示：右上角简图只记录到过的房间；离开房间后，其中的人物和物品不会继续提供实时信息。T可快捷前往已开放的主要地点，且不推进时间。",
+		13,
+		Color("aebdc1")
+	)
+	navigation_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(navigation_note)
 	content.add_child(HSeparator.new())
 	var records_heading := _make_label("已确认的环境记录", 16, Color("e6bd70"))
 	content.add_child(records_heading)
@@ -670,7 +718,7 @@ func _build_intro() -> void:
 	)
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(controls)
-	var note := _make_label("测试时可用F1跳过重复流程；日期切换会等待你确认，不会自动闪过。", 13, Color("88979d"))
+	var note := _make_label("右上角简图只显示已探索房间；离开房间后不再显示其中的实时情况。测试时可用F1跳过重复流程。", 13, Color("88979d"))
 	box.add_child(note)
 	var start_button := Button.new()
 	start_button.text = "开始灾前第3天"

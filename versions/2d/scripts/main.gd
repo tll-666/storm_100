@@ -129,6 +129,7 @@ var pending_day_transition: String = ""
 var processing_day_one_morning: bool = false
 var _last_completed_event_id: String = ""
 var _auto_chain_mode: bool = false
+var current_room_id: String = ""
 
 @onready var world: HouseWorld = $World
 @onready var player: StormPlayer = $Player
@@ -140,6 +141,7 @@ func _ready() -> void:
 	world.build_floor(current_floor)
 	player.global_position = world.spawn_position(current_floor)
 	player.movement_enabled = false
+	camera.zoom = Vector2(1.65, 1.65)
 	camera.limit_left = 0
 	camera.limit_top = 0
 	camera.limit_right = int(HouseWorld.WORLD_SIZE.x)
@@ -157,6 +159,7 @@ func _ready() -> void:
 	hud.debug_action_selected.connect(_on_debug_action_selected)
 	hud.event_browser_preview_requested.connect(_on_event_browser_preview_requested)
 	hud.event_browser_reset_requested.connect(_on_event_browser_reset_requested)
+	_refresh_room_focus(true)
 	_update_hud()
 
 
@@ -165,6 +168,7 @@ func _process(delta: float) -> void:
 		if GameState.advance_continuous_clock(delta):
 			_update_hud()
 	player.movement_enabled = game_started and not hud.is_blocking()
+	_refresh_room_focus()
 	if not game_started or hud.is_blocking():
 		current_target = null
 		world.get_nearest_interactable(Vector2(-10000.0, -10000.0), 1.0)
@@ -195,6 +199,47 @@ func _process(delta: float) -> void:
 		if GameState.phase_id in ["pre_rain_day_3_evening", "pre_rain_day_2_bedtime"] or GameState.phase_id.ends_with("_settlement"):
 			prompt = "结束今天"
 	hud.set_prompt(prompt)
+
+
+func _refresh_room_focus(force: bool = false) -> void:
+	if current_floor == 3:
+		var store_changed := current_room_id != "store" or world.active_room_id != "store"
+		current_room_id = "store"
+		world.set_active_room(current_room_id)
+		GameState.mark_room_explored(current_floor, current_room_id)
+		if store_changed or force:
+			_set_camera_zoom(Vector2(1.15, 1.15), force)
+			_update_minimap()
+		return
+	var room_id := world.room_at_position(player.global_position)
+	if room_id.is_empty():
+		return
+	var changed := force or room_id != current_room_id or world.active_room_id != room_id
+	if not changed:
+		return
+	current_room_id = room_id
+	world.set_active_room(current_room_id)
+	GameState.mark_room_explored(current_floor, current_room_id)
+	_set_camera_zoom(Vector2(1.65, 1.65), force)
+	_update_minimap()
+	if not force:
+		_update_hud()
+
+
+func _set_camera_zoom(target: Vector2, immediate: bool = false) -> void:
+	if immediate:
+		camera.zoom = target
+		return
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(camera, "zoom", target, 0.28)
+
+
+func _update_minimap() -> void:
+	if hud == null or world == null:
+		return
+	var room_label := world.room_name(current_room_id)
+	hud.set_minimap(current_floor, current_room_id, room_label, world.minimap_rooms())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -930,6 +975,8 @@ func _load_checkpoint() -> void:
 
 func _update_hud() -> void:
 	world.reposition_npcs(GameState.phase_id)
+	if world.active_room_id.is_empty():
+		_refresh_room_focus(true)
 	if current_floor == 3:
 		var shop_objective := "在220元和10格后备箱限制下购物，最后到收银台确认。"
 		if GameState.is_third_shopping():
@@ -946,8 +993,10 @@ func _update_hud() -> void:
 			"预算 ¥%d · 后备箱 %d/%d格 · 购物篮 ¥%d"
 			% [GameState.money, GameState.cart_slots(), GameState.trunk_capacity, GameState.cart_total()]
 		)
+		_update_minimap()
 		return
-	var place := "家 · 一楼 / 前院" if current_floor == 1 else "家 · 二楼 / 公共阳台"
+	var room_label := world.room_name(current_room_id)
+	var place := "家 · %d楼 · %s" % [current_floor, room_label]
 	var talked_count := GameState.talked_to.size()
 	var inspected_count := GameState.inspected.size()
 	var objective := "与四位家人交谈，检查房屋关键位置。"
@@ -1086,6 +1135,7 @@ func _update_hud() -> void:
 			hud.set_progress_text("%s阶段 · 剩余 ¥%d" % [segment_text, GameState.money])
 	else:
 		hud.set_progress(talked_count, inspected_count)
+	_update_minimap()
 
 
 func _ready_for_store() -> bool:

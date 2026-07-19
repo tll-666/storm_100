@@ -101,6 +101,7 @@ var inspected: Dictionary = {}
 var environment_states: Dictionary = {"kitchen_faucet": "normal"}
 var inspection_knowledge: Dictionary = {}
 var room_states: Dictionary = {}
+var explored_rooms: Dictionary = {}
 var inventory: Array[String] = []
 var home_storage: Dictionary = {}
 var shopping_cart: Array[String] = []
@@ -158,6 +159,7 @@ func reset_prologue() -> void:
 	environment_states = {"kitchen_faucet": "normal"}
 	inspection_knowledge.clear()
 	room_states = _default_room_states()
+	explored_rooms.clear()
 	inventory.clear()
 	home_storage.clear()
 	shopping_cart.clear()
@@ -266,6 +268,19 @@ func set_room_state(room_id: String, state_id: String) -> void:
 
 func get_room_state(room_id: String) -> String:
 	return str(room_states.get(room_id, "normal"))
+
+
+func mark_room_explored(floor_number: int, room_id: String) -> void:
+	if room_id.is_empty():
+		return
+	explored_rooms["%d:%s" % [floor_number, room_id]] = {
+		"day": day_label,
+		"time": time_label,
+	}
+
+
+func is_room_explored(floor_number: int, room_id: String) -> bool:
+	return explored_rooms.has("%d:%s" % [floor_number, room_id])
 
 
 func degrade_rooms_for_day() -> void:
@@ -1453,6 +1468,7 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"environment_states": environment_states,
 		"inspection_knowledge": inspection_knowledge,
 		"room_states": room_states,
+		"explored_rooms": explored_rooms,
 		"inventory": inventory,
 		"home_storage": home_storage,
 		"shopping_cart": shopping_cart,
@@ -1523,6 +1539,7 @@ func load_checkpoint() -> Dictionary:
 	environment_states = payload.get("environment_states", {"kitchen_faucet": "normal"})
 	inspection_knowledge = payload.get("inspection_knowledge", {})
 	room_states = payload.get("room_states", _default_room_states())
+	explored_rooms = payload.get("explored_rooms", {})
 	inventory.assign(payload.get("inventory", []))
 	home_storage = payload.get("home_storage", {})
 	shopping_cart.assign(payload.get("shopping_cart", []))

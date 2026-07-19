@@ -1,0 +1,42 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/house_prototype.gd" id="1_house"]
+[ext_resource type="Script" path="res://scripts/first_person_controller.gd" id="2_player"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_player"]
+radius = 0.34
+height = 1.78
+
+[node name="HousePrototype" type="Node3D"]
+script = ExtResource("1_house")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+position = Vector3(2.5, 2.22, 4.7)
+floor_snap_length = 0.35
+floor_max_angle = 0.872665
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("2_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+position = Vector3(0, 0.89, 0)
+shape = SubResource("Capsule_player")
+
+[node name="Head" type="Node3D" parent="Player"]
+position = Vector3(0, 1.62, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Player/Head"]
+current = true
+fov = 74.0
+near = 0.05
+
+[node name="Flashlight" type="SpotLight3D" parent="Player/Head/Camera3D"]
+position = Vector3(0.12, -0.12, -0.08)
+rotation_degrees = Vector3(-2, 0, 0)
+light_color = Color(0.9, 0.94, 1, 1)
+light_energy = 2.2
+spot_range = 14.0
+spot_angle = 31.0
+shadow_enabled = true
+visible = false
+

@@ -13,6 +13,7 @@ var active_interactable: InteractionObject
 var rain_drops: Array[Vector2] = []
 var rain_velocities: Array[float] = []
 var darkness_alpha: float = 0.0
+var active_room_id: String = ""
 
 
 func _ready() -> void:
@@ -47,7 +48,67 @@ func build_floor(floor_number: int) -> void:
 	for definition in _interactions_for_floor(current_floor):
 		_add_interaction(definition)
 	active_interactable = null
+	active_room_id = ""
 	queue_redraw()
+
+
+func room_at_position(position: Vector2) -> String:
+	for raw_room in _rooms_for_floor(current_floor):
+		var room: Dictionary = raw_room
+		if (room.get("rect", Rect2()) as Rect2).has_point(position):
+			return str(room.get("id", ""))
+	return ""
+
+
+func room_name(room_id: String) -> String:
+	for raw_room in _rooms_for_floor(current_floor):
+		var room: Dictionary = raw_room
+		if str(room.get("id", "")) == room_id:
+			return str(room.get("label", "未知区域"))
+	return "室内通道"
+
+
+func set_active_room(room_id: String) -> void:
+	if active_room_id == room_id:
+		return
+	if active_interactable != null and is_instance_valid(active_interactable):
+		active_interactable.set_highlighted(false)
+	active_interactable = null
+	active_room_id = room_id
+	_update_interaction_visibility()
+	queue_redraw()
+
+
+func minimap_rooms() -> Array:
+	var result: Array = []
+	for raw_room in _rooms_for_floor(current_floor):
+		var room: Dictionary = raw_room
+		var room_id := str(room.get("id", ""))
+		result.append({
+			"id": room_id,
+			"rect": room.get("rect", Rect2()),
+			"label": str(room.get("label", room_id)),
+			"short_label": str(room.get("short_label", room.get("label", room_id))),
+			"explored": GameState.is_room_explored(current_floor, room_id) if GameState else false,
+		})
+	return result
+
+
+func active_room_camera_rect() -> Rect2:
+	for raw_room in _rooms_for_floor(current_floor):
+		var room: Dictionary = raw_room
+		if str(room.get("id", "")) == active_room_id:
+			return (room.get("rect", Rect2()) as Rect2).grow(125.0)
+	return Rect2(Vector2.ZERO, WORLD_SIZE)
+
+
+func _update_interaction_visibility() -> void:
+	for child in interaction_root.get_children():
+		if not child is InteractionObject:
+			continue
+		var object: InteractionObject = child
+		var object_room := room_at_position(object.position)
+		object.visible = active_room_id.is_empty() or object_room == active_room_id
 
 
 func get_nearest_interactable(origin: Vector2, maximum_distance: float = 92.0) -> InteractionObject:
@@ -57,6 +118,8 @@ func get_nearest_interactable(origin: Vector2, maximum_distance: float = 92.0) -
 		if not child is InteractionObject:
 			continue
 		var candidate: InteractionObject = child
+		if not candidate.visible:
+			continue
 		var distance := origin.distance_to(candidate.global_position)
 		if distance < nearest_distance:
 			nearest_distance = distance
@@ -80,6 +143,7 @@ func reposition_npcs(phase_id: String) -> void:
 			continue
 		if npc_positions.has(obj.object_id):
 			obj.position = npc_positions[obj.object_id]
+	_update_interaction_visibility()
 
 
 func _npc_positions_for_phase(phase_id: String) -> Dictionary:
@@ -181,6 +245,34 @@ func _draw() -> void:
 		_draw_furniture(furniture)
 	_draw_floor_details()
 	_draw_weather_effects()
+	_draw_room_visibility()
+
+
+func _draw_room_visibility() -> void:
+	if current_floor == 3 or active_room_id.is_empty():
+		return
+	var font := ThemeDB.fallback_font
+	for raw_room in _rooms_for_floor(current_floor):
+		var room: Dictionary = raw_room
+		var room_id := str(room.get("id", ""))
+		if room_id == active_room_id:
+			continue
+		var rect: Rect2 = room.get("rect", Rect2())
+		var explored := GameState.is_room_explored(current_floor, room_id) if GameState else false
+		var cover := Color(0.018, 0.028, 0.034, 0.80) if explored else Color(0.008, 0.012, 0.016, 0.94)
+		draw_rect(rect, cover, true)
+		draw_rect(rect, Color(0.12, 0.17, 0.19, 0.75), false, 2.0)
+		var hint := "上次所见" if explored else "尚未进入"
+		var hint_size := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 12)
+		draw_string(
+			font,
+			Vector2(rect.get_center().x - hint_size.x * 0.5, rect.get_center().y + 4.0),
+			hint,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			12,
+			Color(0.55, 0.62, 0.64, 0.72)
+		)
 
 
 func _draw_weather_effects() -> void:
@@ -354,15 +446,25 @@ func _draw_room(room: Dictionary) -> void:
 	if GameState and not room_id.is_empty():
 		var state := GameState.get_room_state(room_id)
 		if state == "leaking":
+			var leak_seed := absi(room_id.hash())
 			for y in range(int(rect.position.y + 30.0), int(rect.end.y), 40):
+				var local_y := y - int(rect.position.y)
+				var leak_x := rect.position.x + 30.0 + fmod(float(leak_seed + local_y * 13), maxf(1.0, rect.size.x - 60.0))
 				draw_line(
-					Vector2(rect.position.x + randf_range(40.0, rect.size.x - 40.0), float(y)),
-					Vector2(rect.position.x + randf_range(40.0, rect.size.x - 40.0), float(y) + 8.0),
+					Vector2(leak_x, float(y)),
+					Vector2(leak_x - 4.0, float(y) + 12.0),
 					Color(0.5, 0.65, 0.8, 0.35), 2.0
 				)
 		if state == "flooded" or state == "unusable":
-			draw_rect(rect, Color(0.2, 0.35, 0.5, 0.4), true)
-			draw_rect(Rect2(rect.position, Vector2(rect.size.x, 6.0)), Color(0.3, 0.5, 0.7, 0.6), true)
+			var water_tint := Color(0.12, 0.27, 0.38, 0.58) if state == "flooded" else Color(0.1, 0.18, 0.24, 0.72)
+			draw_rect(rect, water_tint, true)
+			for row in range(18, int(rect.size.y), 34):
+				var wave_y := rect.position.y + float(row)
+				for x in range(int(rect.position.x + 10.0), int(rect.end.x - 12.0), 42):
+					var wave := sin(animation_time * 1.7 + float(x + row) * 0.055) * 3.0
+					draw_line(Vector2(float(x), wave_y + wave), Vector2(float(x) + 25.0, wave_y + wave), Color(0.48, 0.66, 0.72, 0.25), 2.0)
+			var debris_offset := fmod(animation_time * 7.0 + float(absi(room_id.hash()) % 70), maxf(30.0, rect.size.x - 70.0))
+			draw_rect(Rect2(rect.position + Vector2(18.0 + debris_offset, rect.size.y * 0.62), Vector2(24.0, 7.0)), Color(0.24, 0.19, 0.13, 0.75), true)
 	for y in range(int(rect.position.y + 18.0), int(rect.end.y), 30):
 		draw_line(
 			Vector2(rect.position.x, float(y)),
@@ -383,17 +485,25 @@ func _draw_room(room: Dictionary) -> void:
 
 
 func _draw_wall(rect: Rect2) -> void:
+	var depth := 18.0 if rect.size.x > rect.size.y else 12.0
+	draw_rect(Rect2(rect.position + Vector2(7.0, depth), rect.size), Color(0.0, 0.0, 0.0, 0.28), true)
 	draw_rect(rect, WALL_COLOR, true)
 	draw_rect(
 		Rect2(rect.position, Vector2(rect.size.x, minf(rect.size.y, 4.0))), WALL_TOP_COLOR, true
 	)
+	if rect.size.x > rect.size.y:
+		draw_rect(Rect2(rect.position + Vector2(0.0, rect.size.y), Vector2(rect.size.x, depth)), Color("334047"), true)
+		draw_line(rect.position + Vector2(0.0, rect.size.y + depth), rect.end + Vector2(0.0, depth), Color(0.0, 0.0, 0.0, 0.32), 2.0)
 
 
 func _draw_furniture(item: Dictionary) -> void:
 	var rect: Rect2 = item.rect
-	draw_rect(Rect2(rect.position + Vector2(5.0, 6.0), rect.size), Color(0.0, 0.0, 0.0, 0.22), true)
+	var depth := clampf(rect.size.y * 0.12, 5.0, 12.0)
+	draw_rect(Rect2(rect.position + Vector2(7.0, depth + 3.0), rect.size), Color(0.0, 0.0, 0.0, 0.26), true)
+	draw_rect(Rect2(rect.position + Vector2(0.0, rect.size.y), Vector2(rect.size.x, depth)), (item.color as Color).darkened(0.32), true)
 	draw_rect(rect, item.color, true)
-	draw_rect(rect, Color(1.0, 1.0, 1.0, 0.16), false, 1.0)
+	draw_line(rect.position + Vector2(2.0, 2.0), Vector2(rect.end.x - 2.0, rect.position.y + 2.0), Color(1.0, 1.0, 1.0, 0.28), 2.0)
+	draw_rect(rect, Color(0.04, 0.06, 0.07, 0.35), false, 2.0)
 	var font := ThemeDB.fallback_font
 	var label := str(item.get("label", ""))
 	if not label.is_empty() and rect.size.x >= 52.0:
@@ -442,28 +552,28 @@ func _add_interaction(definition: Dictionary) -> void:
 func _rooms_for_floor(floor_number: int) -> Array:
 	if floor_number == 3:
 		return [
-			{"rect": Rect2(180, 100, 1240, 760), "label": "社区超市", "color": Color("b6b19d")},
+			{"id": "store", "rect": Rect2(180, 100, 1240, 760), "label": "社区超市", "short_label": "超市", "color": Color("b6b19d")},
 		]
 	if floor_number == 2:
 		return [
-			{"rect": Rect2(180, 500, 320, 350), "label": "二楼公共阳台", "color": Color("71877c")},
-			{"rect": Rect2(500, 100, 350, 300), "label": "主卧", "color": Color("a2838c")},
-			{"rect": Rect2(850, 100, 270, 300), "label": "大孩子房", "color": Color("7e8eaf")},
-			{"rect": Rect2(1120, 100, 300, 220), "label": "二楼厕所", "color": Color("84a8aa")},
-			{"rect": Rect2(1120, 320, 300, 330), "label": "小孩子房", "color": Color("b09769")},
-			{"rect": Rect2(500, 400, 620, 450), "label": "楼梯平台 / 家庭活动区", "color": Color("aa9a7d")},
-			{"rect": Rect2(1120, 650, 300, 200), "label": "储物角", "color": Color("8f8775")},
+			{"id": "balcony", "rect": Rect2(180, 500, 320, 350), "label": "二楼公共阳台", "short_label": "阳台", "color": Color("71877c")},
+			{"id": "master_bedroom", "rect": Rect2(500, 100, 350, 300), "label": "主卧", "short_label": "主卧", "color": Color("a2838c")},
+			{"id": "teen_bedroom", "rect": Rect2(850, 100, 270, 300), "label": "大孩子房", "short_label": "大孩房", "color": Color("7e8eaf")},
+			{"id": "upstairs_bathroom", "rect": Rect2(1120, 100, 300, 220), "label": "二楼厕所", "short_label": "厕所", "color": Color("84a8aa")},
+			{"id": "child_bedroom", "rect": Rect2(1120, 320, 300, 330), "label": "小孩子房", "short_label": "小孩房", "color": Color("b09769")},
+			{"id": "family_area", "rect": Rect2(500, 400, 620, 450), "label": "楼梯平台 / 家庭活动区", "short_label": "活动区", "color": Color("aa9a7d")},
+			{"id": "upstairs_storage", "rect": Rect2(1120, 650, 300, 200), "label": "储物角", "short_label": "储物", "color": Color("8f8775")},
 		]
 	return [
-		{"id": "garage", "rect": Rect2(180, 500, 320, 350), "label": "车库 · 地面较低", "color": Color("717b7d")},
-		{"id": "kitchen", "rect": Rect2(500, 100, 400, 240), "label": "厨房 / 食品柜", "color": Color("8ca093")},
-		{"id": "bathroom", "rect": Rect2(900, 100, 220, 240), "label": "厕所 / 洗衣", "color": Color("86aaac")},
-		{"rect": Rect2(1120, 100, 300, 240), "label": "后侧储物", "color": Color("938b78")},
-		{"id": "living_room", "rect": Rect2(500, 340, 400, 310), "label": "客厅 / 餐厅", "color": Color("b7946c")},
-		{"id": "stairway", "rect": Rect2(900, 340, 220, 310), "label": "楼梯间", "color": Color("aa9b80")},
-		{"rect": Rect2(500, 650, 250, 200), "label": "玄关", "color": Color("9a8872")},
-		{"rect": Rect2(750, 650, 370, 200), "label": "过道", "color": Color("ae9f84")},
-		{"id": "elder_bedroom", "rect": Rect2(1120, 340, 300, 510), "label": "老人卧室", "color": Color("9d8388")},
+		{"id": "garage", "rect": Rect2(180, 500, 320, 350), "label": "车库 · 地面较低", "short_label": "车库", "color": Color("717b7d")},
+		{"id": "kitchen", "rect": Rect2(500, 100, 400, 240), "label": "厨房 / 食品柜", "short_label": "厨房", "color": Color("8ca093")},
+		{"id": "bathroom", "rect": Rect2(900, 100, 220, 240), "label": "厕所 / 洗衣", "short_label": "厕所", "color": Color("86aaac")},
+		{"id": "back_storage", "rect": Rect2(1120, 100, 300, 240), "label": "后侧储物", "short_label": "后储物", "color": Color("938b78")},
+		{"id": "living_room", "rect": Rect2(500, 340, 400, 310), "label": "客厅 / 餐厅", "short_label": "客厅", "color": Color("b7946c")},
+		{"id": "stairway", "rect": Rect2(900, 340, 220, 310), "label": "楼梯间", "short_label": "楼梯", "color": Color("aa9b80")},
+		{"id": "entry", "rect": Rect2(500, 650, 250, 200), "label": "玄关", "short_label": "玄关", "color": Color("9a8872")},
+		{"id": "hallway", "rect": Rect2(750, 650, 370, 200), "label": "过道", "short_label": "过道", "color": Color("ae9f84")},
+		{"id": "elder_bedroom", "rect": Rect2(1120, 340, 300, 510), "label": "老人卧室", "short_label": "老人房", "color": Color("9d8388")},
 	]
 
 
