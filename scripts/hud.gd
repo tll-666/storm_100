@@ -723,7 +723,7 @@ func hide_item_grid() -> void:
 
 
 func show_day_summary(
-	title: String, subtitle: String, rows: Array, note: String
+	title: String, subtitle: String, rows: Array, note: String, extra: Dictionary = {}
 ) -> void:
 	day_summary_title.text = title
 	day_summary_subtitle.text = subtitle
@@ -748,6 +748,15 @@ func show_day_summary(
 		value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row_box.add_child(value_label)
 	day_summary_note.text = note
+	if not extra.is_empty():
+		if extra.has("rooms") and str(extra.get("rooms", "")) != "所有房间正常":
+			var rooms_label := _make_label("房间状态：" + str(extra.get("rooms", "")), 12, Color("cbd5d7"))
+			rooms_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			day_summary_rows.add_child(rooms_label)
+		if extra.has("audio_hint"):
+			var audio_label := _make_label("今晚的声音：" + str(extra.get("audio_hint", "")), 11, Color(0.5, 0.6, 0.65, 0.9))
+			audio_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			day_summary_rows.add_child(audio_label)
 	day_summary_overlay.visible = true
 	dialogue_panel.visible = false
 	prompt_panel.visible = false

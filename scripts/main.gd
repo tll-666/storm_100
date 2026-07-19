@@ -1937,7 +1937,11 @@ func _show_rain_day_three_summary() -> void:
 		"暴雨第3天 · 夜间结算",
 		"车库渗水的结果将在明天显现。",
 		rows,
-		str(summary.get("note", "夜里暴雨没有停。"))
+		str(summary.get("note", "夜里暴雨没有停。")),
+		{
+			"rooms": str(summary.get("rooms", "")),
+			"audio_hint": str(summary.get("audio_hint", "")),
+		}
 	)
 
 
@@ -1960,7 +1964,11 @@ func _show_rain_day_four_summary() -> void:
 		"暴雨第4天 · 夜间结算",
 		"正式停电，水质异常。一楼已无法正常居住。",
 		rows,
-		str(summary.get("note", "夜里暴雨没有停。"))
+		str(summary.get("note", "夜里暴雨没有停。")),
+		{
+			"rooms": str(summary.get("rooms", "")),
+			"audio_hint": str(summary.get("audio_hint", "")),
+		}
 	)
 
 
@@ -1982,7 +1990,11 @@ func _show_rain_day_five_summary() -> void:
 		"暴雨第5天 · 夜间结算",
 		"停水停电持续。老人的健康开始出问题。通信彻底中断。",
 		rows,
-		str(summary.get("note", "夜里暴雨没有停。"))
+		str(summary.get("note", "夜里暴雨没有停。")),
+		{
+			"rooms": str(summary.get("rooms", "")),
+			"audio_hint": str(summary.get("audio_hint", "")),
+		}
 	)
 
 
@@ -2004,7 +2016,11 @@ func _show_rain_day_six_summary() -> void:
 		"暴雨第6天 · 夜间结算",
 		"食物即将见底。全楼彻底停电停水。伴侣的承受力接近极限。",
 		rows,
-		str(summary.get("note", "夜里暴雨没有停。"))
+		str(summary.get("note", "夜里暴雨没有停。")),
+		{
+			"rooms": str(summary.get("rooms", "")),
+			"audio_hint": str(summary.get("audio_hint", "")),
+		}
 	)
 
 
@@ -2026,7 +2042,11 @@ func _show_rain_day_seven_summary() -> void:
 		"暴雨第7天 · 夜间结算",
 		"第一周结束。救援没有来。收音机和邻居说了相反的话。食物几乎耗尽。",
 		rows,
-		str(summary.get("note", "夜里暴雨没有停。"))
+		str(summary.get("note", "夜里暴雨没有停。")),
+		{
+			"rooms": str(summary.get("rooms", "")),
+			"audio_hint": str(summary.get("audio_hint", "")),
+		}
 	)
 
 

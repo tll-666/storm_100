@@ -292,6 +292,15 @@ func _ensure_room_state(room_id: String, target: String) -> void:
 		set_room_state(room_id, target)
 
 
+func _room_state_summary() -> String:
+	var parts: Array[String] = []
+	for room_id in ROOM_ORDER:
+		var state := get_room_state(room_id)
+		if state != "normal":
+			parts.append("%s：%s" % [ROOM_NAMES[room_id], ROOM_STATE_LABELS[state]])
+	return " · ".join(parts) if not parts.is_empty() else "所有房间正常"
+
+
 func _update_clock_label() -> void:
 	var total_minutes := clampi(int(clock_minutes), 0, 1439)
 	var hour := int(total_minutes / 60)
@@ -627,6 +636,8 @@ func settle_rain_day_three() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_three_settled"] = true
+	last_rain_day_three_summary["rooms"] = _room_state_summary()
+	last_rain_day_three_summary["audio_hint"] = "雨声持续 · 车库方向微弱流水声"
 	return last_rain_day_three_summary
 
 
@@ -677,6 +688,8 @@ func settle_rain_day_four() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_four_settled"] = true
+	last_rain_day_four_summary["rooms"] = _room_state_summary()
+	last_rain_day_four_summary["audio_hint"] = "持续暴雨 · 管道闷响 · 间歇滴水声"
 	return last_rain_day_four_summary
 
 
@@ -717,6 +730,8 @@ func settle_rain_day_five() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_five_settled"] = true
+	last_rain_day_five_summary["rooms"] = _room_state_summary()
+	last_rain_day_five_summary["audio_hint"] = "持续暴雨 · 老人咳嗽声 · 雨打屋顶"
 	return last_rain_day_five_summary
 
 
@@ -762,6 +777,8 @@ func settle_rain_day_six() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_six_settled"] = true
+	last_rain_day_six_summary["rooms"] = _room_state_summary()
+	last_rain_day_six_summary["audio_hint"] = "狂风 · 间歇雷声 · 水滴从天花板滴落"
 	return last_rain_day_six_summary
 
 
@@ -807,6 +824,8 @@ func settle_rain_day_seven() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_seven_settled"] = true
+	last_rain_day_seven_summary["rooms"] = _room_state_summary()
+	last_rain_day_seven_summary["audio_hint"] = "持续的雨声 · 远处偶尔闷雷 · 屋顶偶尔传来的材料摩擦声"
 	return last_rain_day_seven_summary
 
 
