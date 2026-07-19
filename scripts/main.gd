@@ -127,6 +127,8 @@ var pending_action: Dictionary = {}
 var game_started: bool = false
 var pending_day_transition: String = ""
 var processing_day_one_morning: bool = false
+var _last_completed_event_id: String = ""
+var _auto_chain_mode: bool = false
 
 @onready var world: HouseWorld = $World
 @onready var player: StormPlayer = $Player
@@ -365,6 +367,8 @@ func _on_choice_selected(index: int) -> void:
 			_process_day_one_morning_queue()
 		else:
 			_check_phase_scheduled_event()
+		if _auto_chain_mode:
+			_auto_trigger_phase_event()
 		return
 	if action_type == "travel_to_store":
 		hud.hide_dialogue()
@@ -419,6 +423,7 @@ func _on_choice_selected(index: int) -> void:
 		return
 	if action_type == "database_event":
 		var event_id := str(pending_action.get("event_id", ""))
+		_last_completed_event_id = event_id
 		var force := bool(pending_action.get("force", false))
 		var result: Dictionary = EventManager.apply_choice(event_id, index, force)
 		if not bool(result.get("ok", false)):
@@ -463,6 +468,30 @@ func _on_choice_selected(index: int) -> void:
 		pending_action.clear()
 		if index == 0:
 			_show_rain_day_three_summary()
+		return
+	if action_type == "end_rain_day_four":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_show_rain_day_four_summary()
+		return
+	if action_type == "end_rain_day_five":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_show_rain_day_five_summary()
+		return
+	if action_type == "end_rain_day_six":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_show_rain_day_six_summary()
+		return
+	if action_type == "end_rain_day_seven":
+		hud.hide_dialogue()
+		pending_action.clear()
+		if index == 0:
+			_show_rain_day_seven_summary()
 		return
 	if action_type != "npc_choice":
 		return
@@ -511,6 +540,8 @@ func _on_debug_action_selected(action_id: String) -> void:
 	if action_id != "faucet_prototype":
 		GameState.disable_continuous_clock()
 		GameState.flags.erase("inspection_prototype_active")
+		_auto_chain_mode = false
+		_last_completed_event_id = ""
 	match action_id:
 		"unlock_car":
 			_debug_unlock_car()
@@ -538,6 +569,18 @@ func _on_debug_action_selected(action_id: String) -> void:
 		"rain_day_three":
 			_debug_skip_to_rain_day_three()
 			hud.show_toast("测试：已跳到暴雨第3天。")
+		"rain_day_four":
+			_debug_skip_to_rain_day_four()
+			hud.show_toast("测试：已跳到暴雨第4天。")
+		"rain_day_five":
+			_debug_skip_to_rain_day_five()
+			hud.show_toast("测试：已跳到暴雨第5天。")
+		"rain_day_six":
+			_debug_skip_to_rain_day_six()
+			hud.show_toast("测试：已跳到暴雨第6天。")
+		"rain_day_seven":
+			_debug_skip_to_rain_day_seven()
+			hud.show_toast("测试：已跳到暴雨第7天。")
 		"faucet_prototype":
 			_debug_cycle_faucet_prototype()
 		"event_browser":
@@ -692,6 +735,105 @@ func _debug_skip_to_rain_day_three() -> void:
 	_open_database_event("r3_morning_start", true)
 
 
+func _debug_skip_to_rain_day_four() -> void:
+	_debug_skip_to_rain_day_three()
+	EventManager.apply_choice("r3_morning_start", 0, true)
+	EventManager.apply_choice("r3_garage_flood", 0, true)
+	GameState.settle_rain_day_three()
+	GameState.phase_id = "rain_day_4_morning"
+	GameState.day_label = "暴雨第4天"
+	GameState.time_label = "上午07:00"
+	GameState.time_segment = "morning"
+	GameState.weather_label = "暴雨 · 持续中"
+	GameState.flags["rain_day_four_started"] = true
+	current_floor = 1
+	world.build_floor(current_floor)
+	player.global_position = Vector2(790.0, 735.0)
+	current_target = null
+	pending_action.clear()
+	processing_day_one_morning = false
+	_auto_chain_mode = true
+	_last_completed_event_id = ""
+	_update_hud()
+	_open_database_event("r4_morning_start", true)
+
+
+func _debug_skip_to_rain_day_five() -> void:
+	_debug_skip_to_rain_day_four()
+	EventManager.apply_choice("r4_morning_start", 0, true)
+	EventManager.apply_choice("r4_water_sputter", 0, true)
+	EventManager.apply_choice("r4_move_upstairs", 0, true)
+	EventManager.apply_choice("r4_evening_dinner", 0, true)
+	GameState.settle_rain_day_four()
+	GameState.phase_id = "rain_day_5_morning"
+	GameState.day_label = "暴雨第5天"
+	GameState.time_label = "上午07:00"
+	GameState.time_segment = "morning"
+	GameState.weather_label = "暴雨 · 一楼已进水"
+	GameState.flags["rain_day_five_started"] = true
+	current_floor = 2
+	world.build_floor(current_floor)
+	player.global_position = Vector2(650.0, 735.0)
+	current_target = null
+	pending_action.clear()
+	processing_day_one_morning = false
+	_auto_chain_mode = true
+	_last_completed_event_id = ""
+	_update_hud()
+	_open_database_event("r5_morning", true)
+
+
+func _debug_skip_to_rain_day_six() -> void:
+	_debug_skip_to_rain_day_five()
+	EventManager.apply_choice("r5_morning", 0, true)
+	EventManager.apply_choice("r5_child_drawing", 0, true)
+	EventManager.apply_choice("r5_elder_cough", 0, true)
+	EventManager.apply_choice("r5_teen_phone", 0, true)
+	EventManager.apply_choice("r5_evening_hub", 0, true)
+	GameState.settle_rain_day_five()
+	GameState.phase_id = "rain_day_6_morning"
+	GameState.day_label = "暴雨第6天"
+	GameState.time_label = "上午07:00"
+	GameState.time_segment = "morning"
+	GameState.weather_label = "暴雨 · 全楼断电"
+	GameState.flags["rain_day_six_started"] = true
+	current_floor = 2
+	world.build_floor(current_floor)
+	player.global_position = Vector2(650.0, 735.0)
+	current_target = null
+	pending_action.clear()
+	processing_day_one_morning = false
+	_auto_chain_mode = true
+	_last_completed_event_id = ""
+	_update_hud()
+	_open_database_event("r6_morning_dark", true)
+
+
+func _debug_skip_to_rain_day_seven() -> void:
+	_debug_skip_to_rain_day_six()
+	EventManager.apply_choice("r6_morning_dark", 0, true)
+	EventManager.apply_choice("r6_food_count", 0, true)
+	EventManager.apply_choice("r6_partner_despair", 0, true)
+	EventManager.apply_choice("r6_evening_close", 0, true)
+	GameState.settle_rain_day_six()
+	GameState.phase_id = "rain_day_7_morning"
+	GameState.day_label = "暴雨第7天"
+	GameState.time_label = "上午07:00"
+	GameState.time_segment = "morning"
+	GameState.weather_label = "暴雨 · 第一周结束"
+	GameState.flags["rain_day_seven_started"] = true
+	current_floor = 2
+	world.build_floor(current_floor)
+	player.global_position = Vector2(650.0, 735.0)
+	current_target = null
+	pending_action.clear()
+	processing_day_one_morning = false
+	_auto_chain_mode = true
+	_last_completed_event_id = ""
+	_update_hud()
+	_open_database_event("r7_radio_surprise", true)
+
+
 func _debug_cycle_faucet_prototype() -> void:
 	var states := ["normal", "low", "cloudy", "off"]
 	var state_names := ["正常", "低压", "浑浊", "停水"]
@@ -717,6 +859,9 @@ func _debug_reset_run() -> void:
 	hud.hide_debug_menu()
 	hud.hide_event_browser()
 	GameState.reset_prologue()
+	_auto_chain_mode = false
+	_last_completed_event_id = ""
+	processing_day_one_morning = false
 	current_floor = 1
 	world.build_floor(current_floor)
 	player.global_position = world.spawn_position(current_floor)
@@ -729,6 +874,8 @@ func _debug_reset_run() -> void:
 
 func _on_intro_started() -> void:
 	game_started = true
+	_auto_chain_mode = false
+	_last_completed_event_id = ""
 	hud.show_toast("先和四位家人交谈，并检查至少5处关键位置。", 3.2)
 
 
@@ -832,7 +979,41 @@ func _update_hud() -> void:
 			"rain_day_3_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第3夜结算。"
 			"rain_day_4_morning":
-				objective = "暴雨第4天：车库渗水的结果已经显现。纵向切片到此结束。"
+				objective = "暴雨第4天：下楼看看一楼的情况。"
+			"rain_day_4_afternoon":
+				objective = "厨房水管有异响。去一楼厨房检查水管。"
+			"rain_day_4_moving":
+				objective = "一楼地面开始渗水：决定是否搬上二楼。"
+			"rain_day_4_evening":
+				objective = "晚饭时间：五个人在二楼吃更少的饭。"
+			"rain_day_4_settlement":
+				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第4夜结算。"
+			"rain_day_5_morning":
+				objective = "暴雨第5天：水漫过楼梯。上楼看家人。"
+			"rain_day_5_midday":
+				objective = "二楼每人在不同角落。和孩子、老人、大孩子谈谈。"
+			"r5_family_hub":
+				objective = "傍晚：结束第5天。"
+			"rain_day_5_settlement":
+				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第5夜结算。"
+			"rain_day_6_morning":
+				objective = "暴雨第6天：停电第三天。开始新的一天。"
+			"rain_day_6_midday":
+				objective = "清点食物：五人分的东西越来越少。"
+			"rain_day_6_tension":
+				objective = "伴侣一个人在阳台。去看看。"
+			"rain_day_6_evening":
+				objective = "第六夜：结束这一天。"
+			"rain_day_6_settlement":
+				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第6夜结算。"
+			"rain_day_7_morning":
+				objective = "暴雨第7天：收音机突然响了。去阳台看看。"
+			"rain_day_7_midday":
+				objective = "老张在隔壁屋顶。从阳台看看他要说什么。"
+			"r7_family_hub":
+				objective = "收音机和邻居说了不同的事。今晚做决定。"
+			"rain_day_7_settlement":
+				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第7夜结算。"
 	if GameState.has_flag("inspection_prototype_active"):
 		objective = "检查原型：到一楼厨房水槽旁，主动检查水龙头并把结果记入手册。"
 	hud.set_context(
@@ -1385,6 +1566,38 @@ func _open_master_bed() -> void:
 			["结束今天", "再等等"]
 		)
 		return
+	if GameState.phase_id == "rain_day_4_settlement":
+		pending_action = {"type": "end_rain_day_four"}
+		hud.show_dialogue(
+			"主卧",
+			"暴雨第4天的行动已经结束。睡觉会进行暴雨第4夜结算。",
+			["结束今天", "再等等"]
+		)
+		return
+	if GameState.phase_id == "rain_day_5_settlement":
+		pending_action = {"type": "end_rain_day_five"}
+		hud.show_dialogue(
+			"主卧",
+			"暴雨第5天的行动已经结束。睡觉会进行暴雨第5夜结算。",
+			["结束今天", "再等等"]
+		)
+		return
+	if GameState.phase_id == "rain_day_6_settlement":
+		pending_action = {"type": "end_rain_day_six"}
+		hud.show_dialogue(
+			"主卧",
+			"暴雨第6天的行动已经结束。睡觉会进行暴雨第6夜结算。",
+			["结束今天", "再等等"]
+		)
+		return
+	if GameState.phase_id == "rain_day_7_settlement":
+		pending_action = {"type": "end_rain_day_seven"}
+		hud.show_dialogue(
+			"主卧",
+			"暴雨第7天的行动已经结束。睡觉会进行暴雨第7夜结算。",
+			["结束今天", "再等等"]
+		)
+		return
 	pending_action = {"type": "close"}
 	var text := "现在还不准备休息。白天的重要事情需要先处理完。"
 	if GameState.phase_id.begins_with("pre_rain_day_2"):
@@ -1425,6 +1638,14 @@ func _on_day_summary_confirmed() -> void:
 		hud.play_day_transition("暴雨第3天", "上午07:00", "雨还在下。水质出现异常。车库方向传来不妙的声音。")
 	elif pending_day_transition == "rain_day_four":
 		hud.play_day_transition("暴雨第4天", "上午07:00", "雨还在下。车库渗水的结果已经显现。")
+	elif pending_day_transition == "rain_day_five":
+		hud.play_day_transition("暴雨第5天", "上午07:00", "第五天。水漫过第一级楼梯。手机只剩一格信号。")
+	elif pending_day_transition == "rain_day_six":
+		hud.play_day_transition("暴雨第6天", "上午07:00", "第六天。停电第三天。屋里已经不习惯有光了。")
+	elif pending_day_transition == "rain_day_seven":
+		hud.play_day_transition("暴雨第7天", "上午07:00", "第七天。收音机突然响了。一周过去了，雨没有停。")
+	elif pending_day_transition == "end_of_week":
+		hud.play_day_transition("第一周结束", "上午07:00", "第一周结束。救援没有来。雨还在下。五个人还在。")
 	else:
 		pending_day_transition = "day_two"
 		hud.play_day_transition("暴雨前第2天", "上午07:10", "距离预报中的强降雨，还有两天。")
@@ -1456,11 +1677,32 @@ func _on_day_transition_blackout() -> void:
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 持续中"
 		GameState.flags["rain_day_four_started"] = true
+	elif pending_day_transition == "rain_day_five":
+		GameState.phase_id = "rain_day_5_morning"
+		GameState.day_label = "暴雨第5天"
+		GameState.time_label = "上午07:00"
+		GameState.time_segment = "morning"
+		GameState.weather_label = "暴雨 · 一楼已进水"
+		GameState.flags["rain_day_five_started"] = true
+	elif pending_day_transition == "rain_day_six":
+		GameState.phase_id = "rain_day_6_morning"
+		GameState.day_label = "暴雨第6天"
+		GameState.time_label = "上午07:00"
+		GameState.time_segment = "morning"
+		GameState.weather_label = "暴雨 · 全楼断电"
+		GameState.flags["rain_day_six_started"] = true
+	elif pending_day_transition == "rain_day_seven":
+		GameState.phase_id = "rain_day_7_morning"
+		GameState.day_label = "暴雨第7天"
+		GameState.time_label = "上午07:00"
+		GameState.time_segment = "morning"
+		GameState.weather_label = "暴雨 · 第一周结束"
+		GameState.flags["rain_day_seven_started"] = true
 	else:
 		GameState.begin_day_two()
-	current_floor = 1
+	current_floor = 2 if pending_day_transition.begins_with("rain_day_five") or pending_day_transition.begins_with("rain_day_six") or pending_day_transition.begins_with("rain_day_seven") else 1
 	world.build_floor(current_floor)
-	player.global_position = Vector2(790.0, 735.0)
+	player.global_position = Vector2(650.0, 735.0) if current_floor == 2 else Vector2(790.0, 735.0)
 	_update_hud()
 
 
@@ -1485,16 +1727,49 @@ func _on_day_transition_finished() -> void:
 	if pending_day_transition == "rain_day_four":
 		pending_day_transition = ""
 		processing_day_one_morning = false
+		_auto_chain_mode = true
+		_last_completed_event_id = ""
 		var scheduled_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
 		if not scheduled_id.is_empty():
 			_open_database_event(scheduled_id)
 		else:
-			pending_action = {"type": "close"}
-			hud.show_dialogue(
-				"暴雨第4天",
-				"雨还在下。车库渗水的结果已经显现。纵向切片到此结束，后续内容将在下个版本继续。",
-				["结束当前版本"]
-			)
+			_open_database_event("r4_morning_start", true)
+		return
+	if pending_day_transition == "rain_day_five":
+		pending_day_transition = ""
+		processing_day_one_morning = false
+		_auto_chain_mode = true
+		_last_completed_event_id = ""
+		var scheduled_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
+		if not scheduled_id.is_empty():
+			_open_database_event(scheduled_id)
+		else:
+			_open_database_event("r5_morning", true)
+		return
+	if pending_day_transition == "rain_day_six":
+		pending_day_transition = ""
+		processing_day_one_morning = false
+		_auto_chain_mode = true
+		_last_completed_event_id = ""
+		_open_database_event("r6_morning_dark", true)
+		return
+	if pending_day_transition == "rain_day_seven":
+		pending_day_transition = ""
+		processing_day_one_morning = false
+		_auto_chain_mode = true
+		_last_completed_event_id = ""
+		_open_database_event("r7_radio_surprise", true)
+		return
+	if pending_day_transition == "end_of_week":
+		pending_day_transition = ""
+		_auto_chain_mode = false
+		processing_day_one_morning = false
+		pending_action = {"type": "close"}
+		hud.show_dialogue(
+			"暴雨第7天 · 第一周结束",
+			"第一周已经过去。雨还没有停。收音机说救援在来，邻居说没有看到。你把最后一点食物分了五份，每份都不够。\n\n五个人还在。这已经是第一周的胜利。\n\n当前版本到此结束，后续内容将在下个版本继续。",
+			["结束当前版本"]
+		)
 		return
 	pending_day_transition = ""
 	pending_action = {"type": "day_two_morning"}
@@ -1512,6 +1787,26 @@ func _process_day_one_morning_queue() -> void:
 		return
 	processing_day_one_morning = false
 	_open_database_event("d1_morning_start", true)
+
+
+func _auto_trigger_phase_event() -> void:
+	if not _auto_chain_mode:
+		return
+	var phase := GameState.phase_id
+	var all_entries: Array = EventManager.debug_entries()
+	for entry in all_entries:
+		var event_id := str(entry.get("id", ""))
+		if EventManager.is_available(event_id):
+			_open_database_event(event_id)
+			return
+	if not _last_completed_event_id.is_empty():
+		var data := EventManager.event_data(_last_completed_event_id)
+		var merge_phase := str(data.get("merge", ""))
+		if not merge_phase.is_empty() and merge_phase != phase:
+			GameState.phase_id = merge_phase
+			_last_completed_event_id = ""
+			_update_hud()
+			_auto_trigger_phase_event()
 
 
 func _check_phase_scheduled_event() -> void:
@@ -1640,7 +1935,92 @@ func _show_rain_day_three_summary() -> void:
 	]
 	hud.show_day_summary(
 		"暴雨第3天 · 夜间结算",
-		"车库渗水的结果将在明天显现。纵向切片到此结束。",
+		"车库渗水的结果将在明天显现。",
+		rows,
+		str(summary.get("note", "夜里暴雨没有停。"))
+	)
+
+
+func _show_rain_day_four_summary() -> void:
+	pending_day_transition = "rain_day_five"
+	GameState.time_label = "晚上23:40"
+	GameState.time_segment = "night"
+	var summary := GameState.settle_rain_day_four()
+	_update_hud()
+	var rows := [
+		{"name": "晚饭", "value": str(summary.get("meal", "已完成"))},
+		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
+		{"name": "供电", "value": str(summary.get("power", "未知"))},
+		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "一楼", "value": str(summary.get("onef", "未知"))},
+		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
+	]
+	hud.show_day_summary(
+		"暴雨第4天 · 夜间结算",
+		"正式停电，水质异常。一楼已无法正常居住。",
+		rows,
+		str(summary.get("note", "夜里暴雨没有停。"))
+	)
+
+
+func _show_rain_day_five_summary() -> void:
+	pending_day_transition = "rain_day_six"
+	GameState.time_label = "晚上23:50"
+	GameState.time_segment = "night"
+	var summary := GameState.settle_rain_day_five()
+	_update_hud()
+	var rows := [
+		{"name": "晚饭", "value": str(summary.get("meal", "已完成"))},
+		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
+		{"name": "供电", "value": str(summary.get("power", "未知"))},
+		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
+	]
+	hud.show_day_summary(
+		"暴雨第5天 · 夜间结算",
+		"停水停电持续。老人的健康开始出问题。通信彻底中断。",
+		rows,
+		str(summary.get("note", "夜里暴雨没有停。"))
+	)
+
+
+func _show_rain_day_six_summary() -> void:
+	pending_day_transition = "rain_day_seven"
+	GameState.time_label = "晚上23:55"
+	GameState.time_segment = "night"
+	var summary := GameState.settle_rain_day_six()
+	_update_hud()
+	var rows := [
+		{"name": "晚饭", "value": str(summary.get("meal", "已完成"))},
+		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
+		{"name": "供电", "value": str(summary.get("power", "未知"))},
+		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
+	]
+	hud.show_day_summary(
+		"暴雨第6天 · 夜间结算",
+		"食物即将见底。全楼彻底停电停水。伴侣的承受力接近极限。",
+		rows,
+		str(summary.get("note", "夜里暴雨没有停。"))
+	)
+
+
+func _show_rain_day_seven_summary() -> void:
+	pending_day_transition = "end_of_week"
+	GameState.time_label = "晚上24:00"
+	GameState.time_segment = "night"
+	var summary := GameState.settle_rain_day_seven()
+	_update_hud()
+	var rows := [
+		{"name": "晚饭", "value": str(summary.get("meal", "已完成"))},
+		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
+		{"name": "供电", "value": str(summary.get("power", "未知"))},
+		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
+		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
+	]
+	hud.show_day_summary(
+		"暴雨第7天 · 夜间结算",
+		"第一周结束。救援没有来。收音机和邻居说了相反的话。食物几乎耗尽。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。"))
 	)

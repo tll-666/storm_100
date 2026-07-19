@@ -104,6 +104,10 @@ var last_day_one_summary: Dictionary = {}
 var last_rain_day_one_summary: Dictionary = {}
 var last_rain_day_two_summary: Dictionary = {}
 var last_rain_day_three_summary: Dictionary = {}
+var last_rain_day_four_summary: Dictionary = {}
+var last_rain_day_five_summary: Dictionary = {}
+var last_rain_day_six_summary: Dictionary = {}
+var last_rain_day_seven_summary: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -153,6 +157,10 @@ func reset_prologue() -> void:
 	last_rain_day_one_summary.clear()
 	last_rain_day_two_summary.clear()
 	last_rain_day_three_summary.clear()
+	last_rain_day_four_summary.clear()
+	last_rain_day_five_summary.clear()
+	last_rain_day_six_summary.clear()
+	last_rain_day_seven_summary.clear()
 
 
 func enable_continuous_clock(start_minutes: float = 480.0) -> void:
@@ -550,6 +558,182 @@ func settle_rain_day_three() -> Dictionary:
 	}
 	flags["rain_day_three_settled"] = true
 	return last_rain_day_three_summary
+
+
+func settle_rain_day_four() -> Dictionary:
+	if has_flag("rain_day_four_settled"):
+		return last_rain_day_four_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 10
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 5
+	if _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 3
+	elif _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 4
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "越来越少的存粮"
+	water_supply_state = "unsafe"
+	power_supply_state = "off"
+	var water_result := _settle_family_needs(nutrition_gain)
+	for member_id in FAMILY_ORDER:
+		_adjust_member_stat(member_id, "morale", -2)
+	if has_flag("moved_to_second_floor"):
+		_adjust_member_stat("partner", "morale", 1)
+	var move_status := "一楼已无法正常生活"
+	if has_flag("moved_to_second_floor"):
+		move_status = "全家搬到二楼，物资安全"
+	elif has_flag("partial_move_upstairs"):
+		move_status = "只搬了电器和药物，被褥仍湿了一楼"
+	elif has_flag("shelved_move_decision"):
+		move_status = "没有搬家，一楼被褥和电器受损"
+	var note := "雨整夜没停。一楼地面的水又深了一层，已经是名副其实的内涝。全家挤在二楼度过了一夜。"
+	if has_flag("rationing_started"):
+		note += " 今晚第一次正式定量分配食物。"
+	elif has_flag("rationing_delayed"):
+		note += " 还没有开始定量——但你知道这只是时间问题。"
+	last_rain_day_four_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"onef": move_status,
+		"changes": "正式停电 · 水质异常",
+		"note": note,
+	}
+	flags["rain_day_four_settled"] = true
+	return last_rain_day_four_summary
+
+
+func settle_rain_day_five() -> Dictionary:
+	if has_flag("rain_day_five_settled"):
+		return last_rain_day_five_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 8
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 4
+	if _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 3
+	elif _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 3
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "越来越少的存粮"
+	water_supply_state = "off"
+	power_supply_state = "off"
+	var water_result := _settle_family_needs(nutrition_gain)
+	for member_id in FAMILY_ORDER:
+		_adjust_member_stat(member_id, "morale", -1)
+	if has_flag("elder_got_medicine_day5"):
+		_adjust_member_stat("elder", "health", 3)
+	var note := "第五夜。一楼的水又涨了。老人咳了一晚上。大孩子的手机彻底没电了。小孩子把蜡笔收进盒子的时候，把盒子放在了离枕头最近的地方。"
+	if has_flag("rationing_started"):
+		note += " 定量分配已经变成习惯——每个人知道自己的份在哪里，在哪里结束。"
+	last_rain_day_five_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"changes": "正式停水 · 持续停电",
+		"note": note,
+	}
+	flags["rain_day_five_settled"] = true
+	return last_rain_day_five_summary
+
+
+func settle_rain_day_six() -> Dictionary:
+	if has_flag("rain_day_six_settled"):
+		return last_rain_day_six_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 6
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 3
+	if _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 2
+	elif _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 3
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "几乎见底的存粮"
+	water_supply_state = "off"
+	power_supply_state = "off"
+	var water_result := _settle_family_needs(nutrition_gain)
+	for member_id in FAMILY_ORDER:
+		_adjust_member_stat(member_id, "morale", -3)
+	if has_flag("adult_sacrifice_day6"):
+		for member_id in ["player", "partner", "elder"]:
+			_adjust_member_stat(member_id, "hunger", -3)
+		_adjust_member_stat("child", "morale", 1)
+		_adjust_member_stat("teen", "morale", 2)
+	elif has_flag("tight_rationing_day6"):
+		_adjust_member_stat("child", "morale", -2)
+	var note := "第六夜。全楼已经彻底停电停水。黑暗里只剩手电筒的光斑在天花板上慢慢移动。每个人都在默默算着自己还剩什么。"
+	if has_flag("partner_shared_moment"):
+		note += " 伴侣靠着你的肩膀——自从雨开始以来，这是第一次谁也没说话但不需要说话。"
+	last_rain_day_six_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"changes": "正式停水 · 持续停电 · 食物即将见底",
+		"note": note,
+	}
+	flags["rain_day_six_settled"] = true
+	return last_rain_day_six_summary
+
+
+func settle_rain_day_seven() -> Dictionary:
+	if has_flag("rain_day_seven_settled"):
+		return last_rain_day_seven_summary
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 5
+	if _consume_item_anywhere("rice", 1) > 0:
+		meal_parts.append("大米")
+		nutrition_gain += 2
+	if _consume_item_anywhere("noodles", 1) > 0:
+		meal_parts.append("方便面")
+		nutrition_gain += 2
+	elif _consume_item_anywhere("canned_fish", 1) > 0:
+		meal_parts.append("鱼罐头")
+		nutrition_gain += 2
+	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "几乎见底的存粮"
+	water_supply_state = "off"
+	power_supply_state = "off"
+	var water_result := _settle_family_needs(nutrition_gain)
+	for member_id in FAMILY_ORDER:
+		_adjust_member_stat(member_id, "morale", -2)
+	if has_flag("trusted_radio_evacuation"):
+		for member_id in FAMILY_ORDER:
+			_adjust_member_stat(member_id, "morale", 1)
+	if has_flag("hedged_bets_day7"):
+		_adjust_member_stat("elder", "morale", 2)
+	var note := "第七夜。第一周过去了。雨没有停，救援没有来。收音机和老张说了相反的话。你合上家里最后一包方便面的时候，指尖的塑料包装纸把指尖划了一下——不是疼，是指甲又剪了一次。"
+	if has_flag("trusted_zhang_over_radio"):
+		note += " 你相信邻居亲眼看到的。也许他是对的。也许不是。"
+	elif has_flag("trusted_radio_over_zhang"):
+		note += " 官方播报也许有它的道理。但你会在之后发现答案。"
+	last_rain_day_seven_summary = {
+		"meal": "晚饭使用：%s" % meal_text,
+		"water": str(water_result.get("water_text", "供水状态未知")),
+		"power": power_state_label(),
+		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
+			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
+		],
+		"changes": "第一周结束 · 供水停电持续 · 食物接近耗尽",
+		"note": note,
+	}
+	flags["rain_day_seven_settled"] = true
+	return last_rain_day_seven_summary
 
 
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
@@ -1000,6 +1184,10 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"last_rain_day_one_summary": last_rain_day_one_summary,
 		"last_rain_day_two_summary": last_rain_day_two_summary,
 		"last_rain_day_three_summary": last_rain_day_three_summary,
+		"last_rain_day_four_summary": last_rain_day_four_summary,
+		"last_rain_day_five_summary": last_rain_day_five_summary,
+		"last_rain_day_six_summary": last_rain_day_six_summary,
+		"last_rain_day_seven_summary": last_rain_day_seven_summary,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -1062,5 +1250,9 @@ func load_checkpoint() -> Dictionary:
 	last_rain_day_one_summary = payload.get("last_rain_day_one_summary", last_rain_day_one_summary)
 	last_rain_day_two_summary = payload.get("last_rain_day_two_summary", last_rain_day_two_summary)
 	last_rain_day_three_summary = payload.get("last_rain_day_three_summary", last_rain_day_three_summary)
+	last_rain_day_four_summary = payload.get("last_rain_day_four_summary", last_rain_day_four_summary)
+	last_rain_day_five_summary = payload.get("last_rain_day_five_summary", last_rain_day_five_summary)
+	last_rain_day_six_summary = payload.get("last_rain_day_six_summary", last_rain_day_six_summary)
+	last_rain_day_seven_summary = payload.get("last_rain_day_seven_summary", last_rain_day_seven_summary)
 	_ensure_family_states()
 	return payload

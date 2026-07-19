@@ -60,7 +60,7 @@
           ]
         }
       ],
-      "merge": "rain_day_5_midday"
+      "merge": "rain_day_5_morning"
     },
     {
       "id": "r5_move_delayed_consequence",
@@ -85,7 +85,7 @@
           ]
         }
       ],
-      "merge": "rain_day_5_midday"
+      "merge": "rain_day_5_morning"
     },
     {
       "id": "r5_child_drawing",
