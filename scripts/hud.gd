@@ -555,8 +555,8 @@ func _build_debug_overlay() -> void:
 	panel.anchor_bottom = 0.5
 	panel.offset_left = -360.0
 	panel.offset_right = 360.0
-	panel.offset_top = -275.0
-	panel.offset_bottom = 275.0
+	panel.offset_top = -340.0
+	panel.offset_bottom = 340.0
 	panel.add_theme_stylebox_override(
 		"panel", _panel_style(Color("18252b"), Color("b48758"), 14, 2)
 	)
@@ -591,6 +591,14 @@ func _build_debug_overlay() -> void:
 		["rain_day_five", "直接进入暴雨第5天"],
 		["rain_day_six", "直接进入暴雨第6天"],
 		["rain_day_seven", "直接进入暴雨第7天"],
+		["rain_day_eight", "直接进入暴雨第8天"],
+		["rain_day_nine", "直接进入暴雨第9天"],
+		["rain_day_ten", "直接进入暴雨第10天"],
+		["rain_day_eleven", "直接进入暴雨第11天"],
+		["rain_day_twelve", "直接进入暴雨第12天"],
+		["rain_day_thirteen", "直接进入暴雨第13天"],
+		["rain_day_fourteen", "直接进入暴雨第14天"],
+		["rain_day_fifteen", "直接进入暴雨第15天"],
 		["faucet_prototype", "检查原型：切换水龙头状态"],
 		["event_browser", "打开事件浏览器（查看全部分支）"],
 		["reset", "重置本次测试"],
@@ -599,12 +607,12 @@ func _build_debug_overlay() -> void:
 	actions_grid.columns = 2
 	actions_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	actions_grid.add_theme_constant_override("h_separation", 10)
-	actions_grid.add_theme_constant_override("v_separation", 8)
+	actions_grid.add_theme_constant_override("v_separation", 4)
 	content.add_child(actions_grid)
 	for entry in actions:
 		var button := Button.new()
 		button.text = str(entry[1])
-		button.custom_minimum_size = Vector2(315.0, 42.0)
+		button.custom_minimum_size = Vector2(315.0, 34.0)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_debug_action_pressed.bind(str(entry[0])))
 		actions_grid.add_child(button)

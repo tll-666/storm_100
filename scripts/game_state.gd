@@ -17,6 +17,8 @@ const SHOP_ITEMS := {
 	"basic_medicine": {"name": "常用药", "price": 32, "slots": 1},
 	"meat": {"name": "少量肉", "price": 0, "slots": 1, "food": 3},
 	"eggs": {"name": "鸡蛋", "price": 0, "slots": 1, "food": 1},
+	"cooked_food": {"name": "抢救出的熟食", "price": 0, "slots": 1, "food": 3},
+	"dry_biscuits": {"name": "干饼干", "price": 0, "slots": 1, "food": 2},
 }
 
 const SECOND_SHOP_OVERRIDES := {
@@ -128,6 +130,8 @@ var last_rain_day_four_summary: Dictionary = {}
 var last_rain_day_five_summary: Dictionary = {}
 var last_rain_day_six_summary: Dictionary = {}
 var last_rain_day_seven_summary: Dictionary = {}
+var last_experiment_summary: Dictionary = {}
+var experiment_start_snapshot: Dictionary = {}
 
 
 func reset_prologue() -> void:
@@ -183,6 +187,8 @@ func reset_prologue() -> void:
 	last_rain_day_five_summary.clear()
 	last_rain_day_six_summary.clear()
 	last_rain_day_seven_summary.clear()
+	last_experiment_summary.clear()
+	experiment_start_snapshot.clear()
 
 
 func enable_continuous_clock(start_minutes: float = 480.0) -> void:
@@ -282,6 +288,24 @@ func degrade_rooms_for_day() -> void:
 		_ensure_room_state("elder_bedroom", "leaking")
 		_ensure_room_state("bathroom", "flooded")
 		_ensure_room_state("stairway", "damp")
+	elif phase.begins_with("rain_day_8") or phase.begins_with("rain_day_9"):
+		_ensure_room_state("garage", "unusable")
+		_ensure_room_state("living_room", "unusable")
+		_ensure_room_state("bathroom", "flooded" if not has_flag("sealed_toilet") else "leaking")
+		_ensure_room_state("elder_bedroom", "leaking")
+		_ensure_room_state("stairway", "damp")
+	elif phase.begins_with("rain_day_10") or phase.begins_with("rain_day_11"):
+		_ensure_room_state("garage", "unusable")
+		_ensure_room_state("living_room", "unusable")
+		_ensure_room_state("bathroom", "unusable" if not has_flag("sealed_toilet") else "leaking")
+		_ensure_room_state("elder_bedroom", "leaking" if has_flag("roof_leak_contained") else "flooded")
+		_ensure_room_state("stairway", "leaking")
+	elif phase.begins_with("rain_day_12") or phase.begins_with("rain_day_13") or phase.begins_with("rain_day_14") or phase.begins_with("rain_day_15"):
+		_ensure_room_state("garage", "unusable")
+		_ensure_room_state("living_room", "unusable")
+		_ensure_room_state("bathroom", "leaking" if has_flag("sealed_toilet") else "unusable")
+		_ensure_room_state("elder_bedroom", "leaking" if has_flag("roof_leak_contained") else "unusable")
+		_ensure_room_state("stairway", "flooded")
 
 
 func _ensure_room_state(room_id: String, target: String) -> void:
@@ -829,6 +853,133 @@ func settle_rain_day_seven() -> Dictionary:
 	return last_rain_day_seven_summary
 
 
+func begin_experiment_day(day: int) -> void:
+	var safe_day := clampi(day, 8, 15)
+	phase_id = "rain_day_%d_morning" % safe_day
+	day_label = "暴雨第%d天" % safe_day
+	time_label = "上午07:00"
+	time_segment = "morning"
+	weather_label = experiment_weather(safe_day)
+	flags["rain_day_%d_started" % safe_day] = true
+	water_supply_state = "off"
+	power_supply_state = "off"
+	set_environment_state("kitchen_faucet", "off")
+	enable_continuous_clock(420.0)
+	if experiment_start_snapshot.is_empty():
+		experiment_start_snapshot = resource_snapshot()
+
+
+func experiment_weather(day: int) -> String:
+	var weather := {
+		8: "中雨 · 第二周开始", 9: "暴雨 · 下水道水位上升", 10: "暴雨 · 屋顶持续受压",
+		11: "中雨 · 风势减弱", 12: "小雨转中雨 · 短暂亮天", 13: "暴雨 · 污水反灌",
+		14: "中雨 · 能见度改善", 15: "小雨 · 云层出现裂口",
+	}
+	return str(weather.get(day, "暴雨 · 持续中"))
+
+
+func settle_experiment_day(day: int) -> Dictionary:
+	var settle_flag := "rain_day_%d_settled" % day
+	if has_flag(settle_flag) and int(last_experiment_summary.get("day", 0)) == day:
+		return last_experiment_summary
+	degrade_rooms_for_day()
+	var meal_parts: Array[String] = []
+	var nutrition_gain := 4
+	for item_id in ["cooked_food", "rice", "noodles", "canned_fish", "dry_biscuits"]:
+		if _consume_item_anywhere(item_id, 1) > 0:
+			meal_parts.append(str(shop_item(item_id).get("name", item_id)))
+			nutrition_gain += int(shop_item(item_id).get("food", 1))
+			if meal_parts.size() >= 2:
+				break
+	var needs := _settle_family_needs(nutrition_gain)
+	var room_damage := 0
+	for room_id in ["elder_bedroom", "bathroom", "stairway"]:
+		var state := get_room_state(room_id)
+		if state == "flooded":
+			room_damage += 1
+		elif state == "unusable":
+			room_damage += 2
+	if room_damage > 0:
+		for member_id in FAMILY_ORDER:
+			_adjust_member_stat(member_id, "health", -room_damage)
+	var note := "夜里继续下雨。五个人把能用的地方又缩小了一圈。"
+	if day == 12:
+		note = "雨短暂变小，屋内第一次能听清彼此说话。没人把这当成结束，只把它当作整理房间的窗口。"
+	elif day == 14:
+		note = "第七天留下的信息在今天有了答案。等待没有结束，但这次不再只靠猜。"
+	elif day == 15:
+		note = "这段生存实验结束了。暴雨仍会继续，但第二周内提出的问题已经得到回应。"
+	last_experiment_summary = {
+		"day": day,
+		"meal": "、".join(meal_parts) if not meal_parts.is_empty() else "没有完整的一顿饭",
+		"water": str(needs.get("water_text", "储备水状态未知")),
+		"family": "平均：健康%d · 饱腹%d · 水分%d" % [average_member_stat("health"), average_member_stat("hunger"), average_member_stat("thirst")],
+		"changes": experiment_change_label(day),
+		"rooms": _room_state_summary(),
+		"audio_hint": experiment_audio_hint(day),
+		"note": note,
+	}
+	flags[settle_flag] = true
+	return last_experiment_summary
+
+
+func experiment_change_label(day: int) -> String:
+	var labels := {
+		8: "冰箱保鲜失效", 9: "排水系统发出预警", 10: "二楼出现漏水",
+		11: "储水成为主要矛盾", 12: "可用生活区重新划分", 13: "污水反灌",
+		14: "广播与目击信息得到验证", 15: "第二周盘点完成",
+	}
+	return str(labels.get(day, "环境继续恶化"))
+
+
+func experiment_audio_hint(day: int) -> String:
+	if day == 12 or day == 15:
+		return "较轻的雨声 · 桶底滴水 · 远处偶尔有人声"
+	if day == 9 or day == 13:
+		return "暴雨 · 管道咕噜声 · 楼下水流声"
+	return "持续雨声 · 屋顶滴水 · 风吹塑料布"
+
+
+func resource_snapshot() -> Dictionary:
+	return {
+		"food": total_food_portions(),
+		"water": total_water_reserve_liters(),
+		"healthy": average_member_stat("health"),
+		"usable_rooms": usable_room_count(),
+	}
+
+
+func experiment_delta_summary() -> String:
+	var start := experiment_start_snapshot if not experiment_start_snapshot.is_empty() else resource_snapshot()
+	var current := resource_snapshot()
+	return "食物 %d→%d份；储备水 %.1f→%.1f升；平均健康 %d→%d；可用房间 %d→%d。" % [
+		int(start.get("food", 0)), int(current.get("food", 0)),
+		float(start.get("water", 0.0)), float(current.get("water", 0.0)),
+		int(start.get("healthy", 0)), int(current.get("healthy", 0)),
+		int(start.get("usable_rooms", 0)), int(current.get("usable_rooms", 0)),
+	]
+
+
+func usable_room_count() -> int:
+	var count := 0
+	for room_id in ROOM_ORDER:
+		if get_room_state(room_id) != "unusable":
+			count += 1
+	return count
+
+
+func add_item_to_storage(item_id: String, amount: int = 1, storage_id: String = "pantry") -> void:
+	if item_id.is_empty() or amount <= 0 or shop_item(item_id).is_empty():
+		return
+	var storage := _container_storage(storage_id)
+	storage[item_id] = int(storage.get(item_id, 0)) + amount
+	_set_container_storage(storage_id, storage)
+
+
+func consume_item(item_id: String, amount: int = 1) -> int:
+	return _consume_item_anywhere(item_id, amount)
+
+
 func _consume_from(storage: Dictionary, item_id: String, requested: int) -> int:
 	var available := int(storage.get(item_id, 0))
 	var consumed := mini(available, requested)
@@ -1331,6 +1482,8 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"last_rain_day_five_summary": last_rain_day_five_summary,
 		"last_rain_day_six_summary": last_rain_day_six_summary,
 		"last_rain_day_seven_summary": last_rain_day_seven_summary,
+		"last_experiment_summary": last_experiment_summary,
+		"experiment_start_snapshot": experiment_start_snapshot,
 		"player_x": player_position.x,
 		"player_y": player_position.y,
 		"current_floor": current_floor,
@@ -1399,5 +1552,7 @@ func load_checkpoint() -> Dictionary:
 	last_rain_day_five_summary = payload.get("last_rain_day_five_summary", last_rain_day_five_summary)
 	last_rain_day_six_summary = payload.get("last_rain_day_six_summary", last_rain_day_six_summary)
 	last_rain_day_seven_summary = payload.get("last_rain_day_seven_summary", last_rain_day_seven_summary)
+	last_experiment_summary = payload.get("last_experiment_summary", last_experiment_summary)
+	experiment_start_snapshot = payload.get("experiment_start_snapshot", experiment_start_snapshot)
 	_ensure_family_states()
 	return payload

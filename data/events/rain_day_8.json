@@ -1,182 +1,41 @@
 {
-  "version": 1,
+  "version": 2,
   "events": [
     {
-      "id": "r8_elder_no_medicine",
-      "title": "药的代价",
-      "type": "delayed",
-      "day": "暴雨第8天",
-      "phase": "rain_day_8_morning",
-      "location": "二楼",
-      "once": true,
+      "id": "r8_elder_no_medicine", "title": "潮气里的咳嗽", "type": "family", "day": "暴雨第8天", "phase": "rain_day_8_morning", "location": "二楼", "once": true,
       "conditions": {"phase": "rain_day_8_morning", "required_flags": ["medicine_conserved_day5"]},
-      "clues": ["三天前省下的药现在代价浮现"],
-      "text": "老人的咳嗽变成了闷咳。从胸腔深处传来的那种——不是你用被子盖住就听不见的声音。问他他说没事，但嗓子已经哑得说不完整句话了。大孩子皱着眉头检查了药箱，出来之后只对你摇了摇头。",
-      "choices": [
-        {
-          "id": "continue",
-          "label": "现在再给，还能补救一点",
-          "result": "你把那板省了三天的药掰出来，一半喂给老人。三天前省掉的几颗药，现在代价是老人瘦了一圈的脸。他吞药的时候喉结动得很慢，像是连咽这个动作都在节约力气。",
-          "effects": [
-            {"type": "set_flag", "id": "elder_medicine_late_day8"},
-            {"type": "member_stat", "member": "elder", "stat": "health", "amount": 3},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2}
-          ]
-        }
-      ],
-      "merge": "rain_day_8_midday"
+      "clues": ["咳嗽与潮湿生活区有关，不是老人专属药物线"],
+      "text": "老人早晨咳了几声，离开漏水墙角后便缓下来。他指了指湿被褥：『先换地方，别急着吃药。』问题在房间，不在药箱。",
+      "choices": [{"id": "move_chair", "label": "把休息位置移到干燥处", "result": "椅子和毯子被移到走廊内侧。咳嗽没有立刻消失，但今晚不再靠着湿墙。", "effects": [{"type": "set_flag", "id": "elder_moved_from_damp_wall"}]}],
+      "merge": "rain_day_8_morning"
     },
     {
-      "id": "r8_morning_hunger",
-      "title": "饥饿成了主角",
-      "type": "fixed",
-      "day": "暴雨第8天",
-      "phase": "rain_day_8_morning",
-      "location": "二楼",
-      "once": true,
+      "id": "r8_food_spoilage", "title": "冰箱里的酸味", "type": "room", "day": "暴雨第8天", "phase": "rain_day_8_morning", "location": "一楼厨房", "once": true,
       "conditions": {"phase": "rain_day_8_morning"},
-      "clues": ["食物消耗过半", "饥饿开始影响判断", "每个人都在用不同的方式对抗饿"],
-      "text": "第八天早晨。小孩子醒过来第一句话就是饿。这在以前是没有过的——以前他醒了先找蜡笔。今早他看着你，嘴张了两次，只说了一个字：「饿。」老人没起来。大孩子和伴侣不约而同把早饭吃得特别慢，想拉长咀嚼的时间。一碗粥从热吃到凉。",
-      "text_variants": [
-        {
-          "required_flags": ["tight_rationing_day6"],
-          "text": "减量两天以后，每个人肚子都开始响了——不是饿的咕咕声，是安静的、忍着的。大孩子上厕所的次数比往常多，把肚子里的水当饱。伴侣在做粥的时候偷偷多加了一勺面——然后又把那勺搅匀给了所有人。"
-        },
-        {
-          "required_flags": ["adult_sacrifice_day6"],
-          "text": "大人少吃了两天，小孩子仍然看不出大人的饭在变少——他数的是自己碗里的米粒，不数别人的。但你端着碗的时候手有点抖，筷子比平时更用力才拿稳。伴侣看到了，把自己碗里最后一口粥倒到你碗里。没说话。倒了就走。"
-        }
-      ],
+      "clues": ["断电后的生鲜已经不能继续原样保存"],
+      "text": "冰箱门一开，酸味先涌出来。肉和菜还没有完全坏，但已经到了今天不处理、明天就只能扔的程度。",
       "choices": [
-        {
-          "id": "elder_refuses",
-          "label": "看老人",
-          "result": "老人把你端去的粥推回来：「我不饿。」这是第八天的第二个谎。碗放在他面前直到凉了，他一口没动。小孩子看着冒热气的粥变凉，小声说：「爷爷不吃吗。」你端走碗的时候发现碗底是干的——他连碗都没有碰。",
-          "effects": [
-            {"type": "set_flag", "id": "elder_refused_food_day8"},
-            {"type": "member_stat", "member": "elder", "stat": "hunger", "amount": -5},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
-            {"type": "schedule_event", "event_id": "r11_elder_collapse", "trigger_phase": "rain_day_11_morning"},
-            {"type": "set_phase", "value": "rain_day_8_midday"},
-            {"type": "set_time", "label": "上午09:00", "segment": "morning"}
-          ]
-        },
-        {
-          "id": "insist_elder_eat",
-          "label": "坚持让老人吃",
-          "result": "你蹲到老人面前：「你必须吃。」语气比你想说的更硬。老人看了你一会，慢慢拿起碗，一口一口吃下去。吃得很慢，每一口都像是完成一个任务。伴侣在旁边默默叹了口气——不是松快，是她也知道这不是长久办法。",
-          "effects": [
-            {"type": "set_flag", "id": "made_elder_eat_day8"},
-            {"type": "member_stat", "member": "elder", "stat": "hunger", "amount": 5},
-            {"type": "member_stat", "member": "player", "stat": "hunger", "amount": -2},
-            {"type": "relationship", "member": "elder", "amount": -1},
-            {"type": "set_phase", "value": "rain_day_8_midday"},
-            {"type": "set_time", "label": "上午09:00", "segment": "morning"}
-          ]
-        },
-        {
-          "id": "redistribute",
-          "label": "从每个人碗里匀一口给老人",
-          "result": "你让小孩子的碗少了半勺，大孩子的碗少了一口，你和伴侣的碗各少了三勺。把这些放进老人碗里。老人看着碗里的粥变多了，说：「你们这是……」然后没说完。他开始吃了。因为这个碗不是他一个人的——里面是五个人每人分出来的一口。",
-          "effects": [
-            {"type": "set_flag", "id": "shared_to_elder_day8"},
-            {"type": "member_stat", "member": "player", "stat": "hunger", "amount": -1},
-            {"type": "member_stat", "member": "partner", "stat": "hunger", "amount": -1},
-            {"type": "member_stat", "member": "teen", "stat": "hunger", "amount": -1},
-            {"type": "member_stat", "member": "child", "stat": "hunger", "amount": -1},
-            {"type": "member_stat", "member": "elder", "stat": "hunger", "amount": 3},
-            {"type": "relationship", "member": "elder", "amount": 1},
-            {"type": "relationship", "member": "partner", "amount": 2},
-            {"type": "set_phase", "value": "rain_day_8_midday"},
-            {"type": "set_time", "label": "上午09:00", "segment": "morning"}
-          ]
-        }
+        {"id": "cook_now", "label": "用一升净水彻底煮熟", "result": "坏的部分被切掉，剩下的煮成一锅。付出饮水，换回了两份还能保存一天的熟食。", "effects": [{"type": "add_water", "amount": -1.0}, {"type": "add_item", "item": "cooked_food", "amount": 2, "storage": "pantry"}, {"type": "set_flag", "id": "saved_fridge_food"}, {"type": "set_phase", "value": "rain_day_8_midday"}]},
+        {"id": "discard", "label": "全部丢掉，不冒险", "result": "冰箱被清空。损失看得见，但今晚不会有人因为侥幸吃坏肚子。", "effects": [{"type": "set_flag", "id": "discarded_spoiled_food"}, {"type": "set_phase", "value": "rain_day_8_midday"}]}
       ],
       "merge": "rain_day_8_midday"
     },
     {
-      "id": "r8_teen_search",
-      "title": "大孩子翻出了什么",
-      "type": "room",
-      "day": "暴雨第8天",
-      "phase": "rain_day_8_midday",
-      "location": "二楼储物角",
-      "once": true,
+      "id": "r8_dry_corner", "title": "最后一个干燥角落", "type": "room", "day": "暴雨第8天", "phase": "rain_day_8_midday", "location": "二楼", "once": true,
       "conditions": {"phase": "rain_day_8_midday"},
-      "clues": ["大孩子翻出意外发现", "旧手机可能有离线信息", "家人开始挖掘最后的价值"],
-      "text": "大孩子在储物角翻了大半个小时。出来的时候手里拿了三样东西：一包别人送的茶（盒子潮了，里面没湿）、一本去年的挂历（封面是和旧房子合影的全家福）、一个旧手机。他把手机举起来：「这是你的旧手机——充一充可能还有电。」",
-      "text_variants": [
-        {
-          "required_flags": ["first_pickup_teen"],
-          "text": "大孩子翻出来你在学校接他时车里他带的书包。包里除了课本，还有半袋饼干——日期是接人那天。「忘了。」他说，「有点碎了。」碎掉的半袋饼干现在看起来像个宝藏。"
-        },
-        {
-          "required_flags": ["prep_power"],
-          "text": "旧手机的充电线和备用充电宝刚好匹配。大孩子把手机按在充电宝上，屏幕亮了一瞬间——桌面还是去年夏天的照片，五个人在院子里拍的。你愣了一秒。夏天像是上辈子的事。"
-        }
-      ],
+      "clues": ["可用空间比房屋总面积更重要"],
+      "text": "二楼只有主卧门口还闻不到霉味。食物、被褥和五个人不可能全塞进去，必须先决定这里保护什么。",
       "choices": [
-        {
-          "id": "charge_phone",
-          "label": "试试能不能充开",
-          "result": "旧手机充了十来分钟，屏幕亮了。里面没有信号，但有离线存储的几条社区消息。最后一条是：「有人在外面划船发东西，看到屋顶记号才给。桥西。」时间是一天前。大孩子盯着这条消息看了很久。",
-          "effects": [
-            {"type": "set_flag", "id": "found_offline_messages"},
-            {"type": "add_clue", "id": "boat_distribution_reported"},
-            {"type": "member_stat", "member": "teen", "stat": "morale", "amount": 2},
-            {"type": "schedule_event", "event_id": "r13_boat_rumor", "trigger_phase": "rain_day_13_morning"},
-            {"type": "set_phase", "value": "rain_day_8_evening"},
-            {"type": "set_time", "label": "下午15:00", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "take_cookies",
-          "label": "看看那半袋饼干",
-          "result": "大孩子把饼干放到桌上。小孩子眼睛亮了——这几天第一次的亮。伴侣说：「一人半块。」掰饼干的声音特别响，因为屋里太安静了。一共掰了五次。每一声响都在说同一件事：还能再撑一下。",
-          "effects": [
-            {"type": "set_flag", "id": "found_teen_cookies"},
-            {"type": "member_stat", "member": "child", "stat": "hunger", "amount": 2},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 2},
-            {"type": "set_phase", "value": "rain_day_8_evening"},
-            {"type": "set_time", "label": "下午15:00", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "save_for_later",
-          "label": "这些先收着",
-          "result": "你把三样东西放回柜子里。大孩子看着你收回去的动作：「放着也没用。」「有用的。」他没有争。但你注意到他眼睛在挂历上停了半秒——那个封面上的全家福。去年夏天的五个人，还在院子里笑着。你把挂历翻了过去才合上柜门。",
-          "effects": [
-            {"type": "set_flag", "id": "saved_teen_finds_day8"},
-            {"type": "member_stat", "member": "teen", "stat": "morale", "amount": -2},
-            {"type": "set_phase", "value": "rain_day_8_evening"},
-            {"type": "set_time", "label": "下午15:00", "segment": "daytime"}
-          ]
-        }
+        {"id": "protect_food", "label": "先把食物和净水搬进来", "result": "干燥角落成了物资区。睡觉更挤，但食品不会继续贴着湿墙。", "effects": [{"type": "set_flag", "id": "dry_zone_supplies"}, {"type": "set_room_state", "room": "kitchen", "state": "damp"}, {"type": "set_phase", "value": "rain_day_8_evening"}]},
+        {"id": "protect_bedding", "label": "先保住全家的床铺", "result": "五个人今晚至少能睡在干被褥上。食物仍留在走廊柜子里，需要之后再处理。", "effects": [{"type": "set_flag", "id": "dry_zone_bedding"}, {"type": "set_room_state", "room": "elder_bedroom", "state": "damp"}, {"type": "set_phase", "value": "rain_day_8_evening"}]}
       ],
       "merge": "rain_day_8_evening"
     },
     {
-      "id": "r8_evening_close",
-      "title": "第八夜",
-      "type": "fixed",
-      "day": "暴雨第8天",
-      "phase": "rain_day_8_evening",
-      "location": "二楼",
-      "once": true,
-      "conditions": {"phase": "rain_day_8_evening"},
-      "clues": ["第八天结束", "过去一周的累积开始显现"],
-      "text": "第八夜。小孩子把蜡笔排成一排数了数——少了一支黄色的，不知道什么时候丢的。他用橙色的代替涂了一片黄色的光。大孩子把旧手机放在窗台收音机旁边——两个都在等信号。老人今天咳嗽少了一点，但不说话的时间更多了。伴侣在你旁边坐了一会，什么都没说就起来去收阳台的水桶。",
-      "choices": [
-        {
-          "id": "end_day",
-          "label": "结束这一天",
-          "result": "你在纸上画了第八道记号。第二周开始了。窗外的雨没有变小。但今天翻出了半袋饼干，旧手机亮了一瞬间，小孩子用橙色代替黄色。这些不算什么，但也不算没有。",
-          "effects": [
-            {"type": "set_phase", "value": "rain_day_8_settlement"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
-          ]
-        }
-      ],
+      "id": "r8_evening_close", "title": "第二周第一夜", "type": "fixed", "day": "暴雨第8天", "phase": "rain_day_8_evening", "location": "二楼", "once": true,
+      "conditions": {"phase": "rain_day_8_evening"}, "clues": ["第8天结束"],
+      "text": "屋子没有变大，但干燥的那一小块有了用途。第二周从重新安排一平方米开始。",
+      "choices": [{"id": "end", "label": "结束这一天", "result": "你在纸上画下第八道记号。", "effects": [{"type": "set_phase", "value": "rain_day_8_settlement"}]}],
       "merge": "rain_day_8_settlement"
     }
   ]

@@ -83,7 +83,7 @@ func reposition_npcs(phase_id: String) -> void:
 
 
 func _npc_positions_for_phase(phase_id: String) -> Dictionary:
-	if phase_id.begins_with("rain_day_5") or phase_id.begins_with("rain_day_6") or phase_id.begins_with("rain_day_7") or phase_id == "r5_family_hub" or phase_id == "r7_family_hub":
+	if phase_id.begins_with("rain_day_5") or phase_id.begins_with("rain_day_6") or phase_id.begins_with("rain_day_7") or phase_id.begins_with("rain_day_8") or phase_id.begins_with("rain_day_9") or phase_id.begins_with("rain_day_10") or phase_id.begins_with("rain_day_11") or phase_id.begins_with("rain_day_12") or phase_id.begins_with("rain_day_13") or phase_id.begins_with("rain_day_14") or phase_id.begins_with("rain_day_15") or phase_id == "r5_family_hub" or phase_id == "r7_family_hub":
 		return {
 			"partner": Vector2(650.0, 350.0),
 			"elder": Vector2(1250.0, 400.0),
@@ -208,6 +208,9 @@ func _draw_rain() -> void:
 func _flood_level() -> int:
 	if not GameState:
 		return 0
+	for day in range(8, 16):
+		if GameState.has_flag("rain_day_%d_started" % day):
+			return mini(9, 6 + int((day - 7) / 2))
 	if GameState.has_flag("rain_day_seven_started") or GameState.has_flag("rain_day_six_started"):
 		return 6
 	if GameState.has_flag("rain_day_five_started"):
@@ -657,7 +660,7 @@ func _interactions_for_floor(floor_number: int) -> Array:
 				"color": Color("d1a15e")
 			},
 		]
-		if GameState and (GameState.phase_id.begins_with("rain_day_3") or GameState.phase_id.begins_with("rain_day_4") or GameState.phase_id.begins_with("rain_day_5") or GameState.phase_id.begins_with("rain_day_6") or GameState.phase_id.begins_with("rain_day_7")):
+		if GameState and GameState.phase_id.begins_with("rain_day_"):
 			floor2_npcs.append({
 				"id": "elder",
 				"position": Vector2(1000, 600),
