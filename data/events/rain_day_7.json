@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "events": [
+    {
+      "id": "r7_radio_surprise",
+      "title": "收音机活了",
+      "type": "room",
+      "day": "暴雨第7天",
+      "phase": "rain_day_7_morning",
+      "location": "二楼窗台",
+      "once": true,
+      "conditions": {"phase": "rain_day_7_morning"},
+      "clues": ["收音机突然收到信号", "官方播报不一定准确", "信息不可靠的第一次正式考验"],
+      "text": "第七天早晨。窗台上的收音机突然发出刺耳的杂音，然后是一个断续的女声：「……请低洼住户留在家中，等待救援……目前已有救援队沿排水河方向前进……请确保房屋外墙有可被识别的标志……」播报重复了两遍，然后信号又断了。",
+      "text_variants": [
+        {
+          "required_flags": ["teen_tried_radio"],
+          "text": "第七天早晨。大孩子前天放在窗台上的收音机突然响了。他冲过去把天线扶正——手都在抖。断续的女声重复着：「……等待救援……沿排水河……」大孩子转头看你，嘴张着说不出话。"
+        },
+        {
+          "required_flags": ["used_radio_during_outage"],
+          "text": "第七天早晨。收音机忽然多了几秒清晰的播报——你之前用电池听天气预报的那个频率。女声说：「……救援路线沿排水河……请保持可被识别……」跟上次一样清晰，但这次说的是救援，不是天气。"
+        },
+        {
+          "required_flags": ["prep_power"],
+          "text": "第七天早晨。收音机在一片杂音里出现了一段清晰播报。你立刻换了满电的备用电池。女声说：「……救援路线沿排水河……请保持可被识别……」换电池的时候手指因为用力过度发白。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "trust_radio",
+          "label": "相信播报，做好被救援的准备",
+          "result": "「救援队要来了。」你在窗边挂了一条红色毛巾让外面能看到。大孩子帮忙在纸上写了SOS挂在阳台，字写得特别大。小孩子的画今天第一次不是只有竖线——他加了一条红色的东西在窗外。",
+          "effects": [
+            {"type": "set_flag", "id": "trusted_radio_evacuation"},
+            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": 3},
+            {"type": "member_stat", "member": "teen", "stat": "morale", "amount": 4},
+            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 3},
+            {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 2},
+            {"type": "member_stat", "member": "player", "stat": "morale", "amount": 3},
+            {"type": "add_clue", "id": "radio_promised_rescue"},
+            {"type": "schedule_event", "event_id": "r14_rescue_never_came", "trigger_phase": "rain_day_14_morning"},
+            {"type": "set_phase", "value": "rain_day_7_midday"},
+            {"type": "set_time", "label": "上午09:20", "segment": "morning"}
+          ]
+        },
+        {
+          "id": "skeptical_radio",
+          "label": "广播可能不准，别太当真",
+          "result": "「先听着，别太当真。」你把红毛巾折起来放在窗台边。伴侣犹豫了一下：「万一是真的呢。」「真的再说。」你没有把毛巾挂出去。收音机还在窗台上，但这次你把它关掉了。",
+          "effects": [
+            {"type": "set_flag", "id": "skeptical_about_radio"},
+            {"type": "relationship", "member": "partner", "amount": -1},
+            {"type": "add_clue", "id": "radio_may_be_wrong"},
+            {"type": "set_phase", "value": "rain_day_7_midday"},
+            {"type": "set_time", "label": "上午09:20", "segment": "morning"}
+          ]
+        },
+        {
+          "id": "hide_broadcast",
+          "label": "不对家人说这个播报",
+          "result": "你把收音机音量调低。伴侣问怎么了，你说「没事，杂音。」那条红色毛巾你没有拿出来。晚上小孩子趴在茶几上照常画画——纸上只有蓝色竖线。没有人知道今天收音机里说过什么。",
+          "effects": [
+            {"type": "set_flag", "id": "hid_radio_broadcast"},
+            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2},
+            {"type": "schedule_event", "event_id": "r9_partner_finds_out", "trigger_phase": "rain_day_9_morning"},
+            {"type": "set_phase", "value": "rain_day_7_midday"},
+            {"type": "set_time", "label": "上午09:20", "segment": "morning"}
+          ]
+        }
+      ],
+      "merge": "rain_day_7_midday"
+    },
+    {
+      "id": "r7_neighbor_zhang",
+      "title": "老张在屋顶",
+      "type": "community",
+      "day": "暴雨第7天",
+      "phase": "rain_day_7_midday",
+      "location": "二楼阳台",
+      "once": true,
+      "conditions": {"phase": "rain_day_7_midday"},
+      "clues": ["邻居老张家一楼已被淹", "老张独自一人", "他提供的信息和收音机矛盾"],
+      "text": "中午。从阳台看出去，隔壁老张的身影出现在他家的屋顶上。他正在往屋顶搬东西——一个塑料箱、一个煤气罐、一件亮黄色雨衣。看到你在阳台，他喊了一句什么，雨声太大听不清。他指了指排水河方向，又指了指自己的耳朵，然后比了一个手势——反复摇头。没有救援。",
+      "text_variants": [
+        {
+          "required_flags": ["helped_neighbor"],
+          "text": "老张看到你在阳台，挥了挥手。上次你送他的胶带帮他把一楼能封的地方都封了。他又比划了一次：没有救援来。然后从屋顶往下扔了一个塑料袋。风吹偏了，但你看清了，里面是一台老式收音机和一张纸。纸上画了三个圈圈——三条街外。"
+        },
+        {
+          "required_flags": ["refused_neighbor"],
+          "text": "老张看到你在阳台。他看了一眼，没有挥手，继续往屋顶搬东西。他没有再喊什么。他家的水位比你这边更高——他屋顶上堆的东西越来越多，像个快要沉的小岛。"
+        },
+        {
+          "required_flags": ["trusted_radio_evacuation"],
+          "text": "老张看到你在阳台。他指了指排水河方向，然后摇头。他和你说的是两件事——收音机说有救援，他用半天时间在屋顶上没有看到任何一条船。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "share_radio",
+          "label": "大声告诉他收音机说了什么",
+          "result": "「收音机说有救援队！沿排水河！老张你也挂个东西让人看见！」老张歪了歪头，可能听到了也可能没有。过了一会他家的屋顶上多了件亮黄色的雨衣——在灰色天空下很醒目。隔着雨，两个人在各自的屋顶上，各自为互相矛盾的信号做了准备。",
+          "effects": [
+            {"type": "set_flag", "id": "shared_radio_with_zhang"},
+            {"type": "schedule_event", "event_id": "r11_zhang_returns", "trigger_phase": "rain_day_11_midday"}
+          ]
+        },
+        {
+          "id": "ask_zhang_news",
+          "label": "问他听到了什么",
+          "result": "你做了个收音机的手势。老张摇头，做了个把手放在耳边然后摆手的手势——什么都收不到。又做了个「有别人吗」的手势。他指了指远处，伸出三根手指——三条街外，有三户人还在。他竖起一根手指，指了自己，又摊开双手：就剩这些人了。",
+          "effects": [
+            {"type": "set_flag", "id": "zhang_told_about_neighbors"},
+            {"type": "add_clue", "id": "three_families_nearby"},
+            {"type": "set_flag", "id": "zhang_no_radio_info"}
+          ]
+        },
+        {
+          "id": "ignore_zhang",
+          "label": "不看隔壁",
+          "result": "你回到屋里，走下阳台。伴侣问：「外面怎么了。」「老张在搬东西。」你没有说更多。窗外的雨衣在风里啪啪响，但你没有再往那个方向看。",
+          "effects": [
+            {"type": "set_flag", "id": "ignored_zhang_day7"},
+            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -1},
+            {"type": "schedule_event", "event_id": "r10_zhang_still_there", "trigger_phase": "rain_day_10_morning"}
+          ]
+        }
+      ],
+      "merge": "r7_family_hub"
+    },
+    {
+      "id": "r7_evening_decision",
+      "title": "今晚的决定",
+      "type": "family",
+      "day": "暴雨第7天",
+      "phase": "r7_family_hub",
+      "location": "二楼",
+      "once": true,
+      "conditions": {"phase": "r7_family_hub"},
+      "clues": ["收音机和邻居给出矛盾信息", "这是玩家第一次必须判断信谁"],
+      "text": "晚饭后。收音机和老张说了两件不同的事。收音机说救援在来，老张——一个站在屋顶上亲眼看了六天雨的人——说没有看到。屋里的五个人有一半听到了收音机，另一半什么都没听到。伴侣把收音机摆在桌子中间：「所以。你们相信谁。」",
+      "text_variants": [
+        {
+          "required_flags": ["zhang_told_about_neighbors"],
+          "text": "收音机说救援来了。老张用手势说没有，但他还说了附近有三户人家。伴侣对着桌上收音机和你的手势比划重复了一遍，好像在比较两件不同产地的东西。收音机产自某个你可能永远不会知道的地方。老张产自隔壁。"
+        },
+        {
+          "required_flags": ["hid_radio_broadcast"],
+          "text": "老张的手势你看到了——没有救援。收音机的内容你没有告诉家人。伴侣问你阳台发生什么了，你说「老张在搬东西。」屋里很安静。你一个人举着两个答案——一个来自你藏起来的收音机，一个来自你看见的邻居。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "trust_zhang",
+          "label": "老张在外面看到的可能比广播准",
+          "result": "「老张站在屋顶上看了六天。广播可能是录播——可能是其他地方的信息。」伴侣点了点头。大孩子从窗台看了看老张的房子：「他一个人在屋顶上，不冷吗。」你发现大孩子在意的不是信息的真假，是老张这个人。",
+          "effects": [
+            {"type": "set_flag", "id": "trusted_zhang_over_radio"},
+            {"type": "add_clue", "id": "reality_may_differ_from_broadcast"},
+            {"type": "relationship", "member": "partner", "amount": 1},
+            {"type": "schedule_event", "event_id": "r14_supplies_appear", "trigger_phase": "rain_day_14_morning"},
+            {"type": "set_phase", "value": "rain_day_7_settlement"},
+            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
+          ]
+        },
+        {
+          "id": "trust_radio",
+          "label": "广播是官方的，老张视野有限",
+          "result": "「广播应该是有根据的。老张站在屋顶上视野只有两条街。」伴侣没再追问，但晚上去阳台看了几眼。老张的黄色雨衣在风里啪啪响——一条街之外，他也在等一个答案。",
+          "effects": [
+            {"type": "set_flag", "id": "trusted_radio_over_zhang"},
+            {"type": "relationship", "member": "partner", "amount": -1},
+            {"type": "add_clue", "id": "official_source_may_be_right"},
+            {"type": "schedule_event", "event_id": "r14_no_rescue_arrives", "trigger_phase": "rain_day_14_morning"},
+            {"type": "set_phase", "value": "rain_day_7_settlement"},
+            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
+          ]
+        },
+        {
+          "id": "hedge_bets",
+          "label": "两样都信，两种准备都做",
+          "result": "「老张可能没看到，广播也可能不准。我们两种准备都做。该挂的SOS挂了，该算的粮食继续算。」老人从角落说了句：「这就是当年赈灾的难处——你同时等船，也留粥。两个都做的人最后活下来的最多。」",
+          "effects": [
+            {"type": "set_flag", "id": "hedged_bets_day7"},
+            {"type": "relationship", "member": "partner", "amount": 1},
+            {"type": "relationship", "member": "elder", "amount": 2},
+            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -1},
+            {"type": "set_phase", "value": "rain_day_7_settlement"},
+            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
+          ]
+        }
+      ],
+      "merge": "rain_day_7_settlement"
+    }
+  ]
+}

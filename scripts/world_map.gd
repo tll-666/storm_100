@@ -728,6 +728,13 @@ func _interactions_for_floor(floor_number: int) -> Array:
 			"name": "冰箱"
 		},
 		{
+			"id": "kitchen_faucet",
+			"position": Vector2(835, 220),
+			"prompt": "检查厨房水龙头",
+			"category": "inspect",
+			"name": "厨房水龙头"
+		},
+		{
 			"id": "pantry",
 			"position": Vector2(825, 290),
 			"prompt": "检查食品柜",

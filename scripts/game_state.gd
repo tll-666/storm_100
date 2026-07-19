@@ -60,6 +60,10 @@ var day_label: String = "暴雨前第3天"
 var time_label: String = "上午8:05"
 var weather_label: String = "阴 · 尚未下雨"
 var time_segment: String = "morning"
+var continuous_clock_enabled: bool = false
+var clock_minutes: float = 485.0
+var clock_rate: float = 0.8
+var clock_end_minutes: float = 1200.0
 var money: int = 220
 var personal_capacity: int = 6
 var trunk_capacity: int = 10
@@ -74,6 +78,8 @@ var relationships: Dictionary = {
 }
 var talked_to: Dictionary = {}
 var inspected: Dictionary = {}
+var environment_states: Dictionary = {"kitchen_faucet": "normal"}
+var inspection_knowledge: Dictionary = {}
 var inventory: Array[String] = []
 var home_storage: Dictionary = {}
 var shopping_cart: Array[String] = []
@@ -106,6 +112,10 @@ func reset_prologue() -> void:
 	time_label = "上午8:05"
 	weather_label = "阴 · 尚未下雨"
 	time_segment = "morning"
+	continuous_clock_enabled = false
+	clock_minutes = 485.0
+	clock_rate = 0.8
+	clock_end_minutes = 1200.0
 	money = 220
 	dialogue_choices.clear()
 	flags.clear()
@@ -117,6 +127,8 @@ func reset_prologue() -> void:
 	}
 	talked_to.clear()
 	inspected.clear()
+	environment_states = {"kitchen_faucet": "normal"}
+	inspection_knowledge.clear()
 	inventory.clear()
 	home_storage.clear()
 	shopping_cart.clear()
@@ -141,6 +153,84 @@ func reset_prologue() -> void:
 	last_rain_day_one_summary.clear()
 	last_rain_day_two_summary.clear()
 	last_rain_day_three_summary.clear()
+
+
+func enable_continuous_clock(start_minutes: float = 480.0) -> void:
+	continuous_clock_enabled = true
+	clock_minutes = clampf(start_minutes, 0.0, clock_end_minutes)
+	_update_clock_label()
+
+
+func disable_continuous_clock() -> void:
+	continuous_clock_enabled = false
+
+
+func advance_continuous_clock(delta: float) -> bool:
+	if not continuous_clock_enabled or delta <= 0.0 or clock_minutes >= clock_end_minutes:
+		return false
+	var previous_minute := int(clock_minutes)
+	clock_minutes = minf(clock_end_minutes, clock_minutes + delta * clock_rate)
+	if int(clock_minutes) == previous_minute:
+		return false
+	_update_clock_label()
+	return true
+
+
+func set_environment_state(object_id: String, state_id: String, forget_previous: bool = true) -> void:
+	environment_states[object_id] = state_id
+	if forget_previous:
+		inspection_knowledge.erase(object_id)
+
+
+func environment_state(object_id: String, fallback: String = "unknown") -> String:
+	return str(environment_states.get(object_id, fallback))
+
+
+func record_environment_inspection(object_id: String, display_name: String, summary: String) -> void:
+	inspected[object_id] = true
+	inspection_knowledge[object_id] = {
+		"name": display_name,
+		"state": environment_state(object_id),
+		"summary": summary,
+		"checked_at": "%s · %s" % [day_label, time_label],
+	}
+
+
+func inspection_manual_entries() -> Array:
+	var entries: Array = []
+	for object_id in inspection_knowledge:
+		var knowledge: Dictionary = inspection_knowledge[object_id]
+		entries.append(
+			{
+				"id": str(object_id),
+				"name": str(knowledge.get("name", object_id)),
+				"summary": str(knowledge.get("summary", "状态未知")),
+				"checked_at": str(knowledge.get("checked_at", "尚未检查")),
+			}
+		)
+	entries.sort_custom(
+		func(left: Dictionary, right: Dictionary) -> bool:
+			return str(left.get("name", "")) < str(right.get("name", ""))
+	)
+	return entries
+
+
+func _update_clock_label() -> void:
+	var total_minutes := clampi(int(clock_minutes), 0, 1439)
+	var hour := int(total_minutes / 60)
+	var minute := total_minutes % 60
+	if total_minutes < 720:
+		time_segment = "morning"
+		time_label = "上午%02d:%02d" % [hour, minute]
+	elif total_minutes < 1080:
+		time_segment = "daytime"
+		time_label = "下午%02d:%02d" % [hour, minute]
+	elif total_minutes < 1200:
+		time_segment = "evening"
+		time_label = "傍晚%02d:%02d" % [hour, minute]
+	else:
+		time_segment = "night"
+		time_label = "晚上%02d:%02d" % [hour, minute]
 
 
 func apply_afternoon_plan(plan_id: String) -> String:
@@ -874,12 +964,18 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"time_label": time_label,
 		"weather_label": weather_label,
 		"time_segment": time_segment,
+		"continuous_clock_enabled": continuous_clock_enabled,
+		"clock_minutes": clock_minutes,
+		"clock_rate": clock_rate,
+		"clock_end_minutes": clock_end_minutes,
 		"money": money,
 		"dialogue_choices": dialogue_choices,
 		"flags": flags,
 		"relationships": relationships,
 		"talked_to": talked_to,
 		"inspected": inspected,
+		"environment_states": environment_states,
+		"inspection_knowledge": inspection_knowledge,
 		"inventory": inventory,
 		"home_storage": home_storage,
 		"shopping_cart": shopping_cart,
@@ -930,12 +1026,18 @@ func load_checkpoint() -> Dictionary:
 	time_label = str(payload.get("time_label", time_label))
 	weather_label = str(payload.get("weather_label", weather_label))
 	time_segment = str(payload.get("time_segment", time_segment))
+	continuous_clock_enabled = bool(payload.get("continuous_clock_enabled", false))
+	clock_minutes = float(payload.get("clock_minutes", clock_minutes))
+	clock_rate = float(payload.get("clock_rate", clock_rate))
+	clock_end_minutes = float(payload.get("clock_end_minutes", clock_end_minutes))
 	money = int(payload.get("money", money))
 	dialogue_choices = payload.get("dialogue_choices", {})
 	flags = payload.get("flags", {})
 	relationships = payload.get("relationships", relationships)
 	talked_to = payload.get("talked_to", {})
 	inspected = payload.get("inspected", {})
+	environment_states = payload.get("environment_states", {"kitchen_faucet": "normal"})
+	inspection_knowledge = payload.get("inspection_knowledge", {})
 	inventory.assign(payload.get("inventory", []))
 	home_storage = payload.get("home_storage", {})
 	shopping_cart.assign(payload.get("shopping_cart", []))

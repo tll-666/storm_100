@@ -7,6 +7,7 @@ signal reset_event_requested(event_id: String)
 var entries: Array = []
 var selected_event_id: String = ""
 var event_list: VBoxContainer
+var validation_status: Label
 var detail_title: Label
 var detail_meta: Label
 var detail_status: Label
@@ -56,6 +57,10 @@ func _build_interface() -> void:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_color_override("font_color", Color("aebdc1"))
 	root_box.add_child(note)
+	validation_status = Label.new()
+	validation_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	validation_status.add_theme_font_size_override("font_size", 13)
+	root_box.add_child(validation_status)
 
 	var body := HBoxContainer.new()
 	body.add_theme_constant_override("separation", 14)
@@ -119,8 +124,16 @@ func _build_interface() -> void:
 	footer.add_child(preview_button)
 
 
-func show_entries(new_entries: Array) -> void:
+func show_entries(new_entries: Array, validation_errors: Array[String] = []) -> void:
 	entries = new_entries
+	if validation_errors.is_empty():
+		validation_status.text = "事件数据库校验通过 · 共%d个事件" % entries.size()
+		validation_status.add_theme_color_override("font_color", Color("8fc5a4"))
+	else:
+		validation_status.text = "事件数据库有%d个错误：\n• %s" % [
+			validation_errors.size(), "\n• ".join(PackedStringArray(validation_errors))
+		]
+		validation_status.add_theme_color_override("font_color", Color("e58b7b"))
 	for child in event_list.get_children():
 		event_list.remove_child(child)
 		child.queue_free()

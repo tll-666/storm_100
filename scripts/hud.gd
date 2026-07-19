@@ -13,6 +13,7 @@ signal day_summary_confirmed
 signal day_transition_blackout
 signal day_transition_finished
 signal quick_travel_selected(location_id: String)
+signal survival_manual_requested
 signal debug_action_selected(action_id: String)
 signal event_browser_preview_requested(event_id: String)
 signal event_browser_reset_requested(event_id: String)
@@ -53,6 +54,9 @@ var transition_waiting_for_confirm: bool = false
 var family_overlay: ColorRect
 var family_household_label: Label
 var family_cards: HBoxContainer
+var manual_overlay: ColorRect
+var manual_objective_label: Label
+var manual_records_label: Label
 var quick_travel_overlay: ColorRect
 var debug_overlay: ColorRect
 var event_browser: StormEventBrowser
@@ -176,6 +180,7 @@ func _build_interface() -> void:
 	_build_day_summary_overlay()
 	_build_day_transition_overlay()
 	_build_family_overlay()
+	_build_survival_manual_overlay()
 	_build_quick_travel_overlay()
 	_build_debug_overlay()
 	_build_event_browser()
@@ -194,6 +199,13 @@ func _build_utility_controls() -> void:
 	travel_button.tooltip_text = "在家中已经熟悉的房间之间快速移动"
 	travel_button.pressed.connect(toggle_quick_travel)
 	utility_bar.add_child(travel_button)
+
+	var manual_button := Button.new()
+	manual_button.text = "生存手册  J"
+	manual_button.custom_minimum_size = Vector2(132.0, 38.0)
+	manual_button.tooltip_text = "暂停并查看当前目标与已经确认的检查记录"
+	manual_button.pressed.connect(_on_survival_manual_pressed)
+	utility_bar.add_child(manual_button)
 
 	if OS.is_debug_build():
 		var debug_button := Button.new()
@@ -413,6 +425,63 @@ func _build_family_overlay() -> void:
 	content.add_child(note)
 
 
+func _build_survival_manual_overlay() -> void:
+	manual_overlay = ColorRect.new()
+	manual_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	manual_overlay.color = Color(0.012, 0.022, 0.027, 0.92)
+	manual_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	manual_overlay.visible = false
+	root.add_child(manual_overlay)
+
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -460.0
+	panel.offset_right = 460.0
+	panel.offset_top = -310.0
+	panel.offset_bottom = 310.0
+	panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("18252b"), Color("78909a"), 14, 2)
+	)
+	manual_overlay.add_child(panel)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	panel.add_child(content)
+	var header := HBoxContainer.new()
+	content.add_child(header)
+	var title := _make_label("家庭生存手册", 25, Color("f1c36c"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	var close_button := Button.new()
+	close_button.text = "关闭 ×"
+	close_button.custom_minimum_size = Vector2(100.0, 38.0)
+	close_button.pressed.connect(hide_survival_manual)
+	header.add_child(close_button)
+
+	var pause_note := _make_label("手册属于思考界面，打开时世界时间暂停。", 13, Color("9fb0b5"))
+	content.add_child(pause_note)
+	var objective_heading := _make_label("当前主要目标", 16, Color("e6bd70"))
+	content.add_child(objective_heading)
+	manual_objective_label = _make_label("尚无目标。", 15, Color("eef2ef"))
+	manual_objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	manual_objective_label.custom_minimum_size.y = 54.0
+	content.add_child(manual_objective_label)
+	content.add_child(HSeparator.new())
+	var records_heading := _make_label("已确认的环境记录", 16, Color("e6bd70"))
+	content.add_child(records_heading)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	content.add_child(scroll)
+	manual_records_label = _make_label("尚未检查任何环境对象。", 14, Color("cbd5d7"))
+	manual_records_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	manual_records_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(manual_records_label)
+
+
 func _build_quick_travel_overlay() -> void:
 	quick_travel_overlay = ColorRect.new()
 	quick_travel_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -517,16 +586,24 @@ func _build_debug_overlay() -> void:
 		["day_one", "直接进入暴雨前第1天"],
 		["rain_day_one", "直接进入暴雨第1天"],
 		["rain_day_two", "直接进入暴雨第2天"],
+		["rain_day_three", "直接进入暴雨第3天"],
+		["faucet_prototype", "检查原型：切换水龙头状态"],
 		["event_browser", "打开事件浏览器（查看全部分支）"],
 		["reset", "重置本次测试"],
 	]
+	var actions_grid := GridContainer.new()
+	actions_grid.columns = 2
+	actions_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	actions_grid.add_theme_constant_override("h_separation", 10)
+	actions_grid.add_theme_constant_override("v_separation", 8)
+	content.add_child(actions_grid)
 	for entry in actions:
 		var button := Button.new()
 		button.text = str(entry[1])
-		button.custom_minimum_size = Vector2(500.0, 42.0)
+		button.custom_minimum_size = Vector2(315.0, 42.0)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_debug_action_pressed.bind(str(entry[0])))
-		content.add_child(button)
+		actions_grid.add_child(button)
 	var close_button := Button.new()
 	close_button.text = "关闭"
 	close_button.custom_minimum_size = Vector2(180.0, 38.0)
@@ -577,7 +654,7 @@ func _build_intro() -> void:
 	description.custom_minimum_size.y = 78.0
 	box.add_child(description)
 	var controls := _make_label(
-		"WASD / 方向键：移动　E：互动　B：背包　C：家庭状态　T：快捷移动\nEsc：关闭界面　F1：测试工具　F5：保存　F9：读取", 14, Color("aebcc1")
+		"WASD / 方向键：移动　E：互动　B：背包　C：家庭状态　J：生存手册　T：快捷移动\nEsc：关闭界面　F1：测试工具　F5：保存　F9：读取", 14, Color("aebcc1")
 	)
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(controls)
@@ -704,6 +781,37 @@ func hide_family_status() -> void:
 	family_overlay.visible = false
 
 
+func show_survival_manual(objective: String, inspection_entries: Array) -> void:
+	manual_objective_label.text = objective if not objective.is_empty() else "尚无明确目标。"
+	var lines: Array[String] = []
+	for raw_entry in inspection_entries:
+		if not (raw_entry is Dictionary):
+			continue
+		var entry: Dictionary = raw_entry
+		lines.append(
+			"%s\n%s\n记录时间：%s"
+			% [
+				str(entry.get("name", "未知对象")),
+				str(entry.get("summary", "状态未知")),
+				str(entry.get("checked_at", "尚未检查")),
+			]
+		)
+	manual_records_label.text = (
+		"\n\n".join(lines) if not lines.is_empty() else "尚未检查任何环境对象。"
+	)
+	manual_overlay.visible = true
+	manual_overlay.move_to_front()
+	prompt_panel.visible = false
+
+
+func hide_survival_manual() -> void:
+	manual_overlay.visible = false
+
+
+func current_objective_text() -> String:
+	return objective_label.text
+
+
 func _add_family_card(member: Dictionary) -> void:
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(214, 390)
@@ -813,9 +921,9 @@ func hide_debug_menu() -> void:
 	debug_overlay.visible = false
 
 
-func show_event_browser(entries: Array) -> void:
+func show_event_browser(entries: Array, validation_errors: Array[String] = []) -> void:
 	hide_debug_menu()
-	event_browser.show_entries(entries)
+	event_browser.show_entries(entries, validation_errors)
 
 
 func hide_event_browser() -> void:
@@ -826,6 +934,11 @@ func hide_event_browser() -> void:
 func _on_quick_travel_pressed(location_id: String) -> void:
 	hide_quick_travel()
 	quick_travel_selected.emit(location_id)
+
+
+func _on_survival_manual_pressed() -> void:
+	if not is_blocking():
+		survival_manual_requested.emit()
 
 
 func _on_debug_action_pressed(action_id: String) -> void:
@@ -948,6 +1061,9 @@ func close_top_overlay() -> void:
 	if quick_travel_overlay != null and quick_travel_overlay.visible:
 		hide_quick_travel()
 		return
+	if manual_overlay != null and manual_overlay.visible:
+		hide_survival_manual()
+		return
 	if family_overlay != null and family_overlay.visible:
 		hide_family_status()
 		return
@@ -966,6 +1082,7 @@ func is_blocking() -> bool:
 		or (day_summary_overlay != null and day_summary_overlay.visible)
 		or (transition_overlay != null and transition_overlay.visible)
 		or (family_overlay != null and family_overlay.visible)
+		or (manual_overlay != null and manual_overlay.visible)
 		or (quick_travel_overlay != null and quick_travel_overlay.visible)
 		or (debug_overlay != null and debug_overlay.visible)
 		or (event_browser != null and event_browser.visible)

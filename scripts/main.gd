@@ -151,13 +151,17 @@ func _ready() -> void:
 	hud.day_transition_blackout.connect(_on_day_transition_blackout)
 	hud.day_transition_finished.connect(_on_day_transition_finished)
 	hud.quick_travel_selected.connect(_on_quick_travel_selected)
+	hud.survival_manual_requested.connect(_open_survival_manual)
 	hud.debug_action_selected.connect(_on_debug_action_selected)
 	hud.event_browser_preview_requested.connect(_on_event_browser_preview_requested)
 	hud.event_browser_reset_requested.connect(_on_event_browser_reset_requested)
 	_update_hud()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if game_started and not _should_pause_continuous_clock():
+		if GameState.advance_continuous_clock(delta):
+			_update_hud()
 	player.movement_enabled = game_started and not hud.is_blocking()
 	if not game_started or hud.is_blocking():
 		current_target = null
@@ -210,6 +214,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.keycode == KEY_C and game_started and not hud.is_blocking():
 		_open_family_status()
 		return
+	if event.keycode == KEY_J and game_started and not hud.is_blocking():
+		_open_survival_manual()
+		return
 	if event.keycode == KEY_E and game_started and not hud.is_blocking():
 		_interact_with_current_target()
 		return
@@ -257,6 +264,9 @@ func _start_npc_dialogue(character_id: String) -> void:
 
 
 func _inspect_object(object_id: String) -> void:
+	if object_id == "kitchen_faucet":
+		_inspect_kitchen_faucet()
+		return
 	if object_id == "radio" and GameState.phase_id == "pre_rain_day_3_afternoon":
 		_open_evening_forecast()
 		return
@@ -316,6 +326,33 @@ func _inspect_object(object_id: String) -> void:
 	GameState.record_inspection(object_id)
 	pending_action = {"type": "close"}
 	hud.show_dialogue(str(info[0]), str(info[1]), ["记下了"])
+	_update_hud()
+
+
+func _inspect_kitchen_faucet() -> void:
+	if not GameState.has_flag("inspection_prototype_active"):
+		var supply_to_faucet := {
+			"normal": "normal",
+			"low": "low",
+			"unsafe": "cloudy",
+			"off": "off",
+		}
+		GameState.set_environment_state(
+			"kitchen_faucet",
+			str(supply_to_faucet.get(GameState.water_supply_state, "normal")),
+			false
+		)
+	var state_id := GameState.environment_state("kitchen_faucet", "normal")
+	var summaries := {
+		"normal": "水流稳定，颜色清澈，没有明显异味。当前检查没有发现异常。",
+		"low": "水流比平时细，水色仍然清澈。供水可能正在变得不稳定。",
+		"cloudy": "水带着浅黄色，杯底能看到细小沉淀，并有轻微异味。不宜直接饮用。",
+		"off": "打开龙头后只有管道声，没有水流出来。当前处于停水状态。",
+	}
+	var summary := str(summaries.get(state_id, "目前无法判断厨房供水状态。"))
+	GameState.record_environment_inspection("kitchen_faucet", "厨房水龙头", summary)
+	pending_action = {"type": "close"}
+	hud.show_dialogue("厨房水龙头", summary, ["记录并关闭水龙头"])
 	_update_hud()
 
 
@@ -471,6 +508,9 @@ func _on_quick_travel_selected(location_id: String) -> void:
 
 
 func _on_debug_action_selected(action_id: String) -> void:
+	if action_id != "faucet_prototype":
+		GameState.disable_continuous_clock()
+		GameState.flags.erase("inspection_prototype_active")
 	match action_id:
 		"unlock_car":
 			_debug_unlock_car()
@@ -495,8 +535,13 @@ func _on_debug_action_selected(action_id: String) -> void:
 		"rain_day_two":
 			_debug_skip_to_rain_day_two()
 			hud.show_toast("测试：已跳到暴雨第2天。")
+		"rain_day_three":
+			_debug_skip_to_rain_day_three()
+			hud.show_toast("测试：已跳到暴雨第3天。")
+		"faucet_prototype":
+			_debug_cycle_faucet_prototype()
 		"event_browser":
-			hud.show_event_browser(EventManager.debug_entries())
+			hud.show_event_browser(EventManager.debug_entries(), EventManager.validation_errors)
 		"reset":
 			_debug_reset_run()
 
@@ -507,7 +552,7 @@ func _on_event_browser_preview_requested(event_id: String) -> void:
 
 func _on_event_browser_reset_requested(event_id: String) -> void:
 	EventManager.debug_reset_event(event_id)
-	hud.show_event_browser(EventManager.debug_entries())
+	hud.show_event_browser(EventManager.debug_entries(), EventManager.validation_errors)
 	hud.show_toast("已允许事件重新触发；已经产生的资源和人物后果不会自动回滚。", 3.5)
 
 
@@ -624,6 +669,44 @@ func _debug_skip_to_rain_day_two() -> void:
 	pending_action.clear()
 	_update_hud()
 	_open_database_event("r2_morning_start", true)
+
+
+func _debug_skip_to_rain_day_three() -> void:
+	_debug_skip_to_rain_day_two()
+	EventManager.apply_choice("r2_morning_start", 0, true)
+	EventManager.apply_choice("r2_power_outage", 0, true)
+	GameState.settle_rain_day_two()
+	GameState.phase_id = "rain_day_3_morning"
+	GameState.day_label = "暴雨第3天"
+	GameState.time_label = "上午07:00"
+	GameState.time_segment = "morning"
+	GameState.weather_label = "暴雨 · 水质异常"
+	GameState.flags["rain_day_three_started"] = true
+	current_floor = 1
+	world.build_floor(current_floor)
+	player.global_position = Vector2(790.0, 735.0)
+	current_target = null
+	pending_action.clear()
+	processing_day_one_morning = false
+	_update_hud()
+	_open_database_event("r3_morning_start", true)
+
+
+func _debug_cycle_faucet_prototype() -> void:
+	var states := ["normal", "low", "cloudy", "off"]
+	var state_names := ["正常", "低压", "浑浊", "停水"]
+	var next_index := (int(GameState.flags.get("faucet_debug_index", -1)) + 1) % states.size()
+	GameState.flags["faucet_debug_index"] = next_index
+	GameState.flags["inspection_prototype_active"] = true
+	GameState.set_environment_state("kitchen_faucet", str(states[next_index]), true)
+	GameState.enable_continuous_clock(480.0)
+	current_floor = 1
+	world.build_floor(current_floor)
+	player.global_position = Vector2(790.0, 220.0)
+	current_target = null
+	pending_action.clear()
+	_update_hud()
+	hud.show_toast("检查原型：水龙头真实状态已设为%s；请到厨房水槽检查。" % state_names[next_index], 4.0)
 
 
 func _debug_reset_run() -> void:
@@ -750,13 +833,20 @@ func _update_hud() -> void:
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第3夜结算。"
 			"rain_day_4_morning":
 				objective = "暴雨第4天：车库渗水的结果已经显现。纵向切片到此结束。"
+	if GameState.has_flag("inspection_prototype_active"):
+		objective = "检查原型：到一楼厨房水槽旁，主动检查水龙头并把结果记入手册。"
 	hud.set_context(
 		"%s · %s" % [GameState.day_label, GameState.time_label],
 		GameState.weather_label,
 		place,
 		objective
 	)
-	if GameState.has_flag("first_shopping_complete"):
+	if GameState.has_flag("inspection_prototype_active"):
+		var known_text := "尚未检查"
+		if GameState.inspection_knowledge.has("kitchen_faucet"):
+			known_text = "已有检查记录"
+		hud.set_progress_text("厨房供水：%s · J打开生存手册" % known_text)
+	elif GameState.has_flag("first_shopping_complete"):
 		var segment_text := "上午"
 		match GameState.time_segment:
 			"daytime":
@@ -1000,6 +1090,18 @@ func _open_personal_inventory() -> void:
 
 func _open_family_status() -> void:
 	hud.show_family_status(GameState.family_status_entries(), GameState.household_status())
+
+
+func _open_survival_manual() -> void:
+	hud.show_survival_manual(hud.current_objective_text(), GameState.inspection_manual_entries())
+
+
+func _should_pause_continuous_clock() -> bool:
+	if not GameState.continuous_clock_enabled:
+		return true
+	if str(pending_action.get("type", "")) == "container_grid" and hud.is_item_grid_open():
+		return false
+	return hud.is_blocking()
 
 
 func _entries_from_item_list(item_ids: Array, removable: bool = false) -> Array:
