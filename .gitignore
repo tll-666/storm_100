@@ -10,9 +10,20 @@ export_presets.cfg
 # UID cache
 .godot/
 
+# Godot 编辑器在本地生成的用户数据
+Godot/
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Zip archives
 *.zip
+
+# 本地开发工具和 Godot 生成的脚本 UID
+tools/
+*.gd.uid
+godot-headless.log
+mcp_interaction_server.gd
+mcp_server_runtime.json
+**/config/mcp_server.json

@@ -569,9 +569,9 @@ func _build_quick_travel_overlay() -> void:
 
 	var locations := [
 		["living_room", "一楼 · 客厅与餐桌"],
-		["garage", "一楼 · 车库"],
+		["entry", "一楼 · 玄关与外出装备"],
 		["master_bedroom", "二楼 · 主卧床边"],
-		["balcony", "二楼 · 公共阳台"],
+		["balcony", "二楼 · 窗边与接水区"],
 	]
 	for entry in locations:
 		var button := Button.new()

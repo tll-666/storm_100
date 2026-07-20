@@ -14,6 +14,10 @@ config/name="暴雨100天 · 3D房屋样板"
 run/main_scene="res://scenes/house_prototype.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+McpInteractionServer="*res://scripts/mcp_interaction_server.gd"
+
 [display]
 
 window/size/viewport_width=1280
