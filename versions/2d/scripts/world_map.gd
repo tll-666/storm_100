@@ -107,8 +107,8 @@ func _update_interaction_visibility() -> void:
 		if not child is InteractionObject:
 			continue
 		var object: InteractionObject = child
-		var object_room := room_at_position(object.position)
-		object.visible = active_room_id.is_empty() or object_room == active_room_id
+		# 室内取消战争迷雾，所有房间的互动点始终可见。
+		object.visible = true
 
 
 func get_nearest_interactable(origin: Vector2, maximum_distance: float = 92.0) -> InteractionObject:
@@ -230,12 +230,9 @@ func _update_darkness() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color("172127"), true)
-	if current_floor == 1:
-		_draw_ground_exterior()
-	elif current_floor == 2:
-		_draw_second_floor_exterior()
-	else:
+	# 房屋外部不再绘制可玩区域，只留下黑色背景；超市仍是独立外出场景。
+	draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color("030507"), true)
+	if current_floor == 3:
 		_draw_store_exterior()
 	for room in _rooms_for_floor(current_floor):
 		_draw_room(room)
@@ -245,39 +242,10 @@ func _draw() -> void:
 		_draw_furniture(furniture)
 	_draw_floor_details()
 	_draw_weather_effects()
-	_draw_room_visibility()
-
-
-func _draw_room_visibility() -> void:
-	if current_floor == 3 or active_room_id.is_empty():
-		return
-	var font := ThemeDB.fallback_font
-	for raw_room in _rooms_for_floor(current_floor):
-		var room: Dictionary = raw_room
-		var room_id := str(room.get("id", ""))
-		if room_id == active_room_id:
-			continue
-		var rect: Rect2 = room.get("rect", Rect2())
-		var explored := GameState.is_room_explored(current_floor, room_id) if GameState else false
-		var cover := Color(0.018, 0.028, 0.034, 0.80) if explored else Color(0.008, 0.012, 0.016, 0.94)
-		draw_rect(rect, cover, true)
-		draw_rect(rect, Color(0.12, 0.17, 0.19, 0.75), false, 2.0)
-		var hint := "上次所见" if explored else "尚未进入"
-		var hint_size := font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 12)
-		draw_string(
-			font,
-			Vector2(rect.get_center().x - hint_size.x * 0.5, rect.get_center().y + 4.0),
-			hint,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			12,
-			Color(0.55, 0.62, 0.64, 0.72)
-		)
 
 
 func _draw_weather_effects() -> void:
-	_draw_rain()
-	_draw_flood_water()
+	# 屋外是不可进入的黑幕，雨声和天气信息交给 HUD/事件表现。
 	if darkness_alpha > 0.01:
 		draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color(0.0, 0.0, 0.0, darkness_alpha), true)
 
@@ -295,94 +263,6 @@ func _draw_rain() -> void:
 			break
 		var pos: Vector2 = rain_drops[i]
 		draw_line(pos, pos + Vector2(8.0, drop_len), rain_color, 1.0)
-
-
-func _flood_level() -> int:
-	if not GameState:
-		return 0
-	for day in range(8, 16):
-		if GameState.has_flag("rain_day_%d_started" % day):
-			return mini(9, 6 + int((day - 7) / 2))
-	if GameState.has_flag("rain_day_seven_started") or GameState.has_flag("rain_day_six_started"):
-		return 6
-	if GameState.has_flag("rain_day_five_started"):
-		return 5
-	if GameState.has_flag("rain_day_four_started") or GameState.has_flag("rain_day_three_started"):
-		return 3
-	if GameState.has_flag("rain_day_two_started"):
-		return 2
-	if GameState.has_flag("rain_day_one_started"):
-		return 1
-	return 0
-
-
-func _draw_flood_water() -> void:
-	var flood := _flood_level()
-	if flood <= 0:
-		return
-	if current_floor == 1:
-		var garage_water_height := 20.0 + float(flood) * 25.0
-		var water_rect := Rect2(180.0, 840.0 - garage_water_height, 320.0, garage_water_height)
-		draw_rect(water_rect, Color(0.15, 0.22, 0.30, 0.55), true)
-		for x in range(190, 480, 20):
-			var ripple := sin(animation_time * 2.0 + x * 0.1) * 2.0
-			draw_line(
-				Vector2(float(x), water_rect.position.y + ripple),
-				Vector2(float(x) + 15.0, water_rect.position.y + ripple),
-				Color(0.3, 0.45, 0.55, 0.4),
-				1.0
-			)
-	if current_floor == 1 or current_floor == 2:
-		var street_water_y := 970.0 - float(flood) * 15.0
-		draw_rect(
-			Rect2(0.0, street_water_y, 1600.0, 1100.0 - street_water_y),
-			Color(0.18, 0.25, 0.32, 0.45),
-			true
-		)
-		for x in range(0, 1600, 30):
-			var ripple := sin(animation_time * 1.5 + x * 0.08) * 3.0
-			draw_line(
-				Vector2(float(x), street_water_y + ripple),
-				Vector2(float(x) + 25.0, street_water_y + ripple),
-				Color(0.35, 0.5, 0.6, 0.35),
-				1.0
-			)
-
-
-func _draw_ground_exterior() -> void:
-	draw_rect(Rect2(0.0, 860.0, 1600.0, 120.0), Color("405049"), true)
-	draw_rect(Rect2(0.0, 980.0, 1600.0, 120.0), Color("343e43"), true)
-	draw_rect(Rect2(0.0, 970.0, 1600.0, 10.0), Color("9a9787"), true)
-	for x in range(30, 1600, 180):
-		draw_rect(Rect2(float(x), 1035.0, 94.0, 6.0), Color(0.82, 0.78, 0.58, 0.72), true)
-	draw_rect(Rect2(170.0, 860.0, 330.0, 120.0), Color("596159"), true)
-	draw_rect(Rect2(500.0, 860.0, 930.0, 120.0), Color("526650"), true)
-	draw_rect(Rect2(250.0, 860.0, 205.0, 120.0), Color("6d716b"), true)
-	for index in range(7):
-		var x := 535.0 + float(index) * 126.0
-		var sway := sin(animation_time * 1.4 + float(index)) * 3.0
-		draw_line(Vector2(x, 920.0), Vector2(x + sway, 886.0), Color("334b37"), 5.0)
-		draw_circle(Vector2(x + sway, 880.0), 15.0, Color("3f6748"))
-	var font := ThemeDB.fallback_font
-	draw_string(
-		font,
-		Vector2(32.0, 1016.0),
-		"城市边缘 · 住宅街",
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		16,
-		Color("cbd5d3")
-	)
-	draw_string(
-		font, Vector2(1190.0, 1016.0), "排水河方向 →", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("aebdc1")
-	)
-
-
-func _draw_second_floor_exterior() -> void:
-	draw_rect(Rect2(0.0, 860.0, 1600.0, 240.0), Color("253239"), true)
-	draw_rect(Rect2(0.0, 970.0, 1600.0, 130.0), Color("2f393e"), true)
-	for x in range(20, 1600, 170):
-		draw_rect(Rect2(float(x), 1038.0, 90.0, 5.0), Color(0.78, 0.76, 0.58, 0.45), true)
 
 
 func _draw_store_exterior() -> void:
@@ -404,18 +284,7 @@ func _draw_store_exterior() -> void:
 
 func _draw_floor_details() -> void:
 	var font := ThemeDB.fallback_font
-	if current_floor == 1:
-		draw_string(
-			font, Vector2(1110.0, 935.0), "前院", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("d6dfd3")
-		)
-		draw_string(
-			font, Vector2(290.0, 935.0), "车道", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("d6dfd3")
-		)
-	elif current_floor == 2:
-		for x in range(200, 490, 34):
-			draw_line(Vector2(float(x), 520.0), Vector2(float(x), 560.0), Color("c3cdca"), 4.0)
-		draw_line(Vector2(190.0, 520.0), Vector2(490.0, 520.0), Color("c3cdca"), 4.0)
-	else:
+	if current_floor == 3:
 		draw_string(
 			font,
 			Vector2(680.0, 130.0),
@@ -424,6 +293,20 @@ func _draw_floor_details() -> void:
 			-1,
 			15,
 			Color("426150")
+		)
+	elif current_floor == 1:
+		var door_rect := Rect2(580.0, 844.0, 140.0, 16.0)
+		draw_rect(door_rect, Color("3a2a1e"), true)
+		draw_rect(door_rect, Color("6b4a32"), false, 2.0)
+		draw_line(Vector2(650.0, 852.0), Vector2(650.0, 852.0), Color("d4a857"), 3.0)
+		draw_string(
+			font,
+			Vector2(620.0, 838.0),
+			"大门",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			13,
+			Color("b8a070")
 		)
 
 
@@ -473,10 +356,15 @@ func _draw_room(room: Dictionary) -> void:
 			1.0
 		)
 	var font := ThemeDB.fallback_font
+	var label_pos := rect.position + Vector2(20.0, 30.0)
+	var label_text := str(room.get("short_label", room.label))
+	var label_size := font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16)
+	if label_pos.x + label_size.x > rect.end.x - 8.0:
+		label_pos.x = rect.position.x + maxf(8.0, (rect.size.x - label_size.x) * 0.5)
 	draw_string(
 		font,
-		rect.position + Vector2(16.0, 28.0),
-		str(room.label),
+		label_pos,
+		label_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
 		16,
@@ -556,7 +444,6 @@ func _rooms_for_floor(floor_number: int) -> Array:
 		]
 	if floor_number == 2:
 		return [
-			{"id": "balcony", "rect": Rect2(180, 500, 320, 350), "label": "二楼公共阳台", "short_label": "阳台", "color": Color("71877c")},
 			{"id": "master_bedroom", "rect": Rect2(500, 100, 350, 300), "label": "主卧", "short_label": "主卧", "color": Color("a2838c")},
 			{"id": "teen_bedroom", "rect": Rect2(850, 100, 270, 300), "label": "大孩子房", "short_label": "大孩房", "color": Color("7e8eaf")},
 			{"id": "upstairs_bathroom", "rect": Rect2(1120, 100, 300, 220), "label": "二楼厕所", "short_label": "厕所", "color": Color("84a8aa")},
@@ -565,7 +452,6 @@ func _rooms_for_floor(floor_number: int) -> Array:
 			{"id": "upstairs_storage", "rect": Rect2(1120, 650, 300, 200), "label": "储物角", "short_label": "储物", "color": Color("8f8775")},
 		]
 	return [
-		{"id": "garage", "rect": Rect2(180, 500, 320, 350), "label": "车库 · 地面较低", "short_label": "车库", "color": Color("717b7d")},
 		{"id": "kitchen", "rect": Rect2(500, 100, 400, 240), "label": "厨房 / 食品柜", "short_label": "厨房", "color": Color("8ca093")},
 		{"id": "bathroom", "rect": Rect2(900, 100, 220, 240), "label": "厕所 / 洗衣", "short_label": "厕所", "color": Color("86aaac")},
 		{"id": "back_storage", "rect": Rect2(1120, 100, 300, 240), "label": "后侧储物", "short_label": "后储物", "color": Color("938b78")},
@@ -591,11 +477,7 @@ func _walls_for_floor(floor_number: int) -> Array[Rect2]:
 			Rect2(500, 90, 930, 16),
 			Rect2(1414, 90, 16, 770),
 			Rect2(500, 844, 930, 16),
-			Rect2(500, 90, 16, 470),
-			Rect2(500, 710, 16, 150),
-			Rect2(170, 490, 330, 16),
-			Rect2(170, 844, 330, 16),
-			Rect2(170, 490, 16, 370),
+			Rect2(500, 90, 16, 770),
 			Rect2(850, 90, 16, 170),
 			Rect2(850, 380, 16, 20),
 			Rect2(1120, 90, 16, 90),
@@ -612,15 +494,9 @@ func _walls_for_floor(floor_number: int) -> Array[Rect2]:
 	return [
 		Rect2(500, 90, 930, 16),
 		Rect2(1414, 90, 16, 770),
-		Rect2(500, 844, 45, 16),
-		Rect2(675, 844, 755, 16),
-		Rect2(500, 90, 16, 400),
-		Rect2(170, 490, 330, 16),
-		Rect2(170, 844, 50, 16),
-		Rect2(450, 844, 50, 16),
-		Rect2(170, 490, 16, 370),
-		Rect2(500, 490, 16, 40),
-		Rect2(500, 780, 16, 80),
+		Rect2(500, 844, 80, 16),
+		Rect2(720, 844, 710, 16),
+		Rect2(500, 90, 16, 770),
 		Rect2(900, 90, 16, 240),
 		Rect2(1120, 90, 16, 240),
 		Rect2(500, 330, 150, 16),
@@ -658,23 +534,10 @@ func _furniture_for_floor(floor_number: int) -> Array:
 			{"rect": Rect2(1305, 430, 82, 60), "label": "玩具柜", "color": Color("73613f")},
 			{"rect": Rect2(1185, 555, 115, 50), "label": "小书桌", "color": Color("796c55")},
 			{"rect": Rect2(695, 510, 155, 68), "label": "旧沙发", "color": Color("76604c")},
-			{
-				"rect": Rect2(240, 630, 65, 55),
-				"label": "水桶",
-				"color": Color("4e909b"),
-				"solid": false
-			},
-			{
-				"rect": Rect2(390, 690, 65, 55),
-				"label": "排水口",
-				"color": Color("52675d"),
-				"solid": false
-			},
+			{"rect": Rect2(555, 710, 65, 55), "label": "接水桶", "color": Color("4e909b"), "solid": false},
+			{"rect": Rect2(660, 710, 65, 55), "label": "窗边排水", "color": Color("52675d"), "solid": false},
 		]
 	return [
-		{"rect": Rect2(235, 565, 205, 112), "label": "汽车", "color": Color("445158")},
-		{"rect": Rect2(205, 745, 135, 55), "label": "工具架", "color": Color("5c6669")},
-		{"rect": Rect2(390, 760, 62, 52), "label": "排水口", "color": Color("4c5c60"), "solid": false},
 		{"rect": Rect2(535, 135, 70, 92), "label": "冰箱", "color": Color("d2d9d5")},
 		{"rect": Rect2(655, 135, 130, 55), "label": "灶台", "color": Color("546d61")},
 		{"rect": Rect2(800, 135, 68, 55), "label": "水槽", "color": Color("7e9088")},
@@ -688,7 +551,7 @@ func _furniture_for_floor(floor_number: int) -> Array:
 		{"rect": Rect2(1180, 405, 145, 86), "label": "床", "color": Color("756168")},
 		{"rect": Rect2(1330, 405, 58, 75), "label": "衣柜", "color": Color("67564c")},
 		{"rect": Rect2(1215, 690, 150, 56), "label": "矮柜", "color": Color("705e4f")},
-		{"rect": Rect2(530, 715, 120, 48), "label": "鞋柜", "color": Color("715b47")},
+		{"rect": Rect2(530, 715, 120, 48), "label": "外出装备柜", "color": Color("715b47")},
 		{
 			"rect": Rect2(1000, 720, 75, 50),
 			"label": "配电箱",
@@ -797,17 +660,17 @@ func _interactions_for_floor(floor_number: int) -> Array:
 			},
 			{
 				"id": "balcony_drain",
-				"position": Vector2(420, 720),
-				"prompt": "检查阳台排水口",
+				"position": Vector2(690, 745),
+				"prompt": "检查窗边接水区",
 				"category": "inspect",
-				"name": "排水口"
+				"name": "窗边排水"
 			},
 			{
 				"id": "balcony_view",
-				"position": Vector2(280, 555),
-				"prompt": "从阳台观察街道",
+				"position": Vector2(560, 555),
+				"prompt": "检查封闭窗边",
 				"category": "inspect",
-				"name": "街道"
+				"name": "窗边观察点"
 			},
 			{
 				"id": "teen_desk",
@@ -857,17 +720,17 @@ func _interactions_for_floor(floor_number: int) -> Array:
 		},
 		{
 			"id": "car",
-			"position": Vector2(340, 715),
-			"prompt": "检查汽车和后备箱",
+			"position": Vector2(690, 760),
+			"prompt": "在玄关准备外出",
 			"category": "inspect",
-			"name": "汽车"
+			"name": "外出装备柜"
 		},
 		{
 			"id": "garage_drain",
-			"position": Vector2(420, 805),
-			"prompt": "检查车库排水口",
+			"position": Vector2(690, 805),
+			"prompt": "检查入户门缝",
 			"category": "inspect",
-			"name": "排水口"
+			"name": "入户门槛"
 		},
 		{
 			"id": "fridge",
@@ -912,11 +775,11 @@ func _interactions_for_floor(floor_number: int) -> Array:
 			"name": "配电箱"
 		},
 		{
-			"id": "front_yard",
-			"position": Vector2(790, 915),
-			"prompt": "观察住宅街",
+			"id": "front_door",
+			"position": Vector2(650, 815),
+			"prompt": "查看大门外的情况",
 			"category": "inspect",
-			"name": "前院"
+			"name": "大门"
 		},
 		{
 			"id": "day_planner",

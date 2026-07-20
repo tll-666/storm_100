@@ -74,16 +74,16 @@ const DIALOGUES := {
 }
 
 const INSPECTIONS := {
-	"car": ["汽车和后备箱", "油箱只剩三分之一。后备箱很宽，普通购物可以按10格计算；真正外出时个人只能携带6格。"],
-	"garage_drain": ["车库排水口", "排水口周围积着灰尘和落叶。车库地面比住宅低，将来会是最早积水的位置。"],
+	"car": ["玄关外出装备", "外出所需的钥匙、随手包和搬运清单都放在这里。真正出门会进入独立事件场景，不需要走进屋外。"],
+	"garage_drain": ["入户门缝", "门槛和门缝附近暂时没有明显渗水。暴雨后这里会成为一楼最先需要确认的低处。"],
 	"fridge": ["冰箱", "只剩少量肉、鸡蛋、牛奶和蔬菜，大约够一家人吃两天。"],
 	"pantry": ["食品柜", "米缸快见底了，旁边还有几包方便面。这里将是家庭食品储存的主要位置。"],
 	"radio": ["收音机", "旋钮转动时只有沙沙声。电池已经没什么电了。"],
 	"bathroom": ["厕所 / 洗衣区", "卫生用品和清洁用品都快用完了。二楼厕所与这里共用一条上下水管线。"],
 	"breaker": ["配电箱", "线路看起来很旧。连续潮湿以后，这里可能出现跳闸或短路。"],
-	"front_yard": ["住宅街", "街道地势向排水河方向缓慢下降。现在路面干燥，只有风比平时更大。"],
-	"balcony_drain": ["二楼阳台", "公共阳台位于车库上方。排水口落着几片叶子，角落可以放接雨水的容器。"],
-	"balcony_view": ["阳台外", "从这里能看见住宅街和远处的排水河方向。后期也可以用于观察、求救和接收投递。"],
+	"front_door": ["大门", "门外是黑幕。通过门槛、门缝和声音判断外面的情况。"],
+	"balcony_drain": ["窗边接水区", "接水桶放在封闭窗边，排水管和窗框都能在室内检查。外部区域不可进入，只保留声音和事件反馈。"],
+	"balcony_view": ["封闭窗边", "窗外不再绘制可探索区域。这里用于听取雨声、接收信号和触发相关事件。"],
 	"teen_desk": ["大孩子的书桌", "充电宝只有一半电，充电线被压在书本下面。"],
 	"child_toys": ["小孩子的玩具柜", "玩具和绘本塞得很满。长时间不能外出时，这里会影响小孩子的情绪。"],
 }
@@ -177,15 +177,15 @@ func _process(delta: float) -> void:
 	current_target = world.get_nearest_interactable(player.global_position)
 	var prompt := current_target.prompt_text if current_target != null else ""
 	if current_target != null and current_target.object_id == "garage_drain" and GameState.phase_id == "rain_day_3_garage":
-		prompt = "查看车库渗水"
+		prompt = "查看入户门缝渗水"
 	if current_target != null and current_target.object_id == "car" and _ready_for_store():
-		prompt = "开车去社区超市"
+		prompt = "从玄关出发去社区超市"
 	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
-		prompt = "出发接人"
+		prompt = "从玄关出发接人"
 	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_after_pickup":
-		prompt = "再去一次超市"
+		prompt = "从玄关再次出发"
 	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
-		prompt = "冒雨去超市"
+		prompt = "从玄关冒雨出发"
 	if current_target != null and current_target.object_id == "day_planner":
 		if GameState.phase_id == "pre_rain_day_3_after_first_shop":
 			prompt = "安排今天下午"
@@ -329,16 +329,16 @@ func _inspect_object(object_id: String) -> void:
 	if object_id == "car" and GameState.phase_id == "pre_rain_day_1_after_pickup":
 		pending_action = {"type": "travel_to_second_store"}
 		hud.show_dialogue(
-			"汽车",
-			"油箱接近见底，还能跑一趟。超市还没关门，但雨天商品可能开始限购或缺货。要再去一次吗？",
+			"玄关外出装备",
+			"外出装备已经整理好，还能再完成一趟独立外出事件。超市还没关门，但雨天商品可能开始限购或缺货。要再去一次吗？",
 			["开车去超市", "今天不再出门"]
 		)
 		return
 	if object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
 		pending_action = {"type": "travel_to_third_store"}
 		hud.show_dialogue(
-			"汽车",
-			"雨还在下，但短暂减弱了一些。油箱勉强够跑一趟。超市可能已经缺货大半，这次出去风险不小。",
+			"玄关外出装备",
+			"雨还在下，但短暂减弱了一些。外出行动仍有风险，超市可能已经缺货大半。",
 			["冒雨去超市", "还是不出门了"]
 		)
 		return
@@ -346,7 +346,7 @@ func _inspect_object(object_id: String) -> void:
 		var clue_events := {
 			"radio": "d2_clue_radio",
 			"balcony_view": "d2_clue_balcony",
-			"front_yard": "d2_clue_street",
+			"front_door": "d2_clue_street",
 			"garage_drain": "d2_clue_garage",
 		}
 		if clue_events.has(object_id) and EventManager.is_available(str(clue_events[object_id])):
@@ -355,8 +355,8 @@ func _inspect_object(object_id: String) -> void:
 	if object_id == "car" and _ready_for_store():
 		pending_action = {"type": "travel_to_store"}
 		hud.show_dialogue(
-			"汽车",
-			"需求已经记得差不多了。现在去社区超市，回来后再处理下午的安排。",
+			"玄关外出装备",
+			"需求已经记得差不多了。现在可以从玄关进入社区超市事件，回来后再处理下午的安排。",
 			["开车去超市", "再检查一下"]
 		)
 		return
@@ -369,7 +369,7 @@ func _inspect_object(object_id: String) -> void:
 		return
 	var info: Array = INSPECTIONS[object_id]
 	if object_id == "car" and GameState.has_flag("first_shopping_complete"):
-		info = ["汽车和后备箱", "第一次购物已经搬回家。油箱仍然只剩三分之一，下午是否开车还需要考虑。"]
+		info = ["玄关外出装备", "第一次购物已经搬回家。外出装备仍然放在原处，下午是否再次出门还需要考虑。"]
 	GameState.record_inspection(object_id)
 	pending_action = {"type": "close"}
 	hud.show_dialogue(str(info[0]), str(info[1]), ["记下了"])
@@ -562,7 +562,7 @@ func _switch_floor(floor_number: int) -> void:
 	current_floor = floor_number
 	world.build_floor(current_floor)
 	player.global_position = world.spawn_position(current_floor)
-	hud.show_toast("来到二楼和公共阳台。" if current_floor == 2 else "回到一楼。")
+	hud.show_toast("来到二楼窗边和家庭活动区。" if current_floor == 2 else "回到一楼。")
 	_update_hud()
 
 
@@ -572,9 +572,9 @@ func _on_quick_travel_selected(location_id: String) -> void:
 		return
 	var destinations := {
 		"living_room": {"floor": 1, "position": Vector2(825.0, 605.0), "name": "一楼客厅"},
-		"garage": {"floor": 1, "position": Vector2(350.0, 720.0), "name": "一楼车库"},
+		"entry": {"floor": 1, "position": Vector2(610.0, 745.0), "name": "一楼玄关"},
 		"master_bedroom": {"floor": 2, "position": Vector2(650.0, 275.0), "name": "二楼主卧"},
-		"balcony": {"floor": 2, "position": Vector2(330.0, 735.0), "name": "二楼公共阳台"},
+		"balcony": {"floor": 2, "position": Vector2(610.0, 700.0), "name": "二楼窗边"},
 	}
 	if not destinations.has(location_id):
 		return
@@ -597,7 +597,7 @@ func _on_debug_action_selected(action_id: String) -> void:
 	match action_id:
 		"unlock_car":
 			_debug_unlock_car()
-			hud.show_toast("测试：前置调查已完成，现在可以直接去车库开车。", 3.2)
+			hud.show_toast("测试：前置调查已完成，现在可以从玄关出发。", 3.2)
 		"go_store":
 			_debug_unlock_car()
 			_enter_supermarket()
@@ -1001,9 +1001,9 @@ func _update_hud() -> void:
 	var inspected_count := GameState.inspected.size()
 	var objective := "与四位家人交谈，检查房屋关键位置。"
 	if talked_count >= 4:
-		objective = "家人的需求已经记下。继续检查车库、厨房和阳台。"
+		objective = "家人的需求已经记下。继续检查玄关、厨房和二楼窗边。"
 	if talked_count >= 4 and inspected_count >= 5:
-		objective = "需求已经记下：到车库开车去社区超市。"
+		objective = "需求已经记下：到玄关进入社区超市外出事件。"
 	if GameState.has_flag("first_shopping_complete"):
 		match GameState.phase_id:
 			"pre_rain_day_3_after_first_shop":
@@ -1015,7 +1015,7 @@ func _update_hud() -> void:
 			"pre_rain_day_2_morning":
 				objective = "第二天清晨：到客厅检查收音机，确认最新天气提醒。"
 			"pre_rain_day_2_clues":
-				objective = "从收音机、阳台、住宅街或车库取得至少两条额外线索。"
+				objective = "从收音机、二楼窗边、入户门或门缝取得至少两条额外线索。"
 			"pre_rain_day_2_notices":
 				objective = "重点准备已完成：到客厅餐桌查看学校和社区通知。"
 			"pre_rain_day_2_evening":
@@ -1025,9 +1025,9 @@ func _update_hud() -> void:
 			"pre_rain_day_1_morning":
 				objective = "清晨：家人分散在学校和社区，先确认昨天的准备是否到位。"
 			"pre_rain_day_1_dispatch":
-				objective = "到车库准备出发接人：先接伴侣还是先接大孩子。"
+				objective = "到玄关准备出发接人：先接伴侣还是先接大孩子。"
 			"pre_rain_day_1_first_route":
-				objective = "选择前往目的地的路线：安全主干道或排水河近路。"
+				objective = "选择外出方案：稳妥路线或低洼近路。"
 			"pre_rain_day_1_en_route":
 				objective = "前往第一个接人点。"
 			"pre_rain_day_1_second_route":
@@ -1035,13 +1035,13 @@ func _update_hud() -> void:
 			"pre_rain_day_1_second_arrival":
 				objective = "接上第二个人，回家。"
 			"pre_rain_day_1_after_pickup":
-				objective = "接人完成：可以去车库开车去超市，或到主卧等待晚上。"
+				objective = "接人完成：可以从玄关进入超市外出事件，或到主卧等待晚上。"
 			"pre_rain_day_1_evening":
 				objective = "今天的接人和购物已经结束：到二楼主卧睡觉。"
 			"rain_day_1_morning":
-				objective = "暴雨第1天：到车库决定是否冒雨去购物。"
+				objective = "暴雨第1天：到玄关决定是否冒雨进入购物事件。"
 			"rain_day_1_dispatch":
-				objective = "雨有短暂减弱。到车库开车去超市。"
+				objective = "雨有短暂减弱。到玄关进入社区超市事件。"
 			"rain_day_1_home":
 				objective = "有人敲门。去玄关看看。"
 			"rain_day_1_noise":
@@ -1057,9 +1057,9 @@ func _update_hud() -> void:
 			"rain_day_2_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第2夜结算。"
 			"rain_day_3_morning":
-				objective = "暴雨第3天：车库方向传来不妙的声音。去一楼检查。"
+				objective = "暴雨第3天：一楼门缝方向传来不妙的声音。去一楼检查。"
 			"rain_day_3_garage":
-				objective = "车库开始渗水：选择封堵、排水、转移物资或暂不处理。"
+				objective = "入户门缝开始渗水：选择封堵、排水、转移物资或暂不处理。"
 			"rain_day_3_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第3夜结算。"
 			"rain_day_4_morning":
@@ -1525,7 +1525,7 @@ func _open_day_planner() -> void:
 				pending_action = {"type": "close"}
 				hud.show_dialogue(
 					"餐桌上的便签",
-					"目前的信息还太少。再检查收音机、阳台、住宅街或车库，至少获得三条线索后再决定。",
+					"目前的信息还太少。再检查收音机、二楼窗边、入户门或门缝，至少获得三条线索后再决定。",
 					["继续调查"]
 				)
 				return
@@ -1663,7 +1663,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_three"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第3天的行动已经结束。睡觉会进行暴雨第3夜结算——车库的状况会在明天显现。",
+			"暴雨第3天的行动已经结束。睡觉会进行暴雨第3夜结算——一楼低处的状况会在明天显现。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1736,9 +1736,9 @@ func _on_day_summary_confirmed() -> void:
 	elif pending_day_transition == "rain_day_two":
 		hud.play_day_transition("暴雨第2天", "上午07:00", "雨没有停。水压偏低，电力不稳定。")
 	elif pending_day_transition == "rain_day_three":
-		hud.play_day_transition("暴雨第3天", "上午07:00", "雨还在下。水质出现异常。车库方向传来不妙的声音。")
+		hud.play_day_transition("暴雨第3天", "上午07:00", "雨还在下。水质出现异常。一楼门缝方向传来不妙的声音。")
 	elif pending_day_transition == "rain_day_four":
-		hud.play_day_transition("暴雨第4天", "上午07:00", "雨还在下。车库渗水的结果已经显现。")
+		hud.play_day_transition("暴雨第4天", "上午07:00", "雨还在下。一楼低处渗水的结果已经显现。")
 	elif pending_day_transition == "rain_day_five":
 		hud.play_day_transition("暴雨第5天", "上午07:00", "第五天。水漫过第一级楼梯。手机只剩一格信号。")
 	elif pending_day_transition == "rain_day_six":
@@ -1907,7 +1907,7 @@ func _on_day_transition_finished() -> void:
 	pending_action = {"type": "day_two_morning"}
 	hud.show_dialogue(
 		"第二天清晨",
-		"夜里没有下雨。清晨的窗玻璃蒙着一层水汽，街道比昨天安静。客厅方向传来手机连续震动的声音。",
+		"夜里没有下雨。清晨的窗玻璃蒙着一层水汽，门口比昨天安静。客厅方向传来手机连续震动的声音。",
 		["起床查看"]
 	)
 
@@ -2050,7 +2050,7 @@ func _show_rain_day_two_summary() -> void:
 	]
 	hud.show_day_summary(
 		"暴雨第2天 · 夜间结算",
-		"水质出现异常，停电后恢复但不稳定。车库渗水可能在明天发生。",
+		"水质出现异常，停电后恢复但不稳定。一楼低处渗水可能在明天发生。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。"))
 	)
@@ -2067,11 +2067,11 @@ func _show_rain_day_three_summary() -> void:
 		{"name": "饮用水", "value": str(summary.get("water", "未知"))},
 		{"name": "供电", "value": str(summary.get("power", "未知"))},
 		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
-		{"name": "车库", "value": str(summary.get("garage", "未知"))},
+		{"name": "一楼低处", "value": str(summary.get("garage", "未知"))},
 	]
 	hud.show_day_summary(
 		"暴雨第3天 · 夜间结算",
-		"车库渗水的结果将在明天显现。",
+		"一楼低处渗水的结果将在明天显现。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。")),
 		{
