@@ -45,6 +45,12 @@ func _draw() -> void:
 			_draw_meat()
 		"eggs":
 			_draw_eggs()
+		"seeds":
+			_draw_seeds()
+		"shotgun":
+			_draw_shotgun()
+		"ammo":
+			_draw_ammo()
 		_:
 			draw_circle(Vector2(38, 34), 19, Color("78888d"))
 	if count > 1:
@@ -153,6 +159,28 @@ func _draw_cigarettes() -> void:
 	for y in [32.0, 38.0, 44.0, 50.0]:
 		draw_rect(Rect2(25, y, 28, 4), Color("e8e0d0"), true)
 		draw_rect(Rect2(47, y, 6, 4), Color("c45a3a"), true)
+
+
+func _draw_seeds() -> void:
+	draw_rect(Rect2(24, 24, 40, 36), Color("8a7355"), true)
+	draw_rect(Rect2(24, 24, 40, 6), Color("a88a5e"), true)
+	for x in [30.0, 40.0, 50.0]:
+		for y in [34.0, 44.0, 52.0]:
+			draw_circle(Vector2(x, y), 2.5, Color("c4a040"))
+	draw_string(ThemeDB.fallback_font, Vector2(30, 58), "种", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("5a4a30"))
+
+
+func _draw_shotgun() -> void:
+	draw_rect(Rect2(20, 30, 48, 8), Color("3a2a1e"), true)
+	draw_rect(Rect2(20, 28, 16, 12), Color("5a4030"), true)
+	draw_rect(Rect2(56, 31, 10, 6), Color("2a1a14"), true)
+
+
+func _draw_ammo() -> void:
+	for x in [26.0, 38.0, 50.0]:
+		draw_rect(Rect2(x, 30, 8, 24), Color("b8462a"), true)
+		draw_rect(Rect2(x, 28, 8, 4), Color("d4a050"), true)
+		draw_rect(Rect2(x, 50, 8, 6), Color("8a3020"), true)
 
 
 func _draw_oval_shape(center: Vector2, radii: Vector2, color: Color) -> void:

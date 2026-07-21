@@ -89,7 +89,6 @@ func minimap_rooms() -> Array:
 			"rect": room.get("rect", Rect2()),
 			"label": str(room.get("label", room_id)),
 			"short_label": str(room.get("short_label", room.get("label", room_id))),
-			"explored": GameState.is_room_explored(current_floor, room_id) if GameState else false,
 		})
 	return result
 
@@ -312,42 +311,7 @@ func _draw_floor_details() -> void:
 
 func _draw_room(room: Dictionary) -> void:
 	var rect: Rect2 = room.rect
-	var room_color: Color = room.color as Color
-	var room_id: String = str(room.get("id", ""))
-	if GameState and not room_id.is_empty():
-		var state := GameState.get_room_state(room_id)
-		match state:
-			"damp":
-				room_color = (room.color as Color).darkened(0.15)
-			"leaking":
-				room_color = (room.color as Color).darkened(0.28)
-			"flooded":
-				room_color = Color(0.3, 0.42, 0.55, 1.0)
-			"unusable":
-				room_color = Color(0.18, 0.2, 0.22, 1.0)
-	draw_rect(rect, room_color, true)
-	if GameState and not room_id.is_empty():
-		var state := GameState.get_room_state(room_id)
-		if state == "leaking":
-			var leak_seed := absi(room_id.hash())
-			for y in range(int(rect.position.y + 30.0), int(rect.end.y), 40):
-				var local_y := y - int(rect.position.y)
-				var leak_x := rect.position.x + 30.0 + fmod(float(leak_seed + local_y * 13), maxf(1.0, rect.size.x - 60.0))
-				draw_line(
-					Vector2(leak_x, float(y)),
-					Vector2(leak_x - 4.0, float(y) + 12.0),
-					Color(0.5, 0.65, 0.8, 0.35), 2.0
-				)
-		if state == "flooded" or state == "unusable":
-			var water_tint := Color(0.12, 0.27, 0.38, 0.58) if state == "flooded" else Color(0.1, 0.18, 0.24, 0.72)
-			draw_rect(rect, water_tint, true)
-			for row in range(18, int(rect.size.y), 34):
-				var wave_y := rect.position.y + float(row)
-				for x in range(int(rect.position.x + 10.0), int(rect.end.x - 12.0), 42):
-					var wave := sin(animation_time * 1.7 + float(x + row) * 0.055) * 3.0
-					draw_line(Vector2(float(x), wave_y + wave), Vector2(float(x) + 25.0, wave_y + wave), Color(0.48, 0.66, 0.72, 0.25), 2.0)
-			var debris_offset := fmod(animation_time * 7.0 + float(absi(room_id.hash()) % 70), maxf(30.0, rect.size.x - 70.0))
-			draw_rect(Rect2(rect.position + Vector2(18.0 + debris_offset, rect.size.y * 0.62), Vector2(24.0, 7.0)), Color(0.24, 0.19, 0.13, 0.75), true)
+	draw_rect(rect, room.color, true)
 	for y in range(int(rect.position.y + 18.0), int(rect.end.y), 30):
 		draw_line(
 			Vector2(rect.position.x, float(y)),
@@ -450,6 +414,7 @@ func _rooms_for_floor(floor_number: int) -> Array:
 			{"id": "child_bedroom", "rect": Rect2(1120, 320, 300, 330), "label": "小孩子房", "short_label": "小孩房", "color": Color("b09769")},
 			{"id": "family_area", "rect": Rect2(500, 400, 620, 450), "label": "楼梯平台 / 家庭活动区", "short_label": "活动区", "color": Color("aa9a7d")},
 			{"id": "upstairs_storage", "rect": Rect2(1120, 650, 300, 200), "label": "储物角", "short_label": "储物", "color": Color("8f8775")},
+			{"id": "balcony", "rect": Rect2(180, 650, 300, 200), "label": "阳台 · 未封顶", "short_label": "阳台", "color": Color("6b8a6e")},
 		]
 	return [
 		{"id": "kitchen", "rect": Rect2(500, 100, 400, 240), "label": "厨房 / 食品柜", "short_label": "厨房", "color": Color("8ca093")},
@@ -490,6 +455,9 @@ func _walls_for_floor(floor_number: int) -> Array[Rect2]:
 			Rect2(1330, 320, 100, 16),
 			Rect2(1120, 650, 90, 16),
 			Rect2(1330, 650, 100, 16),
+			Rect2(480, 650, 16, 80),
+			Rect2(480, 780, 16, 70),
+			Rect2(180, 650, 300, 16),
 		]
 	return [
 		Rect2(500, 90, 930, 16),
@@ -536,6 +504,8 @@ func _furniture_for_floor(floor_number: int) -> Array:
 			{"rect": Rect2(695, 510, 155, 68), "label": "旧沙发", "color": Color("76604c")},
 			{"rect": Rect2(555, 710, 65, 55), "label": "接水桶", "color": Color("4e909b"), "solid": false},
 			{"rect": Rect2(660, 710, 65, 55), "label": "窗边排水", "color": Color("52675d"), "solid": false},
+			{"rect": Rect2(210, 690, 120, 60), "label": "种植区", "color": Color("5a4a30"), "solid": false},
+			{"rect": Rect2(350, 690, 80, 60), "label": "雨水桶", "color": Color("4a7080"), "solid": false},
 		]
 	return [
 		{"rect": Rect2(535, 135, 70, 92), "label": "冰箱", "color": Color("d2d9d5")},
@@ -671,6 +641,13 @@ func _interactions_for_floor(floor_number: int) -> Array:
 				"prompt": "检查封闭窗边",
 				"category": "inspect",
 				"name": "窗边观察点"
+			},
+			{
+				"id": "balcony_garden",
+				"position": Vector2(270, 720),
+				"prompt": "查看种植区",
+				"category": "inspect",
+				"name": "阳台种植区"
 			},
 			{
 				"id": "teen_desk",

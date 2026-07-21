@@ -115,9 +115,9 @@ const STORE_SHELVES := {
 	},
 	"shelf_vice":
 	{
-		"name": "烟酒和零食",
-		"text": "货架角落摆着白酒和香烟。平时没人在意，灾后可能比食物还值钱。",
-		"items": ["alcohol", "cigarettes", "chocolate"],
+		"name": "烟酒零食和种子",
+		"text": "货架角落摆着白酒和香烟。底下有几包蔬菜种子，平时没人在意。",
+		"items": ["alcohol", "cigarettes", "chocolate", "seeds"],
 	},
 	"shelf_drinks":
 	{
@@ -212,7 +212,6 @@ func _refresh_room_focus(force: bool = false) -> void:
 		var store_changed := current_room_id != "store" or world.active_room_id != "store"
 		current_room_id = "store"
 		world.set_active_room(current_room_id)
-		GameState.mark_room_explored(current_floor, current_room_id)
 		if store_changed or force:
 			_set_camera_zoom(Vector2(1.15, 1.15), force)
 			_update_minimap()
@@ -225,7 +224,6 @@ func _refresh_room_focus(force: bool = false) -> void:
 		return
 	current_room_id = room_id
 	world.set_active_room(current_room_id)
-	GameState.mark_room_explored(current_floor, current_room_id)
 	_set_camera_zoom(Vector2(1.65, 1.65), force)
 	_update_minimap()
 	if not force:
@@ -1599,12 +1597,6 @@ func _handle_evening_forecast_choice(index: int) -> void:
 	]
 	var flags := ["prepare_tomorrow", "doors_checked", "shielded_child"]
 	GameState.flags[flags[safe_index]] = true
-	if safe_index == 0:
-		GameState.relationships["partner"] = int(GameState.relationships["partner"]) + 1
-	elif safe_index == 1:
-		GameState.relationships["elder"] = int(GameState.relationships["elder"]) + 1
-	else:
-		GameState.relationships["child"] = int(GameState.relationships["child"]) + 1
 	GameState.flags["evening_forecast_heard"] = true
 	GameState.phase_id = "pre_rain_day_3_evening"
 	GameState.time_label = "晚上19:10"
@@ -2248,22 +2240,18 @@ func _apply_shopping_reactions() -> String:
 		lines.append("两个孩子各自回了房间。老人把没电的收音机重新放回桌上。")
 	else:
 		if GameState.storage_has_any(["rice", "vegetables"]):
-			GameState.relationships["partner"] = int(GameState.relationships["partner"]) + 1
 			lines.append("伴侣先把家里真正缺的东西收好，神情轻松了一点。")
 		else:
 			lines.append("伴侣翻了翻购物袋，没有说什么，只提醒晚饭前可能还得想办法。")
 		if GameState.storage_has_any(["power_bank", "batteries", "noodles"]):
-			GameState.relationships["teen"] = int(GameState.relationships["teen"]) + 1
 			lines.append("大孩子找到了自己提过的东西，又提醒你下午留意手机。")
 		else:
 			lines.append("大孩子没在袋子里找到想要的东西，仍说下午会发消息。")
 		if GameState.storage_has_any(["milk", "chocolate"]):
-			GameState.relationships["child"] = int(GameState.relationships["child"]) + 1
-			lines.append("小孩子抱着牛奶或巧克力，高兴了一阵，但影响不会改变当天的大事。")
+			lines.append("小孩子抱着牛奶或巧克力，高兴了一阵。")
 		else:
 			lines.append("小孩子看了一眼购物袋，很快又跑回玩具柜旁。")
 		if GameState.storage_has_any(["canned_fish", "batteries", "bottled_water"]):
-			GameState.relationships["elder"] = int(GameState.relationships["elder"]) + 1
 			lines.append("老人把罐头、电池或水放到一边，说家里有点存货就好。")
 		else:
 			lines.append("老人没有埋怨，只又转了转没有声音的收音机旋钮。")
