@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -55,9 +55,7 @@
           "result": "几条毯子和一个插座直接进了黑色塑料袋。伴侣蹲在旁边帮你分，动作快得像要抢在什么东西前面。",
           "effects": [
             {"type": "set_flag", "id": "damage_from_delay"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3},
-            {"type": "relationship", "member": "partner", "amount": -1}
-          ]
+            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3}]
         }
       ],
       "merge": "rain_day_5_morning"
@@ -80,9 +78,7 @@
           "result": "人没受伤，但好几件东西废了。老人最后那句话在你脑子里转——不是责备，是陈述事实。",
           "effects": [
             {"type": "set_flag", "id": "major_damage_from_hesitation"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -4},
-            {"type": "relationship", "member": "partner", "amount": -2}
-          ]
+            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -4}]
         }
       ],
       "merge": "rain_day_5_morning"
@@ -161,7 +157,6 @@
           "effects": [
             {"type": "set_flag", "id": "elder_got_medicine_day5"},
             {"type": "member_stat", "member": "elder", "stat": "health", "amount": 5},
-            {"type": "relationship", "member": "elder", "amount": 2},
             {"type": "schedule_event", "event_id": "r8_elder_no_medicine", "trigger_phase": "rain_day_8_morning"}
           ]
         },
@@ -171,9 +166,7 @@
           "result": "药箱里感冒药只剩一板，退烧药只有两颗。你犹豫了一下，放回去了。关药箱盖子的时候啪嗒响了一声。老人看着你放回去的动作，没有说什么。但咳嗽声比刚才更重了。",
           "effects": [
             {"type": "set_flag", "id": "medicine_conserved_day5"},
-            {"type": "member_stat", "member": "elder", "stat": "health", "amount": -3},
-            {"type": "relationship", "member": "elder", "amount": -1}
-          ]
+            {"type": "member_stat", "member": "elder", "stat": "health", "amount": -3}]
         },
         {
           "id": "ask_partner",
@@ -182,7 +175,6 @@
           "effects": [
             {"type": "set_flag", "id": "elder_got_medicine_day5"},
             {"type": "member_stat", "member": "elder", "stat": "health", "amount": 5},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "member_stat", "member": "partner", "stat": "morale", "amount": 1}
           ]
         }
@@ -208,7 +200,6 @@
           "effects": [
             {"type": "set_flag", "id": "talked_with_teen_day5"},
             {"type": "member_stat", "member": "teen", "stat": "morale", "amount": 2},
-            {"type": "relationship", "member": "teen", "amount": 2},
             {"type": "add_clue", "id": "someone_sent_location"}
           ]
         },

@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -78,8 +78,6 @@
             {"type": "set_flag", "id": "garage_moved_supplies"},
             {"type": "set_phase", "value": "rain_day_3_evening"},
             {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
-            {"type": "relationship", "member": "partner", "amount": 1},
-            {"type": "relationship", "member": "teen", "amount": 1},
             {"type": "schedule_event", "event_id": "r3_garage_result_moved", "trigger_phase": "rain_day_4_morning"}
           ]
         },
@@ -141,7 +139,7 @@
       "clues": ["物资安全"],
       "text": "今早车库水更深了，工具架下半截泡在水里。但重要物资都在楼上，没损失。",
       "choices": [
-        {"id": "continue", "label": "继续", "result": "做了正确的决定。", "effects": [{"type": "set_flag", "id": "garage_move_recalled"}, {"type": "relationship", "member": "partner", "amount": 1}]}
+        {"id": "continue", "label": "继续", "result": "做了正确的决定。", "effects": [{"type": "set_flag", "id": "garage_move_recalled"}]}
       ],
       "merge": "rain_day_4_merge"
     },
@@ -157,7 +155,7 @@
       "clues": ["不处理导致损失"],
       "text": "今早水没过脚踝了。工具架泡烂了，储物柜里几件东西也坏了。伴侣没说话，但脸色不好看。",
       "choices": [
-        {"id": "continue", "label": "继续", "result": "昨天要是处理一下就好了。", "effects": [{"type": "set_flag", "id": "garage_ignore_recalled"}, {"type": "relationship", "member": "partner", "amount": -1}, {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3}]}
+        {"id": "continue", "label": "继续", "result": "昨天要是处理一下就好了。", "effects": [{"type": "set_flag", "id": "garage_ignore_recalled"}, {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3}]}
       ],
       "merge": "rain_day_4_merge"
     }

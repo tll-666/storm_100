@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -79,7 +79,6 @@
             {"type": "set_flag", "id": "equal_rationing_day6"},
             {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 1},
             {"type": "member_stat", "member": "teen", "stat": "morale", "amount": -1},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "set_phase", "value": "rain_day_6_tension"},
             {"type": "set_time", "label": "中午12:00", "segment": "daytime"}
           ]
@@ -93,7 +92,6 @@
             {"type": "member_stat", "member": "player", "stat": "hunger", "amount": -5},
             {"type": "member_stat", "member": "partner", "stat": "hunger", "amount": -5},
             {"type": "member_stat", "member": "elder", "stat": "hunger", "amount": -5},
-            {"type": "relationship", "member": "teen", "amount": 2},
             {"type": "member_stat", "member": "child", "stat": "morale", "amount": 1},
             {"type": "schedule_event", "event_id": "r11_elder_collapse", "trigger_phase": "rain_day_11_morning"},
             {"type": "set_phase", "value": "rain_day_6_tension"},
@@ -131,7 +129,6 @@
           "result": "你坐在伴侣旁边，两个人的肩膀没有碰到。雨声很大。过了很久，伴侣把烟掐了。「回去吧，冷。」但在门口站住，回头看了你一眼。那个眼神不是一个问题，是一个坐标——确认你还在那里。",
           "effects": [
             {"type": "set_flag", "id": "partner_shared_moment"},
-            {"type": "relationship", "member": "partner", "amount": 3},
             {"type": "member_stat", "member": "partner", "stat": "morale", "amount": 3},
             {"type": "member_stat", "member": "player", "stat": "morale", "amount": 2},
             {"type": "set_phase", "value": "rain_day_6_evening"},
@@ -144,7 +141,6 @@
           "result": "「我们五个人在一起。」伴侣笑了一下，不是开心的那种。「你说得对。」但说这句话的方式像是在念台词——她/他在努力配合你，努力相信一个连你自己都不太确定的东西。",
           "effects": [
             {"type": "set_flag", "id": "partner_reassured_hollow"},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2},
             {"type": "set_phase", "value": "rain_day_6_evening"},
             {"type": "set_time", "label": "下午17:30", "segment": "evening"}
@@ -156,7 +152,6 @@
           "result": "伴侣站起来，把烟头往地上一碾。「知道了。」进了屋。门关上之后，阳台只剩你和雨。你站在那里想，刚才那句话到底是给别人打气还是在给自己打气。可能都有。可能哪个都没打着。",
           "effects": [
             {"type": "set_flag", "id": "partner_shut_down_day6"},
-            {"type": "relationship", "member": "partner", "amount": -2},
             {"type": "member_stat", "member": "partner", "stat": "morale", "amount": -3},
             {"type": "schedule_event", "event_id": "r12_partner_cold", "trigger_phase": "rain_day_12_morning"},
             {"type": "set_phase", "value": "rain_day_6_evening"},

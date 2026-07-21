@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -76,7 +76,6 @@
           "effects": [
             {"type": "set_flag", "id": "caught_yellow_water"},
             {"type": "add_water", "amount": 3.0},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "set_phase", "value": "rain_day_4_moving"},
             {"type": "set_time", "label": "上午11:30", "segment": "daytime"}
           ]
@@ -137,7 +136,6 @@
             {"type": "set_flag", "id": "moved_to_second_floor"},
             {"type": "member_stat", "member": "partner", "stat": "morale", "amount": -1},
             {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "set_phase", "value": "rain_day_4_evening"},
             {"type": "set_time", "label": "下午16:00", "segment": "daytime"}
           ]
@@ -148,7 +146,6 @@
           "result": "电视和冰箱插头拔下来搬到高处。床铺还在楼下。伴侣拍了拍枕头说：「今天晚上会不会睡到一半水进来。」不是问句。你把药箱和充电宝拎上了楼，但枕头还留在楼下沙发上。",
           "effects": [
             {"type": "set_flag", "id": "partial_move_upstairs"},
-            {"type": "relationship", "member": "partner", "amount": -1},
             {"type": "member_stat", "member": "player", "stat": "morale", "amount": -1},
             {"type": "set_phase", "value": "rain_day_4_evening"},
             {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
@@ -199,7 +196,6 @@
             {"type": "add_clue", "id": "food_management_begun"},
             {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 1},
             {"type": "member_stat", "member": "child", "stat": "morale", "amount": -1},
-            {"type": "relationship", "member": "partner", "amount": 2},
             {"type": "set_phase", "value": "rain_day_4_settlement"},
             {"type": "set_time", "label": "晚上20:30", "segment": "night"}
           ]
@@ -210,7 +206,6 @@
           "result": "「现在还不用。」伴侣把筷子放下。「你真觉得够了？」「先这样。」饭吃完后各人默默散开。老人那份饭只吃了一半，另一半在他碗里凉了。你看见大孩子拿走了那半碗。",
           "effects": [
             {"type": "set_flag", "id": "rationing_delayed"},
-            {"type": "relationship", "member": "partner", "amount": -2},
             {"type": "member_stat", "member": "elder", "stat": "health", "amount": -2},
             {"type": "member_stat", "member": "child", "stat": "hunger", "amount": -2},
             {"type": "set_phase", "value": "rain_day_4_settlement"},

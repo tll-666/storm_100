@@ -216,10 +216,6 @@ func _apply_effect(effect: Dictionary) -> void:
 			GameState.time_segment = str(effect.get("segment", GameState.time_segment))
 		"set_weather":
 			GameState.weather_label = str(effect.get("value", GameState.weather_label))
-		"relationship":
-			var member_id := str(effect.get("member", ""))
-			if GameState.relationships.has(member_id):
-				GameState.relationships[member_id] = int(GameState.relationships[member_id]) + int(effect.get("amount", 0))
 		"member_stat":
 			GameState.adjust_member_stat(
 				str(effect.get("member", "")), str(effect.get("stat", "")), int(effect.get("amount", 0))
@@ -234,8 +230,6 @@ func _apply_effect(effect: Dictionary) -> void:
 			)
 		"consume_item":
 			GameState.consume_item(str(effect.get("item", "")), int(effect.get("amount", 1)))
-		"set_room_state":
-			GameState.set_room_state(str(effect.get("room", "")), str(effect.get("state", "normal")))
 		"set_environment_state":
 			GameState.set_environment_state(
 				str(effect.get("object", "")), str(effect.get("state", "unknown"))
@@ -340,9 +334,7 @@ func _effects_summary(raw_effects: Variant) -> String:
 			"add_backup_power": parts.append("备用电力+%d格" % int(effect.get("amount", 0)))
 			"add_item": parts.append("%s+%d" % [str(effect.get("item", "物资")), int(effect.get("amount", 1))])
 			"consume_item": parts.append("消耗%s×%d" % [str(effect.get("item", "物资")), int(effect.get("amount", 1))])
-			"set_room_state": parts.append("%s→%s" % [str(effect.get("room", "房间")), str(effect.get("state", "状态"))])
 			"set_environment_state": parts.append("%s→%s" % [str(effect.get("object", "环境")), str(effect.get("state", "状态"))])
-			"relationship": parts.append("%s信任%+d" % [str(effect.get("member", "")), int(effect.get("amount", 0))])
 			"member_stat": parts.append("%s的%s%+d" % [str(effect.get("member", "")), str(effect.get("stat", "")), int(effect.get("amount", 0))])
 			"schedule_event": parts.append("安排:%s" % str(effect.get("event_id", "")))
 	return "；".join(parts) if not parts.is_empty() else "无"

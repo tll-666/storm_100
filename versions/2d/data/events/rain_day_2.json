@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -70,7 +70,6 @@
             {"type": "set_flag", "id": "used_phone_during_outage"},
             {"type": "add_clue", "id": "neighborhood_wide_outage"},
             {"type": "add_clue", "id": "shelter_location_known"},
-            {"type": "relationship", "member": "teen", "amount": 1},
             {"type": "set_phase", "value": "rain_day_2_evening"},
             {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
             {"type": "set_weather", "value": "暴雨 · 停电"}

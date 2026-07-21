@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -161,7 +161,6 @@
             {"type": "set_flag", "id": "prep_water"},
             {"type": "set_preparation", "value": "water"},
             {"type": "add_water", "amount": 12.0},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "schedule_event", "event_id": "d1_water_prepared", "trigger_phase": "pre_rain_day_1_morning"},
             {"type": "set_phase", "value": "pre_rain_day_2_notices"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
@@ -191,7 +190,6 @@
             {"type": "set_flag", "id": "prep_route"},
             {"type": "set_preparation", "value": "route"},
             {"type": "set_flag", "id": "vehicle_route_checked"},
-            {"type": "relationship", "member": "elder", "amount": 1},
             {"type": "schedule_event", "event_id": "d1_route_prepared", "trigger_phase": "pre_rain_day_1_morning"},
             {"type": "set_phase", "value": "pre_rain_day_2_notices"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
@@ -219,7 +217,6 @@
           "result": "大孩子把手机声音调到最大。伴侣没有反对，只提醒你社区那边也可能临时结束工作。",
           "effects": [
             {"type": "set_flag", "id": "intend_pickup_teen_first"},
-            {"type": "relationship", "member": "teen", "amount": 1},
             {"type": "add_clue", "id": "tomorrow_two_pickups"},
             {"type": "set_phase", "value": "pre_rain_day_2_evening"},
             {"type": "set_time", "label": "下午17:50", "segment": "evening"},
@@ -232,7 +229,6 @@
           "result": "伴侣说社区离排水河更近，真下大了可能更难出来。大孩子沉默了一会，只说自己会保持联系。",
           "effects": [
             {"type": "set_flag", "id": "intend_pickup_partner_first"},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "add_clue", "id": "tomorrow_two_pickups"},
             {"type": "set_phase", "value": "pre_rain_day_2_evening"},
             {"type": "set_time", "label": "下午17:50", "segment": "evening"},
@@ -286,7 +282,6 @@
           "result": "老人认真听完，小孩子明显紧张起来。至少明天没有人会因为突然变化而完全措手不及。",
           "effects": [
             {"type": "set_flag", "id": "family_fully_briefed"},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
             {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
             {"type": "set_time", "label": "晚上20:30", "segment": "evening"},
@@ -299,7 +294,6 @@
           "result": "小孩子只知道明天可能早点回家。你避免了眼前的恐惧，也让两个孩子掌握的信息不一样。",
           "effects": [
             {"type": "set_flag", "id": "day_two_shielded_child"},
-            {"type": "relationship", "member": "child", "amount": 1},
             {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
             {"type": "set_time", "label": "晚上20:30", "segment": "evening"},
             {"type": "set_weather", "value": "阴 · 远处连续闷雷"}

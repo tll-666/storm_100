@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -50,7 +50,6 @@
           "result": "「先听着，别太当真。」你把红毛巾折起来放在窗台边。伴侣犹豫了一下：「万一是真的呢。」「真的再说。」你没有把毛巾挂出去。收音机还在窗台上，但这次你把它关掉了。",
           "effects": [
             {"type": "set_flag", "id": "skeptical_about_radio"},
-            {"type": "relationship", "member": "partner", "amount": -1},
             {"type": "add_clue", "id": "radio_may_be_wrong"},
             {"type": "set_phase", "value": "rain_day_7_midday"},
             {"type": "set_time", "label": "上午09:20", "segment": "morning"}
@@ -158,7 +157,6 @@
           "effects": [
             {"type": "set_flag", "id": "trusted_zhang_over_radio"},
             {"type": "add_clue", "id": "reality_may_differ_from_broadcast"},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "schedule_event", "event_id": "r14_supplies_appear", "trigger_phase": "rain_day_14_morning"},
             {"type": "set_phase", "value": "rain_day_7_settlement"},
             {"type": "set_time", "label": "晚上20:30", "segment": "night"}
@@ -170,7 +168,6 @@
           "result": "「广播应该是有根据的。老张站在屋顶上视野只有两条街。」伴侣没再追问，但晚上去阳台看了几眼。老张的黄色雨衣在风里啪啪响——一条街之外，他也在等一个答案。",
           "effects": [
             {"type": "set_flag", "id": "trusted_radio_over_zhang"},
-            {"type": "relationship", "member": "partner", "amount": -1},
             {"type": "add_clue", "id": "official_source_may_be_right"},
             {"type": "schedule_event", "event_id": "r14_no_rescue_arrives", "trigger_phase": "rain_day_14_morning"},
             {"type": "set_phase", "value": "rain_day_7_settlement"},
@@ -183,8 +180,6 @@
           "result": "「老张可能没看到，广播也可能不准。我们两种准备都做。该挂的SOS挂了，该算的粮食继续算。」老人从角落说了句：「这就是当年赈灾的难处——你同时等船，也留粥。两个都做的人最后活下来的最多。」",
           "effects": [
             {"type": "set_flag", "id": "hedged_bets_day7"},
-            {"type": "relationship", "member": "partner", "amount": 1},
-            {"type": "relationship", "member": "elder", "amount": 2},
             {"type": "member_stat", "member": "player", "stat": "morale", "amount": -1},
             {"type": "set_phase", "value": "rain_day_7_settlement"},
             {"type": "set_time", "label": "晚上20:30", "segment": "night"}

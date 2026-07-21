@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -57,7 +57,6 @@
           "result": "老张千恩万谢走了。伴侣觉得你做得对。",
           "effects": [
             {"type": "set_flag", "id": "helped_neighbor"},
-            {"type": "relationship", "member": "partner", "amount": 1},
             {"type": "set_phase", "value": "rain_day_1_noise"},
             {"type": "set_time", "label": "上午10:00", "segment": "morning"},
             {"type": "schedule_event", "event_id": "r1_noise", "trigger_phase": "rain_day_1_noise"}
@@ -157,7 +156,6 @@
           "effects": [
             {"type": "set_flag", "id": "child_left_alone"},
             {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
-            {"type": "relationship", "member": "partner", "amount": -1},
             {"type": "set_phase", "value": "rain_day_1_evening"},
             {"type": "set_time", "label": "下午17:00", "segment": "evening"}
           ]

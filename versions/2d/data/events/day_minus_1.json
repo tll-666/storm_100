@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 1,
   "events": [
     {
@@ -230,10 +230,7 @@
             {"type": "set_flag", "id": "all_family_home"},
             {"type": "set_phase", "value": "pre_rain_day_1_after_pickup"},
             {"type": "set_time", "label": "上午09:15", "segment": "morning"},
-            {"type": "set_weather", "value": "中雨 · 黄色预警"},
-            {"type": "relationship", "member": "partner", "amount": 1},
-            {"type": "relationship", "member": "teen", "amount": 1}
-          ]
+            {"type": "set_weather", "value": "中雨 · 黄色预警"}]
         }
       ],
       "merge": "pre_rain_day_1_after_pickup"

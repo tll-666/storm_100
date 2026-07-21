@@ -1,4 +1,4 @@
-extends Node
+﻿extends Node
 
 const SAVE_PATH := "user://storm_100_checkpoint.json"
 
@@ -18,6 +18,9 @@ const SHOP_ITEMS := {
 	"meat": {"name": "少量肉", "price": 0, "slots": 1, "food": 3},
 	"eggs": {"name": "鸡蛋", "price": 0, "slots": 1, "food": 1},
 	"dry_biscuits": {"name": "干饼干", "price": 0, "slots": 1, "food": 2},
+	"seeds": {"name": "蔬菜种子", "price": 20, "slots": 1},
+	"shotgun": {"name": "老式猎枪", "price": 0, "slots": 2},
+	"ammo": {"name": "猎枪子弹", "price": 0, "slots": 1},
 }
 
 const SECOND_SHOP_OVERRIDES := {
@@ -53,24 +56,6 @@ const FAMILY_NAMES := {
 	"elder": "老人",
 }
 
-const ROOM_ORDER := ["garage", "kitchen", "living_room", "bathroom", "elder_bedroom", "stairway"]
-const ROOM_NAMES := {
-	"garage": "车库",
-	"kitchen": "厨房",
-	"living_room": "客厅",
-	"bathroom": "厕所",
-	"elder_bedroom": "老人卧室",
-	"stairway": "楼梯间",
-}
-const ROOM_STATES := ["normal", "damp", "leaking", "flooded", "unusable"]
-const ROOM_STATE_LABELS := {
-	"normal": "正常",
-	"damp": "潮湿",
-	"leaking": "漏水",
-	"flooded": "积水",
-	"unusable": "不可使用",
-}
-
 var phase_id: String = "pre_rain_day_3"
 var day_label: String = "暴雨前第3天"
 var time_label: String = "上午8:05"
@@ -86,18 +71,10 @@ var trunk_capacity: int = 10
 
 var dialogue_choices: Dictionary = {}
 var flags: Dictionary = {}
-var relationships: Dictionary = {
-	"partner": 0,
-	"teen": 0,
-	"child": 0,
-	"elder": 0,
-}
 var talked_to: Dictionary = {}
 var inspected: Dictionary = {}
 var environment_states: Dictionary = {"kitchen_faucet": "normal"}
 var inspection_knowledge: Dictionary = {}
-var room_states: Dictionary = {}
-var explored_rooms: Dictionary = {}
 var inventory: Array[String] = []
 var home_storage: Dictionary = {}
 var shopping_cart: Array[String] = []
@@ -116,7 +93,6 @@ var event_choices: Dictionary = {}
 var clues: Dictionary = {}
 var scheduled_events: Array = []
 var event_log: Array = []
-var rationing_log: Array = []
 var day_two_preparation: String = ""
 var last_day_two_summary: Dictionary = {}
 var last_day_one_summary: Dictionary = {}
@@ -144,18 +120,10 @@ func reset_prologue() -> void:
 	money = 220
 	dialogue_choices.clear()
 	flags.clear()
-	relationships = {
-		"partner": 0,
-		"teen": 0,
-		"child": 0,
-		"elder": 0,
-	}
 	talked_to.clear()
 	inspected.clear()
 	environment_states = {"kitchen_faucet": "normal"}
 	inspection_knowledge.clear()
-	room_states = _default_room_states()
-	explored_rooms.clear()
 	inventory.clear()
 	home_storage.clear()
 	shopping_cart.clear()
@@ -174,7 +142,6 @@ func reset_prologue() -> void:
 	clues.clear()
 	scheduled_events.clear()
 	event_log.clear()
-	rationing_log.clear()
 	day_two_preparation = ""
 	last_day_two_summary.clear()
 	last_day_one_summary.clear()
@@ -249,93 +216,6 @@ func inspection_manual_entries() -> Array:
 	return entries
 
 
-func _default_room_states() -> Dictionary:
-	var states: Dictionary = {}
-	for room_id in ROOM_ORDER:
-		states[room_id] = "normal"
-	return states
-
-
-func set_room_state(room_id: String, state_id: String) -> void:
-	if not state_id in ROOM_STATES:
-		return
-	room_states[room_id] = state_id
-
-
-func get_room_state(room_id: String) -> String:
-	return str(room_states.get(room_id, "normal"))
-
-
-func mark_room_explored(floor_number: int, room_id: String) -> void:
-	if room_id.is_empty():
-		return
-	explored_rooms["%d:%s" % [floor_number, room_id]] = {
-		"day": day_label,
-		"time": time_label,
-	}
-
-
-func is_room_explored(floor_number: int, room_id: String) -> bool:
-	return explored_rooms.has("%d:%s" % [floor_number, room_id])
-
-
-func degrade_rooms_for_day() -> void:
-	var phase := phase_id
-	if phase == "rain_day_3_morning" or phase == "rain_day_3_garage" or phase == "rain_day_3_evening":
-		_ensure_room_state("garage", "leaking")
-	elif phase.begins_with("rain_day_4"):
-		_ensure_room_state("garage", "flooded")
-		_ensure_room_state("kitchen", "damp")
-	elif phase.begins_with("rain_day_5"):
-		_ensure_room_state("kitchen", "leaking")
-		_ensure_room_state("living_room", "damp")
-	elif phase.begins_with("rain_day_6"):
-		_ensure_room_state("living_room", "leaking")
-		_ensure_room_state("elder_bedroom", "damp")
-		_ensure_room_state("bathroom", "leaking")
-	elif phase.begins_with("rain_day_7"):
-		_ensure_room_state("garage", "unusable")
-		_ensure_room_state("living_room", "flooded")
-		_ensure_room_state("elder_bedroom", "leaking")
-		_ensure_room_state("bathroom", "flooded")
-		_ensure_room_state("stairway", "damp")
-	elif phase.begins_with("rain_day_8") or phase.begins_with("rain_day_9"):
-		_ensure_room_state("garage", "unusable")
-		_ensure_room_state("living_room", "unusable")
-		_ensure_room_state("bathroom", "flooded" if not has_flag("sealed_toilet") else "leaking")
-		_ensure_room_state("elder_bedroom", "leaking")
-		_ensure_room_state("stairway", "damp")
-	elif phase.begins_with("rain_day_10") or phase.begins_with("rain_day_11"):
-		_ensure_room_state("garage", "unusable")
-		_ensure_room_state("living_room", "unusable")
-		_ensure_room_state("bathroom", "unusable" if not has_flag("sealed_toilet") else "leaking")
-		_ensure_room_state("elder_bedroom", "leaking" if has_flag("roof_leak_contained") else "flooded")
-		_ensure_room_state("stairway", "leaking")
-	elif phase.begins_with("rain_day_12") or phase.begins_with("rain_day_13") or phase.begins_with("rain_day_14") or phase.begins_with("rain_day_15"):
-		_ensure_room_state("garage", "unusable")
-		_ensure_room_state("living_room", "unusable")
-		_ensure_room_state("bathroom", "leaking" if has_flag("sealed_toilet") else "unusable")
-		_ensure_room_state("elder_bedroom", "leaking" if has_flag("roof_leak_contained") else "unusable")
-		_ensure_room_state("stairway", "flooded")
-
-
-func _ensure_room_state(room_id: String, target: String) -> void:
-	var current := get_room_state(room_id)
-	var current_idx := ROOM_STATES.find(current)
-	var target_idx := ROOM_STATES.find(target)
-	if current_idx < target_idx:
-		set_room_state(room_id, target)
-
-
-func _room_state_summary() -> String:
-	var parts: Array[String] = []
-	for room_id in ROOM_ORDER:
-		var state := get_room_state(room_id)
-		if state != "normal":
-			parts.append("%s：%s" % [ROOM_NAMES[room_id], ROOM_STATE_LABELS[state]])
-	return " · ".join(parts) if not parts.is_empty() else "所有房间正常"
-
-
 func _update_clock_label() -> void:
 	var total_minutes := clampi(int(clock_minutes), 0, 1439)
 	var hour := int(total_minutes / 60)
@@ -365,18 +245,14 @@ func apply_afternoon_plan(plan_id: String) -> String:
 	match plan_id:
 		"organize_supplies":
 			flags["supplies_organized"] = true
-			relationships["partner"] = int(relationships["partner"]) + 1
 			_adjust_member_stat("partner", "morale", 4)
 			return "你和伴侣把冷藏、常温和日用品分别归位，又在柜门内侧贴了简短清单。"
 		"inspect_house":
 			flags["house_rechecked"] = true
-			relationships["elder"] = int(relationships["elder"]) + 1
 			_adjust_member_stat("elder", "morale", 4)
 			return "你重新清理了车库和阳台排水口，也确认配电箱附近没有渗水痕迹。"
 		"family_time":
 			flags["family_afternoon"] = true
-			relationships["teen"] = int(relationships["teen"]) + 1
-			relationships["child"] = int(relationships["child"]) + 1
 			for member_id in FAMILY_ORDER:
 				_adjust_member_stat(member_id, "morale", 5)
 			return "你没有继续忙碌，而是陪家人吃了顿迟来的午饭。两个孩子都放松了一些。"
@@ -634,7 +510,6 @@ func settle_rain_day_two() -> Dictionary:
 func settle_rain_day_three() -> Dictionary:
 	if has_flag("rain_day_three_settled"):
 		return last_rain_day_three_summary
-	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 12
 	if _consume_item_anywhere("rice", 1) > 0:
@@ -671,7 +546,6 @@ func settle_rain_day_three() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_three_settled"] = true
-	last_rain_day_three_summary["rooms"] = _room_state_summary()
 	last_rain_day_three_summary["audio_hint"] = "雨声持续 · 车库方向微弱流水声"
 	return last_rain_day_three_summary
 
@@ -679,7 +553,6 @@ func settle_rain_day_three() -> Dictionary:
 func settle_rain_day_four() -> Dictionary:
 	if has_flag("rain_day_four_settled"):
 		return last_rain_day_four_summary
-	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 10
 	if _consume_item_anywhere("rice", 1) > 0:
@@ -723,7 +596,6 @@ func settle_rain_day_four() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_four_settled"] = true
-	last_rain_day_four_summary["rooms"] = _room_state_summary()
 	last_rain_day_four_summary["audio_hint"] = "持续暴雨 · 管道闷响 · 间歇滴水声"
 	return last_rain_day_four_summary
 
@@ -731,7 +603,6 @@ func settle_rain_day_four() -> Dictionary:
 func settle_rain_day_five() -> Dictionary:
 	if has_flag("rain_day_five_settled"):
 		return last_rain_day_five_summary
-	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 8
 	if _consume_item_anywhere("rice", 1) > 0:
@@ -765,7 +636,6 @@ func settle_rain_day_five() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_five_settled"] = true
-	last_rain_day_five_summary["rooms"] = _room_state_summary()
 	last_rain_day_five_summary["audio_hint"] = "持续暴雨 · 老人咳嗽声 · 雨打屋顶"
 	return last_rain_day_five_summary
 
@@ -773,7 +643,6 @@ func settle_rain_day_five() -> Dictionary:
 func settle_rain_day_six() -> Dictionary:
 	if has_flag("rain_day_six_settled"):
 		return last_rain_day_six_summary
-	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 6
 	if _consume_item_anywhere("rice", 1) > 0:
@@ -812,7 +681,6 @@ func settle_rain_day_six() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_six_settled"] = true
-	last_rain_day_six_summary["rooms"] = _room_state_summary()
 	last_rain_day_six_summary["audio_hint"] = "狂风 · 间歇雷声 · 水滴从天花板滴落"
 	return last_rain_day_six_summary
 
@@ -820,7 +688,6 @@ func settle_rain_day_six() -> Dictionary:
 func settle_rain_day_seven() -> Dictionary:
 	if has_flag("rain_day_seven_settled"):
 		return last_rain_day_seven_summary
-	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 5
 	if _consume_item_anywhere("rice", 1) > 0:
@@ -859,7 +726,6 @@ func settle_rain_day_seven() -> Dictionary:
 		"note": note,
 	}
 	flags["rain_day_seven_settled"] = true
-	last_rain_day_seven_summary["rooms"] = _room_state_summary()
 	last_rain_day_seven_summary["audio_hint"] = "持续的雨声 · 远处偶尔闷雷 · 屋顶偶尔传来的材料摩擦声"
 	return last_rain_day_seven_summary
 
@@ -893,7 +759,6 @@ func settle_experiment_day(day: int) -> Dictionary:
 	var settle_flag := "rain_day_%d_settled" % day
 	if has_flag(settle_flag) and int(last_experiment_summary.get("day", 0)) == day:
 		return last_experiment_summary
-	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 4
 	for item_id in ["rice", "noodles", "canned_fish", "dry_biscuits"]:
@@ -903,16 +768,6 @@ func settle_experiment_day(day: int) -> Dictionary:
 			if meal_parts.size() >= 2:
 				break
 	var needs := _settle_family_needs(nutrition_gain)
-	var room_damage := 0
-	for room_id in ["elder_bedroom", "bathroom", "stairway"]:
-		var state := get_room_state(room_id)
-		if state == "flooded":
-			room_damage += 1
-		elif state == "unusable":
-			room_damage += 2
-	if room_damage > 0:
-		for member_id in FAMILY_ORDER:
-			_adjust_member_stat(member_id, "health", -room_damage)
 	var note := "夜里继续下雨。五个人把能用的地方又缩小了一圈。"
 	if day == 12:
 		note = "雨短暂变小，屋内第一次能听清彼此说话。没人把这当成结束，只把它当作整理房间的窗口。"
@@ -926,7 +781,6 @@ func settle_experiment_day(day: int) -> Dictionary:
 		"water": str(needs.get("water_text", "储备水状态未知")),
 		"family": "平均：健康%d · 饱腹%d · 水分%d" % [average_member_stat("health"), average_member_stat("hunger"), average_member_stat("thirst")],
 		"changes": experiment_change_label(day),
-		"rooms": _room_state_summary(),
 		"audio_hint": experiment_audio_hint(day),
 		"note": note,
 	}
@@ -956,7 +810,6 @@ func resource_snapshot() -> Dictionary:
 		"food": total_food_portions(),
 		"water": total_water_reserve_liters(),
 		"healthy": average_member_stat("health"),
-		"usable_rooms": usable_room_count(),
 	}
 
 
@@ -969,14 +822,6 @@ func experiment_delta_summary() -> String:
 		int(start.get("healthy", 0)), int(current.get("healthy", 0)),
 		int(start.get("usable_rooms", 0)), int(current.get("usable_rooms", 0)),
 	]
-
-
-func usable_room_count() -> int:
-	var count := 0
-	for room_id in ROOM_ORDER:
-		if get_room_state(room_id) != "unusable":
-			count += 1
-	return count
 
 
 func add_item_to_storage(item_id: String, amount: int = 1, storage_id: String = "pantry") -> void:
@@ -1134,13 +979,9 @@ func _settle_family_needs(nutrition_gain: int) -> Dictionary:
 			var served := _consume_water_reserve(10.0)
 			hydration_gain = roundi(28.0 * served / 10.0)
 			water_text = "%s · 使用储备水%.1f升" % [water_state_label(), served]
-	var rationing_info := _build_rationing_log(nutrition_gain)
 	for member_id in FAMILY_ORDER:
 		var hunger_delta := -22 + nutrition_gain
 		var thirst_delta := -26 + hydration_gain
-		if rationing_info.has("applied"):
-			hunger_delta = int(rationing_info.get(member_id + "_hunger", hunger_delta))
-			thirst_delta = int(rationing_info.get(member_id + "_thirst", thirst_delta))
 		_adjust_member_stat(member_id, "hunger", hunger_delta)
 		_adjust_member_stat(member_id, "thirst", thirst_delta)
 		if power_supply_state == "unstable":
@@ -1157,49 +998,7 @@ func _settle_family_needs(nutrition_gain: int) -> Dictionary:
 			health_loss += 6
 		if health_loss > 0:
 			_adjust_member_stat(member_id, "health", -health_loss)
-	var result: Dictionary = {"water_text": water_text}
-	if rationing_info.has("applied"):
-		result["rationing"] = str(rationing_info.get("note", ""))
-	return result
-
-
-func _build_rationing_log(nutrition_gain: int) -> Dictionary:
-	var result: Dictionary = {}
-	var total_food := total_food_portions()
-	if total_food >= 5:
-		return result
-	if has_flag("adult_sacrifice_day6"):
-		result["applied"] = true
-		result["player_hunger"] = -22 + nutrition_gain - 5
-		result["partner_hunger"] = -22 + nutrition_gain - 5
-		result["elder_hunger"] = -22 + nutrition_gain - 5
-		result["teen_hunger"] = -22 + nutrition_gain
-		result["child_hunger"] = -22 + nutrition_gain
-		result["note"] = "大人主动减少食物，孩子和青少年保持正常。"
-		return result
-	if has_flag("tight_rationing_day6"):
-		result["applied"] = true
-		result["player_hunger"] = -22 + nutrition_gain - 3
-		result["partner_hunger"] = -22 + nutrition_gain - 3
-		result["elder_hunger"] = -22 + nutrition_gain - 3
-		result["teen_hunger"] = -22 + nutrition_gain - 3
-		result["child_hunger"] = -22 + nutrition_gain - 3
-		result["note"] = "每人再减量三成，碗里越来越浅。"
-		return result
-	if has_flag("equal_rationing_day6"):
-		result["applied"] = true
-		result["note"] = "五人平均分配，食物刚刚够。"
-		return result
-	if has_flag("rationing_started") or has_flag("rationing_delayed"):
-		result["applied"] = true
-		result["note"] = "定量分配已经开始，每个人知道自己的份在哪里。"
-		return result
-	if total_food < 4:
-		result["applied"] = true
-		result["note"] = "食物严重不足，五个人都在挨饿。今晚几乎没有什么真正算一顿饭。"
-		rationing_log.append({"day": day_label, "total_food": total_food, "nutrition": nutrition_gain})
-		return result
-	return result
+	return {"water_text": water_text}
 
 
 func _consume_water_reserve(requested_liters: float) -> float:
@@ -1294,12 +1093,10 @@ func remove_scheduled_event(event_id: String) -> void:
 
 
 func record_dialogue_choice(
-	character_id: String, choice_index: int, relation_delta: int, flag_id: String
+	character_id: String, choice_index: int, _relation_delta: int, flag_id: String
 ) -> void:
 	dialogue_choices[character_id] = choice_index
 	talked_to[character_id] = true
-	if relationships.has(character_id):
-		relationships[character_id] = int(relationships[character_id]) + relation_delta
 	if not flag_id.is_empty():
 		flags[flag_id] = true
 
@@ -1458,13 +1255,10 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"money": money,
 		"dialogue_choices": dialogue_choices,
 		"flags": flags,
-		"relationships": relationships,
 		"talked_to": talked_to,
 		"inspected": inspected,
 		"environment_states": environment_states,
 		"inspection_knowledge": inspection_knowledge,
-		"room_states": room_states,
-		"explored_rooms": explored_rooms,
 		"inventory": inventory,
 		"home_storage": home_storage,
 		"shopping_cart": shopping_cart,
@@ -1483,7 +1277,6 @@ func save_checkpoint(player_position: Vector2, current_floor: int) -> bool:
 		"clues": clues,
 		"scheduled_events": scheduled_events,
 		"event_log": event_log,
-		"rationing_log": rationing_log,
 		"day_two_preparation": day_two_preparation,
 		"last_day_two_summary": last_day_two_summary,
 		"last_day_one_summary": last_day_one_summary,
@@ -1529,13 +1322,10 @@ func load_checkpoint() -> Dictionary:
 	money = int(payload.get("money", money))
 	dialogue_choices = payload.get("dialogue_choices", {})
 	flags = payload.get("flags", {})
-	relationships = payload.get("relationships", relationships)
 	talked_to = payload.get("talked_to", {})
 	inspected = payload.get("inspected", {})
 	environment_states = payload.get("environment_states", {"kitchen_faucet": "normal"})
 	inspection_knowledge = payload.get("inspection_knowledge", {})
-	room_states = payload.get("room_states", _default_room_states())
-	explored_rooms = payload.get("explored_rooms", {})
 	inventory.assign(payload.get("inventory", []))
 	home_storage = payload.get("home_storage", {})
 	shopping_cart.assign(payload.get("shopping_cart", []))
@@ -1554,7 +1344,6 @@ func load_checkpoint() -> Dictionary:
 	clues = payload.get("clues", {})
 	scheduled_events.assign(payload.get("scheduled_events", []))
 	event_log.assign(payload.get("event_log", []))
-	rationing_log.assign(payload.get("rationing_log", []))
 	day_two_preparation = str(payload.get("day_two_preparation", day_two_preparation))
 	last_day_two_summary = payload.get("last_day_two_summary", last_day_two_summary)
 	last_day_one_summary = payload.get("last_day_one_summary", last_day_one_summary)
