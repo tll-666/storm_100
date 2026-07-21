@@ -13,6 +13,8 @@ const SHOP_ITEMS := {
 	"batteries": {"name": "电池", "price": 24, "slots": 1},
 	"power_bank": {"name": "充电宝", "price": 65, "slots": 1},
 	"basic_medicine": {"name": "常用药", "price": 32, "slots": 1},
+	"alcohol": {"name": "白酒", "price": 35, "slots": 1, "morale": 1},
+	"cigarettes": {"name": "香烟", "price": 30, "slots": 1},
 	"meat": {"name": "少量肉", "price": 0, "slots": 1, "food": 3},
 	"eggs": {"name": "鸡蛋", "price": 0, "slots": 1, "food": 1},
 	"dry_biscuits": {"name": "干饼干", "price": 0, "slots": 1, "food": 2},

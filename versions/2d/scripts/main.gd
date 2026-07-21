@@ -113,6 +113,12 @@ const STORE_SHELVES := {
 		"text": "充电宝明显比其他东西贵。收银台旁的小药架只放着最普通的家庭常用药。",
 		"items": ["batteries", "power_bank", "basic_medicine"],
 	},
+	"shelf_vice":
+	{
+		"name": "烟酒和零食",
+		"text": "货架角落摆着白酒和香烟。平时没人在意，灾后可能比食物还值钱。",
+		"items": ["alcohol", "cigarettes", "chocolate"],
+	},
 	"shelf_drinks":
 	{
 		"name": "饮料冷柜",

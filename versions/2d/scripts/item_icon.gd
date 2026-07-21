@@ -37,6 +37,10 @@ func _draw() -> void:
 			_draw_power_bank()
 		"basic_medicine":
 			_draw_medicine()
+		"alcohol":
+			_draw_alcohol()
+		"cigarettes":
+			_draw_cigarettes()
 		"meat":
 			_draw_meat()
 		"eggs":
@@ -133,6 +137,22 @@ func _draw_meat() -> void:
 func _draw_eggs() -> void:
 	_draw_oval_shape(Vector2(29, 41), Vector2(10, 16), Color("e8dfc5"))
 	_draw_oval_shape(Vector2(47, 39), Vector2(10, 17), Color("f2e9ce"))
+
+
+func _draw_alcohol() -> void:
+	draw_rect(Rect2(26, 20, 24, 40), Color("3d6b4a"), true)
+	draw_rect(Rect2(30, 14, 16, 8), Color("5a8868"), true)
+	draw_rect(Rect2(32, 10, 12, 5), Color("2a4d34"), true)
+	draw_rect(Rect2(28, 48, 20, 8), Color("d4c060"), true)
+	draw_string(ThemeDB.fallback_font, Vector2(30, 44), "酒", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("e8d878"))
+
+
+func _draw_cigarettes() -> void:
+	draw_rect(Rect2(22, 25, 36, 28), Color("8a6d3b"), true)
+	draw_rect(Rect2(22, 25, 36, 5), Color("a88a4e"), true)
+	for y in [32.0, 38.0, 44.0, 50.0]:
+		draw_rect(Rect2(25, y, 28, 4), Color("e8e0d0"), true)
+		draw_rect(Rect2(47, y, 6, 4), Color("c45a3a"), true)
 
 
 func _draw_oval_shape(center: Vector2, radii: Vector2, color: Color) -> void:
