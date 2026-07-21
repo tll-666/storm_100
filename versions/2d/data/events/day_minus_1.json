@@ -44,8 +44,8 @@
           "result": "雨不小了。留在家，靠现有物资撑。",
           "effects": [
             {"type": "set_flag", "id": "day_one_stayed_home"},
-            {"type": "set_phase", "value": "pre_rain_day_1_home"},
-            {"type": "set_time", "label": "上午08:00", "segment": "morning"},
+            {"type": "set_phase", "value": "pre_rain_day_1_evening"},
+            {"type": "set_time", "label": "下午16:00", "segment": "evening"},
             {"type": "set_weather", "value": "小雨 · 持续"}
           ]
         }

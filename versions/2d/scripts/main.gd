@@ -1,4 +1,4 @@
-extends Node2D
+﻿extends Node2D
 
 const DIALOGUES := {
 	"partner":
@@ -773,7 +773,6 @@ func _debug_skip_to_rain_day_three() -> void:
 	player.global_position = Vector2(790.0, 735.0)
 	current_target = null
 	pending_action.clear()
-	processing_day_one_morning = false
 	_update_hud()
 	_open_database_event("r3_morning_start", true)
 
@@ -794,7 +793,6 @@ func _debug_skip_to_rain_day_four() -> void:
 	player.global_position = Vector2(790.0, 735.0)
 	current_target = null
 	pending_action.clear()
-	processing_day_one_morning = false
 	_auto_chain_mode = true
 	_last_completed_event_id = ""
 	_update_hud()
@@ -819,7 +817,6 @@ func _debug_skip_to_rain_day_five() -> void:
 	player.global_position = Vector2(650.0, 735.0)
 	current_target = null
 	pending_action.clear()
-	processing_day_one_morning = false
 	_auto_chain_mode = true
 	_last_completed_event_id = ""
 	_update_hud()
@@ -845,7 +842,6 @@ func _debug_skip_to_rain_day_six() -> void:
 	player.global_position = Vector2(650.0, 735.0)
 	current_target = null
 	pending_action.clear()
-	processing_day_one_morning = false
 	_auto_chain_mode = true
 	_last_completed_event_id = ""
 	_update_hud()
@@ -870,7 +866,6 @@ func _debug_skip_to_rain_day_seven() -> void:
 	player.global_position = Vector2(650.0, 735.0)
 	current_target = null
 	pending_action.clear()
-	processing_day_one_morning = false
 	_auto_chain_mode = true
 	_last_completed_event_id = ""
 	_update_hud()
@@ -889,7 +884,6 @@ func _debug_skip_to_experiment_day(day: int) -> void:
 	player.global_position = Vector2(650.0, 735.0)
 	current_target = null
 	pending_action.clear()
-	processing_day_one_morning = false
 	_auto_chain_mode = true
 	_last_completed_event_id = ""
 	_update_hud()
@@ -927,7 +921,6 @@ func _debug_reset_run() -> void:
 	GameState.reset_prologue()
 	_auto_chain_mode = false
 	_last_completed_event_id = ""
-	processing_day_one_morning = false
 	current_floor = 1
 	world.build_floor(current_floor)
 	player.global_position = world.spawn_position(current_floor)
@@ -1009,21 +1002,11 @@ func _update_hud() -> void:
 			"pre_rain_day_2_bedtime":
 				objective = "今天的准备已经结束：到二楼主卧睡觉。"
 			"pre_rain_day_1_morning":
-				objective = "清晨：家人分散在学校和社区，先确认昨天的准备是否到位。"
+				objective = "暴雨前第1天：雨开始下了，全家都在家。到玄关去超市。"
 			"pre_rain_day_1_dispatch":
-				objective = "到玄关准备出发接人：先接伴侣还是先接大孩子。"
-			"pre_rain_day_1_first_route":
-				objective = "选择外出方案：稳妥路线或低洼近路。"
-			"pre_rain_day_1_en_route":
-				objective = "前往第一个接人点。"
-			"pre_rain_day_1_second_route":
-				objective = "前往第二个接人点。"
-			"pre_rain_day_1_second_arrival":
-				objective = "接上第二个人，回家。"
-			"pre_rain_day_1_after_pickup":
-				objective = "接人完成：可以从玄关进入超市外出事件，或到主卧等待晚上。"
+				objective = "到玄关开车去超市——这是有信息有判断的一次购物。"
 			"pre_rain_day_1_evening":
-				objective = "今天的接人和购物已经结束：到二楼主卧睡觉。"
+				objective = "今天的行动已经结束：到二楼主卧睡觉。"
 			"rain_day_1_morning":
 				objective = "暴雨第1天：到玄关决定是否冒雨进入购物事件。"
 			"rain_day_1_dispatch":
@@ -1815,7 +1798,6 @@ func _on_day_transition_finished() -> void:
 		return
 	if pending_day_transition == "rain_day_four":
 		pending_day_transition = ""
-		processing_day_one_morning = false
 		_auto_chain_mode = true
 		_last_completed_event_id = ""
 		var scheduled_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
@@ -1826,7 +1808,6 @@ func _on_day_transition_finished() -> void:
 		return
 	if pending_day_transition == "rain_day_five":
 		pending_day_transition = ""
-		processing_day_one_morning = false
 		_auto_chain_mode = true
 		_last_completed_event_id = ""
 		var scheduled_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
@@ -1837,21 +1818,18 @@ func _on_day_transition_finished() -> void:
 		return
 	if pending_day_transition == "rain_day_six":
 		pending_day_transition = ""
-		processing_day_one_morning = false
 		_auto_chain_mode = true
 		_last_completed_event_id = ""
 		_open_database_event("r6_morning_dark", true)
 		return
 	if pending_day_transition == "rain_day_seven":
 		pending_day_transition = ""
-		processing_day_one_morning = false
 		_auto_chain_mode = true
 		_last_completed_event_id = ""
 		_open_database_event("r7_radio_surprise", true)
 		return
 	if pending_day_transition.begins_with("rain_day_") and pending_day_transition.trim_prefix("rain_day_").is_valid_int():
 		pending_day_transition = ""
-		processing_day_one_morning = false
 		_auto_chain_mode = true
 		_last_completed_event_id = ""
 		var scheduled_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
@@ -1863,7 +1841,6 @@ func _on_day_transition_finished() -> void:
 	if pending_day_transition == "chapter_complete":
 		pending_day_transition = ""
 		_auto_chain_mode = false
-		processing_day_one_morning = false
 		pending_action = {"type": "close"}
 		hud.show_dialogue(
 			"暴雨第15天 · 实验收束",
@@ -1874,7 +1851,6 @@ func _on_day_transition_finished() -> void:
 	if pending_day_transition == "end_of_week":
 		pending_day_transition = ""
 		_auto_chain_mode = false
-		processing_day_one_morning = false
 		pending_action = {"type": "close"}
 		hud.show_dialogue(
 			"暴雨第7天 · 第一周结束",
@@ -1889,15 +1865,6 @@ func _on_day_transition_finished() -> void:
 		"夜里没有下雨。清晨的窗玻璃蒙着一层水汽，门口比昨天安静。客厅方向传来手机连续震动的声音。",
 		["起床查看"]
 	)
-
-
-func _process_day_one_morning_queue() -> void:
-	var scheduled_event_id := EventManager.scheduled_event_for_phase(GameState.phase_id)
-	if not scheduled_event_id.is_empty():
-		_open_database_event(scheduled_event_id)
-		return
-	processing_day_one_morning = false
-	_open_database_event("d1_morning_start", true)
 
 
 func _auto_trigger_phase_event() -> void:
@@ -1983,7 +1950,6 @@ func _show_day_one_summary() -> void:
 		{"name": "饮用水", "value": str(summary.get("water", "正常"))},
 		{"name": "供电", "value": str(summary.get("power", "正常"))},
 		{"name": "家庭状态", "value": str(summary.get("family", "平稳"))},
-		{"name": "接人", "value": str(summary.get("pickup", "未明确"))},
 	]
 	hud.show_day_summary(
 		"暴雨前第1天 · 夜间结算",

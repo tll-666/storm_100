@@ -383,10 +383,6 @@ func settle_day_one() -> Dictionary:
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
 	var water_result := _settle_family_needs(nutrition_gain)
 	var note := "雨整夜没停。凌晨时雨声变得更密，远处能听见排水河方向的水声。"
-	if has_flag("second_route_river"):
-		note = "雨整夜没停。回程走过近路的人鞋袜还没干透，家里弥漫着潮湿的气味。"
-		_adjust_member_stat("teen", "morale", -2)
-		_adjust_member_stat("partner", "morale", -2)
 	if has_flag("second_shopping_complete"):
 		note += "买回来的东西已经归位，但雨势让窗外的能见度越来越差。"
 	last_day_one_summary = {
@@ -396,19 +392,10 @@ func settle_day_one() -> Dictionary:
 		"family": "五人平均：饱腹%d · 水分%d · 精神%d" % [
 			average_member_stat("hunger"), average_member_stat("thirst"), average_member_stat("morale")
 		],
-		"pickup": "接人顺序：%s" % _pickup_order_label(),
 		"note": note,
 	}
 	flags["day_one_settled"] = true
 	return last_day_one_summary
-
-
-func _pickup_order_label() -> String:
-	if has_flag("first_pickup_teen"):
-		return "先接大孩子"
-	if has_flag("first_pickup_partner"):
-		return "先接伴侣"
-	return "未明确"
 
 
 func begin_day_one() -> void:
