@@ -185,7 +185,8 @@ func _process(delta: float) -> void:
 		prompt = "查看入户门缝渗水"
 	if current_target != null and current_target.object_id == "car" and _ready_for_store():
 		prompt = "开车去社区超市"
-	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
+	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
+		prompt = "开车去超市"
 	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
 		prompt = "从玄关冒雨出发"
 	if current_target != null and current_target.object_id == "day_planner":
