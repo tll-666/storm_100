@@ -29,10 +29,6 @@ func _draw() -> void:
 			_draw_milk()
 		"chocolate":
 			_draw_chocolate()
-		"toilet_paper":
-			_draw_toilet_paper()
-		"cleaner":
-			_draw_cleaner()
 		"bottled_water":
 			_draw_water()
 		"batteries":
@@ -98,20 +94,6 @@ func _draw_chocolate() -> void:
 		draw_line(Vector2(x, 18), Vector2(x, 60), Color("a2704f"), 2.0)
 	for y in [31.0, 46.0]:
 		draw_line(Vector2(23, y), Vector2(55, y), Color("a2704f"), 2.0)
-
-
-func _draw_toilet_paper() -> void:
-	draw_rect(Rect2(23, 27, 30, 28), Color("f1eee5"), true)
-	_draw_oval_shape(Vector2(24, 41), Vector2(8, 14), Color("d8d6ce"))
-	draw_circle(Vector2(24, 41), 4, Color("8d8170"))
-	draw_rect(Rect2(42, 50, 17, 10), Color("f4f0e6"), true)
-
-
-func _draw_cleaner() -> void:
-	draw_rect(Rect2(28, 26, 25, 34), Color("68aeb2"), true)
-	draw_rect(Rect2(34, 17, 13, 12), Color("d7e4de"), true)
-	draw_rect(Rect2(39, 13, 17, 5), Color("d7e4de"), true)
-	draw_rect(Rect2(33, 39, 15, 9), Color("f2d78c"), true)
 
 
 func _draw_water() -> void:

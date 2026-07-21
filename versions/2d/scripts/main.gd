@@ -103,9 +103,9 @@ const STORE_SHELVES := {
 	},
 	"shelf_daily":
 	{
-		"name": "卫生和清洁用品",
-		"text": "卫生纸体积不小。清洁用品和瓶装水摆在旁边，没有人抢购。",
-		"items": ["toilet_paper", "cleaner", "bottled_water"],
+		"name": "瓶装水",
+		"text": "瓶装水摆在货架旁边，没有人抢购。",
+		"items": ["bottled_water"],
 	},
 	"shelf_power":
 	{
@@ -2241,7 +2241,7 @@ func _apply_shopping_reactions() -> String:
 		lines.append("伴侣看着空空的后备箱，没有追问，只把原来的购物清单折了起来。")
 		lines.append("两个孩子各自回了房间。老人把没电的收音机重新放回桌上。")
 	else:
-		if GameState.storage_has_any(["rice", "vegetables", "toilet_paper", "cleaner"]):
+		if GameState.storage_has_any(["rice", "vegetables"]):
 			GameState.relationships["partner"] = int(GameState.relationships["partner"]) + 1
 			lines.append("伴侣先把家里真正缺的东西收好，神情轻松了一点。")
 		else:

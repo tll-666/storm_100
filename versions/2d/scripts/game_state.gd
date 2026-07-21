@@ -9,15 +9,12 @@ const SHOP_ITEMS := {
 	"vegetables": {"name": "蔬菜", "price": 20, "slots": 1, "food": 3},
 	"milk": {"name": "牛奶", "price": 16, "slots": 1, "food": 2},
 	"chocolate": {"name": "巧克力", "price": 15, "slots": 1, "food": 1},
-	"toilet_paper": {"name": "卫生纸", "price": 28, "slots": 2},
-	"cleaner": {"name": "清洁用品", "price": 22, "slots": 1},
 	"bottled_water": {"name": "瓶装水", "price": 14, "slots": 2, "water_liters": 6.0},
 	"batteries": {"name": "电池", "price": 24, "slots": 1},
 	"power_bank": {"name": "充电宝", "price": 65, "slots": 1},
 	"basic_medicine": {"name": "常用药", "price": 32, "slots": 1},
 	"meat": {"name": "少量肉", "price": 0, "slots": 1, "food": 3},
 	"eggs": {"name": "鸡蛋", "price": 0, "slots": 1, "food": 1},
-	"cooked_food": {"name": "抢救出的熟食", "price": 0, "slots": 1, "food": 3},
 	"dry_biscuits": {"name": "干饼干", "price": 0, "slots": 1, "food": 2},
 }
 
@@ -28,7 +25,6 @@ const SECOND_SHOP_OVERRIDES := {
 	"bottled_water": {"price": 20, "limit": 2},
 	"batteries": {"price": 32, "limit": 2},
 	"power_bank": {"price": 85, "limit": 1},
-	"toilet_paper": {"price": 35},
 	"chocolate": {"available": false},
 	"canned_fish": {"price": 24, "limit": 3},
 }
@@ -41,10 +37,8 @@ const THIRD_SHOP_OVERRIDES := {
 	"bottled_water": {"price": 30, "limit": 1},
 	"batteries": {"price": 42, "limit": 1},
 	"power_bank": {"available": false},
-	"toilet_paper": {"price": 48, "limit": 1},
 	"canned_fish": {"price": 32, "limit": 2},
 	"noodles": {"price": 16, "limit": 3},
-	"cleaner": {"price": 30, "limit": 1},
 	"basic_medicine": {"price": 45, "limit": 1},
 }
 
@@ -107,7 +101,7 @@ var home_storage: Dictionary = {}
 var shopping_cart: Array[String] = []
 var fridge_storage: Dictionary = {"meat": 1, "eggs": 4, "milk": 1, "vegetables": 1}
 var pantry_storage: Dictionary = {"rice": 1, "noodles": 2}
-var utility_storage: Dictionary = {"toilet_paper": 1, "cleaner": 1}
+var utility_storage: Dictionary = {}
 var afternoon_plan: String = ""
 var last_night_summary: Dictionary = {}
 var water_supply_state: String = "normal"
@@ -165,7 +159,7 @@ func reset_prologue() -> void:
 	shopping_cart.clear()
 	fridge_storage = {"meat": 1, "eggs": 4, "milk": 1, "vegetables": 1}
 	pantry_storage = {"rice": 1, "noodles": 2}
-	utility_storage = {"toilet_paper": 1, "cleaner": 1}
+	utility_storage = {}
 	afternoon_plan = ""
 	last_night_summary.clear()
 	water_supply_state = "normal"
@@ -900,7 +894,7 @@ func settle_experiment_day(day: int) -> Dictionary:
 	degrade_rooms_for_day()
 	var meal_parts: Array[String] = []
 	var nutrition_gain := 4
-	for item_id in ["cooked_food", "rice", "noodles", "canned_fish", "dry_biscuits"]:
+	for item_id in ["rice", "noodles", "canned_fish", "dry_biscuits"]:
 		if _consume_item_anywhere(item_id, 1) > 0:
 			meal_parts.append(str(shop_item(item_id).get("name", item_id)))
 			nutrition_gain += int(shop_item(item_id).get("food", 1))
@@ -1435,10 +1429,10 @@ func complete_shopping() -> bool:
 func _store_purchased_item(item_id: String) -> void:
 	if item_id in ["vegetables", "milk", "meat", "eggs"]:
 		fridge_storage[item_id] = int(fridge_storage.get(item_id, 0)) + 1
-	elif item_id in ["rice", "noodles", "canned_fish", "chocolate", "bottled_water"]:
-		pantry_storage[item_id] = int(pantry_storage.get(item_id, 0)) + 1
-	else:
+	elif item_id in ["batteries", "power_bank", "basic_medicine"]:
 		utility_storage[item_id] = int(utility_storage.get(item_id, 0)) + 1
+	else:
+		pantry_storage[item_id] = int(pantry_storage.get(item_id, 0)) + 1
 
 
 func storage_has_any(item_ids: Array) -> bool:
