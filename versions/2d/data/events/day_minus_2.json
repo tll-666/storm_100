@@ -161,7 +161,7 @@
             {"type": "set_flag", "id": "prep_water"},
             {"type": "set_preparation", "value": "water"},
             {"type": "add_water", "amount": 12.0},
-            {"type": "set_phase", "value": "pre_rain_day_2_notices"},
+            {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
             {"type": "set_weather", "value": "低云 · 风向不定"}
           ]
@@ -175,7 +175,7 @@
             {"type": "set_preparation", "value": "power"},
             {"type": "add_backup_power", "amount": 12},
             {"type": "member_stat", "member": "teen", "stat": "morale", "amount": 3},
-            {"type": "set_phase", "value": "pre_rain_day_2_notices"},
+            {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
             {"type": "set_weather", "value": "低云 · 风向不定"}
           ]
@@ -188,124 +188,9 @@
             {"type": "set_flag", "id": "prep_route"},
             {"type": "set_preparation", "value": "route"},
             {"type": "set_flag", "id": "vehicle_route_checked"},
-            {"type": "set_phase", "value": "pre_rain_day_2_notices"},
+            {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
             {"type": "set_weather", "value": "低云 · 风向不定"}
-          ]
-        }
-      ],
-      "merge": "d2_school_notice"
-    },
-    {
-      "id": "d2_school_notice",
-      "title": "学校与社区的通知",
-      "type": "community",
-      "day": "暴雨前第2天",
-      "phase": "pre_rain_day_2_notices",
-      "location": "客厅餐桌",
-      "once": true,
-      "conditions": {"phase": "pre_rain_day_2_notices"},
-      "clues": ["大孩子明天仍需到校", "伴侣明天要到社区", "天气恶化时两人可能同时需要接送"],
-      "text": "下午，学校通知明天仍然到校，但可能提前放学；社区则要求伴侣明早去协助登记低洼住户。老人和小孩子会留在家里。",
-      "choices": [
-        {
-          "id": "promise_teen",
-          "label": "答应天气变坏就先去学校",
-          "result": "大孩子把手机声音调到最大。伴侣没有反对，只提醒你社区那边也可能临时结束工作。",
-          "effects": [
-            {"type": "set_flag", "id": "intend_pickup_teen_first"},
-            {"type": "add_clue", "id": "tomorrow_two_pickups"},
-            {"type": "set_phase", "value": "pre_rain_day_2_evening"},
-            {"type": "set_time", "label": "下午17:50", "segment": "evening"},
-            {"type": "set_weather", "value": "阴沉 · 偶有阵风"}
-          ]
-        },
-        {
-          "id": "promise_partner",
-          "label": "答应先到社区接伴侣",
-          "result": "伴侣说社区离排水河更近，真下大了可能更难出来。大孩子沉默了一会，只说自己会保持联系。",
-          "effects": [
-            {"type": "set_flag", "id": "intend_pickup_partner_first"},
-            {"type": "add_clue", "id": "tomorrow_two_pickups"},
-            {"type": "set_phase", "value": "pre_rain_day_2_evening"},
-            {"type": "set_time", "label": "下午17:50", "segment": "evening"},
-            {"type": "set_weather", "value": "阴沉 · 偶有阵风"}
-          ]
-        },
-        {
-          "id": "delay_decision",
-          "label": "等明天看路况再决定",
-          "result": "谁也没有得到明确承诺。这个决定更灵活，但明天真正出发时，两边都可能催促你。",
-          "effects": [
-            {"type": "set_flag", "id": "pickup_order_undecided"},
-            {"type": "add_clue", "id": "tomorrow_two_pickups"},
-            {"type": "set_phase", "value": "pre_rain_day_2_evening"},
-            {"type": "set_time", "label": "下午17:50", "segment": "evening"},
-            {"type": "set_weather", "value": "阴沉 · 偶有阵风"}
-          ]
-        }
-      ],
-      "merge": "d2_evening_discussion"
-    },
-    {
-      "id": "d2_evening_discussion",
-      "title": "晚饭前的短暂讨论",
-      "type": "family",
-      "day": "暴雨前第2天",
-      "phase": "pre_rain_day_2_evening",
-      "location": "客厅餐桌",
-      "once": true,
-      "conditions": {"phase": "pre_rain_day_2_evening"},
-      "clues": ["明天家庭成员会分散在学校、社区和家中"],
-      "text": "窗外仍没下雨。家里表面上和平时一样，但明天每个人会在不同地点，所有安排都建立在手机和道路还能正常使用的前提上。",
-      "text_variants": [
-        {
-          "required_flags": ["prep_water"],
-          "text": "储水容器沿墙摆好，家里看起来第一次像在为灾难准备。明天每个人会在不同地点，所有安排仍依赖手机和道路。"
-        },
-        {
-          "required_flags": ["prep_power"],
-          "text": "充满电的设备排在桌边，屏幕上的天气提醒不断刷新。明天每个人会在不同地点，通信是否稳定仍无法保证。"
-        },
-        {
-          "required_flags": ["prep_route"],
-          "text": "学校、社区和回家路线已经标在地图上，但路况不会按照计划保持不变。明天每个人会在不同地点。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "brief_everyone",
-          "label": "把目前知道的情况全部告诉家人",
-          "result": "老人认真听完，小孩子明显紧张起来。至少明天没有人会因为突然变化而完全措手不及。",
-          "effects": [
-            {"type": "set_flag", "id": "family_fully_briefed"},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
-            {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "evening"},
-            {"type": "set_weather", "value": "阴 · 远处连续闷雷"}
-          ]
-        },
-        {
-          "id": "shield_child",
-          "label": "只和伴侣及老人讨论风险",
-          "result": "小孩子只知道明天可能早点回家。你避免了眼前的恐惧，也让两个孩子掌握的信息不一样。",
-          "effects": [
-            {"type": "set_flag", "id": "day_two_shielded_child"},
-            {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "evening"},
-            {"type": "set_weather", "value": "阴 · 远处连续闷雷"}
-          ]
-        },
-        {
-          "id": "pack_bags",
-          "label": "让每个人准备一个随手包",
-          "result": "家人各自装了少量必需品。没有人知道是否真会用上，但明天临时移动会更快。",
-          "effects": [
-            {"type": "set_flag", "id": "family_bags_packed"},
-            {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 2},
-            {"type": "set_phase", "value": "pre_rain_day_2_bedtime"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "evening"},
-            {"type": "set_weather", "value": "阴 · 远处连续闷雷"}
           ]
         }
       ],

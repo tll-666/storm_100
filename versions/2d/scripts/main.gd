@@ -193,11 +193,7 @@ func _process(delta: float) -> void:
 		if GameState.phase_id == "pre_rain_day_3_after_first_shop":
 			prompt = "安排今天下午"
 		elif GameState.phase_id == "pre_rain_day_2_clues":
-			prompt = "根据线索安排重点准备"
-		elif GameState.phase_id == "pre_rain_day_2_notices":
-			prompt = "查看学校和社区通知"
-		elif GameState.phase_id == "pre_rain_day_2_evening":
-			prompt = "和家人讨论明天"
+			prompt = "根据线索决定重点准备"
 	if current_target != null and current_target.object_id == "master_bed":
 		if GameState.phase_id in ["pre_rain_day_3_evening", "pre_rain_day_2_bedtime"] or GameState.phase_id.ends_with("_settlement"):
 			prompt = "结束今天"
@@ -609,25 +605,25 @@ func _on_debug_action_selected(action_id: String) -> void:
 			hud.show_toast("测试：已跳到暴雨前第1天清晨。")
 		"rain_day_one":
 			_debug_skip_to_rain_day_one()
-			hud.show_toast("测试：已跳到暴雨第1天。")
+			hud.show_toast("测试：已跳到第2天。")
 		"rain_day_two":
 			_debug_skip_to_rain_day_two()
-			hud.show_toast("测试：已跳到暴雨第2天。")
+			hud.show_toast("测试：已跳到第3天。")
 		"rain_day_three":
 			_debug_skip_to_rain_day_three()
-			hud.show_toast("测试：已跳到暴雨第3天。")
+			hud.show_toast("测试：已跳到第4天。")
 		"rain_day_four":
 			_debug_skip_to_rain_day_four()
-			hud.show_toast("测试：已跳到暴雨第4天。")
+			hud.show_toast("测试：已跳到第5天。")
 		"rain_day_five":
 			_debug_skip_to_rain_day_five()
-			hud.show_toast("测试：已跳到暴雨第5天。")
+			hud.show_toast("测试：已跳到第6天。")
 		"rain_day_six":
 			_debug_skip_to_rain_day_six()
-			hud.show_toast("测试：已跳到暴雨第6天。")
+			hud.show_toast("测试：已跳到第7天。")
 		"rain_day_seven":
 			_debug_skip_to_rain_day_seven()
-			hud.show_toast("测试：已跳到暴雨第7天。")
+			hud.show_toast("测试：已跳到第8天。")
 		"rain_day_eight", "rain_day_nine", "rain_day_ten", "rain_day_eleven", "rain_day_twelve", "rain_day_thirteen", "rain_day_fourteen", "rain_day_fifteen":
 			var words := {"eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15}
 			var day := int(words.get(action_id.trim_prefix("rain_day_"), 8))
@@ -669,7 +665,7 @@ func _debug_skip_after_shop() -> void:
 	GameState.shopping_cart.clear()
 	GameState.flags["first_shopping_complete"] = true
 	GameState.phase_id = "pre_rain_day_3_after_first_shop"
-	GameState.day_label = "暴雨前第3天"
+	GameState.day_label = "暴雨前"
 	GameState.time_label = "上午11:45"
 	GameState.time_segment = "daytime"
 	GameState.weather_label = "阴 · 风声渐紧"
@@ -745,7 +741,7 @@ func _debug_skip_to_rain_day_two() -> void:
 	GameState.flags["third_shopping_complete"] = true
 	GameState.settle_rain_day_one()
 	GameState.phase_id = "rain_day_2_morning"
-	GameState.day_label = "暴雨第2天"
+	GameState.day_label = "第3天"
 	GameState.time_label = "上午07:00"
 	GameState.time_segment = "morning"
 	GameState.weather_label = "暴雨 · 水压偏低"
@@ -764,7 +760,7 @@ func _debug_skip_to_rain_day_three() -> void:
 	EventManager.apply_choice("r2_power_outage", 0, true)
 	GameState.settle_rain_day_two()
 	GameState.phase_id = "rain_day_3_morning"
-	GameState.day_label = "暴雨第3天"
+	GameState.day_label = "第4天"
 	GameState.time_label = "上午07:00"
 	GameState.time_segment = "morning"
 	GameState.weather_label = "暴雨 · 水质异常"
@@ -784,7 +780,7 @@ func _debug_skip_to_rain_day_four() -> void:
 	EventManager.apply_choice("r3_garage_flood", 0, true)
 	GameState.settle_rain_day_three()
 	GameState.phase_id = "rain_day_4_morning"
-	GameState.day_label = "暴雨第4天"
+	GameState.day_label = "第5天"
 	GameState.time_label = "上午07:00"
 	GameState.time_segment = "morning"
 	GameState.weather_label = "暴雨 · 持续中"
@@ -808,7 +804,7 @@ func _debug_skip_to_rain_day_five() -> void:
 	EventManager.apply_choice("r4_evening_dinner", 0, true)
 	GameState.settle_rain_day_four()
 	GameState.phase_id = "rain_day_5_morning"
-	GameState.day_label = "暴雨第5天"
+	GameState.day_label = "第6天"
 	GameState.time_label = "上午07:00"
 	GameState.time_segment = "morning"
 	GameState.weather_label = "暴雨 · 一楼已进水"
@@ -833,7 +829,7 @@ func _debug_skip_to_rain_day_six() -> void:
 	EventManager.apply_choice("r5_evening_hub", 0, true)
 	GameState.settle_rain_day_five()
 	GameState.phase_id = "rain_day_6_morning"
-	GameState.day_label = "暴雨第6天"
+	GameState.day_label = "第7天"
 	GameState.time_label = "上午07:00"
 	GameState.time_segment = "morning"
 	GameState.weather_label = "暴雨 · 全楼断电"
@@ -857,7 +853,7 @@ func _debug_skip_to_rain_day_seven() -> void:
 	EventManager.apply_choice("r6_evening_close", 0, true)
 	GameState.settle_rain_day_six()
 	GameState.phase_id = "rain_day_7_morning"
-	GameState.day_label = "暴雨第7天"
+	GameState.day_label = "第8天"
 	GameState.time_label = "上午07:00"
 	GameState.time_segment = "morning"
 	GameState.weather_label = "暴雨 · 第一周结束"
@@ -1009,7 +1005,7 @@ func _update_hud() -> void:
 			"pre_rain_day_1_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉。"
 			"rain_day_1_morning":
-				objective = "暴雨第1天：到玄关决定是否冒雨进入购物事件。"
+				objective = "第2天：到玄关决定是否冒雨进入购物事件。"
 			"rain_day_1_dispatch":
 				objective = "雨有短暂减弱。到玄关进入社区超市事件。"
 			"rain_day_1_home":
@@ -1021,19 +1017,19 @@ func _update_hud() -> void:
 			"rain_day_1_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第1夜结算。"
 			"rain_day_2_morning":
-				objective = "暴雨第2天：供电不稳定，收音机需要电池。"
+				objective = "第3天：供电不稳定，收音机需要电池。"
 			"rain_day_2_ready":
 				objective = "停电发生了：决定如何使用有限的备用电力。"
 			"rain_day_2_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第2夜结算。"
 			"rain_day_3_morning":
-				objective = "暴雨第3天：一楼门缝方向传来不妙的声音。去一楼检查。"
+				objective = "第4天：一楼门缝方向传来不妙的声音。去一楼检查。"
 			"rain_day_3_garage":
 				objective = "入户门缝开始渗水：选择封堵、排水、转移物资或暂不处理。"
 			"rain_day_3_evening":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第3夜结算。"
 			"rain_day_4_morning":
-				objective = "暴雨第4天：下楼看看一楼的情况。"
+				objective = "第5天：下楼看看一楼的情况。"
 			"rain_day_4_afternoon":
 				objective = "厨房水管有异响。去一楼厨房检查水管。"
 			"rain_day_4_moving":
@@ -1043,7 +1039,7 @@ func _update_hud() -> void:
 			"rain_day_4_settlement":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第4夜结算。"
 			"rain_day_5_morning":
-				objective = "暴雨第5天：水漫过楼梯。上楼看家人。"
+				objective = "第6天：水漫过楼梯。上楼看家人。"
 			"rain_day_5_midday":
 				objective = "二楼每人在不同角落。和孩子、老人、大孩子谈谈。"
 			"r5_family_hub":
@@ -1051,7 +1047,7 @@ func _update_hud() -> void:
 			"rain_day_5_settlement":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第5夜结算。"
 			"rain_day_6_morning":
-				objective = "暴雨第6天：停电第三天。开始新的一天。"
+				objective = "第7天：停电第三天。开始新的一天。"
 			"rain_day_6_midday":
 				objective = "清点食物：五人分的东西越来越少。"
 			"rain_day_6_tension":
@@ -1061,7 +1057,7 @@ func _update_hud() -> void:
 			"rain_day_6_settlement":
 				objective = "今天的行动已经结束：到二楼主卧睡觉，进行暴雨第6夜结算。"
 			"rain_day_7_morning":
-				objective = "暴雨第7天：收音机突然响了。去阳台看看。"
+				objective = "第8天：收音机突然响了。去阳台看看。"
 			"rain_day_7_midday":
 				objective = "老张在隔壁屋顶。从阳台看看他要说什么。"
 			"r7_family_hub":
@@ -1501,23 +1497,12 @@ func _open_day_planner() -> void:
 				return
 			_open_database_event("d2_preparation")
 			return
-		"pre_rain_day_2_notices":
-			_open_database_event("d2_school_notice")
-			return
-		"pre_rain_day_2_evening":
-			_open_database_event("d2_evening_discussion")
-			return
-	if not GameState.has_flag("first_shopping_complete"):
-		pending_action = {"type": "close"}
-		hud.show_dialogue("餐桌", "购物清单还没有处理完，现在安排下午还太早。", ["离开"])
-		return
 	if GameState.phase_id != "pre_rain_day_3_after_first_shop":
 		pending_action = {"type": "close"}
-		hud.show_dialogue(
-			"餐桌",
-			"下午的安排已经确定：%s。" % GameState.afternoon_plan_label(),
-			["离开"]
-		)
+		if GameState.phase_id.begins_with("pre_rain_day_2"):
+			hud.show_dialogue("餐桌", "今天的准备已经完成。该去睡了。", ["离开"])
+		else:
+			hud.show_dialogue("餐桌", "先和家人们聊聊，检查一下房屋的关键位置。", ["离开"])
 		return
 	pending_action = {"type": "afternoon_plan"}
 	hud.show_dialogue(
@@ -1603,7 +1588,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_day_one"}
 		hud.show_dialogue(
 			"主卧",
-			"今天的接人和购物已经结束。雨还在下。睡觉会进行夜间结算，进入暴雨第1天。",
+			"今天的接人和购物已经结束。雨还在下。睡觉会进行夜间结算，进入第2天。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1611,7 +1596,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_one"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第1天的行动已经结束。睡觉会进行暴雨第1夜结算——供水和供电可能开始变化。",
+			"第2天的行动已经结束。睡觉会进行暴雨第1夜结算——供水和供电可能开始变化。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1619,7 +1604,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_two"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第2天的行动已经结束。睡觉会进行暴雨第2夜结算——供水和供电可能继续恶化。",
+			"第3天的行动已经结束。睡觉会进行暴雨第2夜结算——供水和供电可能继续恶化。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1627,7 +1612,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_three"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第3天的行动已经结束。睡觉会进行暴雨第3夜结算——一楼低处的状况会在明天显现。",
+			"第4天的行动已经结束。睡觉会进行暴雨第3夜结算——一楼低处的状况会在明天显现。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1635,7 +1620,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_four"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第4天的行动已经结束。睡觉会进行暴雨第4夜结算。",
+			"第5天的行动已经结束。睡觉会进行暴雨第4夜结算。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1643,7 +1628,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_five"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第5天的行动已经结束。睡觉会进行暴雨第5夜结算。",
+			"第6天的行动已经结束。睡觉会进行暴雨第5夜结算。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1651,7 +1636,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_six"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第6天的行动已经结束。睡觉会进行暴雨第6夜结算。",
+			"第7天的行动已经结束。睡觉会进行暴雨第6夜结算。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1659,7 +1644,7 @@ func _open_master_bed() -> void:
 		pending_action = {"type": "end_rain_day_seven"}
 		hud.show_dialogue(
 			"主卧",
-			"暴雨第7天的行动已经结束。睡觉会进行暴雨第7夜结算。",
+			"第8天的行动已经结束。睡觉会进行暴雨第7夜结算。",
 			["结束今天", "再等等"]
 		)
 		return
@@ -1696,19 +1681,19 @@ func _on_day_summary_confirmed() -> void:
 	if pending_day_transition == "day_one":
 		hud.play_day_transition("暴雨前第1天", "上午07:00", "窗外终于开始落下零星雨点。")
 	elif pending_day_transition == "rain_day_one":
-		hud.play_day_transition("暴雨第1天", "上午07:00", "持续的暴雨正式开始。窗外一片灰白，排水河方向传来连续的水声。")
+		hud.play_day_transition("第2天", "上午07:00", "持续的暴雨正式开始。窗外一片灰白，排水河方向传来连续的水声。")
 	elif pending_day_transition == "rain_day_two":
-		hud.play_day_transition("暴雨第2天", "上午07:00", "雨没有停。水压偏低，电力不稳定。")
+		hud.play_day_transition("第3天", "上午07:00", "雨没有停。水压偏低，电力不稳定。")
 	elif pending_day_transition == "rain_day_three":
-		hud.play_day_transition("暴雨第3天", "上午07:00", "雨还在下。水质出现异常。一楼门缝方向传来不妙的声音。")
+		hud.play_day_transition("第4天", "上午07:00", "雨还在下。水质出现异常。一楼门缝方向传来不妙的声音。")
 	elif pending_day_transition == "rain_day_four":
-		hud.play_day_transition("暴雨第4天", "上午07:00", "雨还在下。一楼低处渗水的结果已经显现。")
+		hud.play_day_transition("第5天", "上午07:00", "雨还在下。一楼低处渗水的结果已经显现。")
 	elif pending_day_transition == "rain_day_five":
-		hud.play_day_transition("暴雨第5天", "上午07:00", "第五天。水漫过第一级楼梯。手机只剩一格信号。")
+		hud.play_day_transition("第6天", "上午07:00", "第五天。水漫过第一级楼梯。手机只剩一格信号。")
 	elif pending_day_transition == "rain_day_six":
-		hud.play_day_transition("暴雨第6天", "上午07:00", "第六天。停电第三天。屋里已经不习惯有光了。")
+		hud.play_day_transition("第7天", "上午07:00", "第六天。停电第三天。屋里已经不习惯有光了。")
 	elif pending_day_transition == "rain_day_seven":
-		hud.play_day_transition("暴雨第7天", "上午07:00", "第七天。收音机突然响了。一周过去了，雨没有停。")
+		hud.play_day_transition("第8天", "上午07:00", "第七天。收音机突然响了。一周过去了，雨没有停。")
 	elif pending_day_transition.begins_with("rain_day_") and pending_day_transition.trim_prefix("rain_day_").is_valid_int():
 		var day := int(pending_day_transition.trim_prefix("rain_day_"))
 		hud.play_day_transition("暴雨第%d天" % day, "上午07:00", GameState.experiment_change_label(day) + "。雨仍在继续。")
@@ -1717,8 +1702,7 @@ func _on_day_summary_confirmed() -> void:
 	elif pending_day_transition == "end_of_week":
 		hud.play_day_transition("第一周结束", "上午07:00", "第一周结束。救援没有来。雨还在下。五个人还在。")
 	else:
-		pending_day_transition = "day_two"
-		hud.play_day_transition("暴雨前第2天", "上午07:10", "距离预报中的强降雨，还有两天。")
+		hud.play_day_transition("暴雨前第1天", "上午07:00", "窗外终于开始落下零星雨点。")
 
 
 func _on_day_transition_blackout() -> void:
@@ -1728,42 +1712,42 @@ func _on_day_transition_blackout() -> void:
 		GameState.begin_rain_day_one()
 	elif pending_day_transition == "rain_day_two":
 		GameState.phase_id = "rain_day_2_morning"
-		GameState.day_label = "暴雨第2天"
+		GameState.day_label = "第3天"
 		GameState.time_label = "上午07:00"
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 水压偏低"
 		GameState.flags["rain_day_two_started"] = true
 	elif pending_day_transition == "rain_day_three":
 		GameState.phase_id = "rain_day_3_morning"
-		GameState.day_label = "暴雨第3天"
+		GameState.day_label = "第4天"
 		GameState.time_label = "上午07:00"
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 水质异常"
 		GameState.flags["rain_day_three_started"] = true
 	elif pending_day_transition == "rain_day_four":
 		GameState.phase_id = "rain_day_4_morning"
-		GameState.day_label = "暴雨第4天"
+		GameState.day_label = "第5天"
 		GameState.time_label = "上午07:00"
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 持续中"
 		GameState.flags["rain_day_four_started"] = true
 	elif pending_day_transition == "rain_day_five":
 		GameState.phase_id = "rain_day_5_morning"
-		GameState.day_label = "暴雨第5天"
+		GameState.day_label = "第6天"
 		GameState.time_label = "上午07:00"
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 一楼已进水"
 		GameState.flags["rain_day_five_started"] = true
 	elif pending_day_transition == "rain_day_six":
 		GameState.phase_id = "rain_day_6_morning"
-		GameState.day_label = "暴雨第6天"
+		GameState.day_label = "第7天"
 		GameState.time_label = "上午07:00"
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 全楼断电"
 		GameState.flags["rain_day_six_started"] = true
 	elif pending_day_transition == "rain_day_seven":
 		GameState.phase_id = "rain_day_7_morning"
-		GameState.day_label = "暴雨第7天"
+		GameState.day_label = "第8天"
 		GameState.time_label = "上午07:00"
 		GameState.time_segment = "morning"
 		GameState.weather_label = "暴雨 · 第一周结束"
@@ -1854,7 +1838,7 @@ func _on_day_transition_finished() -> void:
 		_auto_chain_mode = false
 		pending_action = {"type": "close"}
 		hud.show_dialogue(
-			"暴雨第7天 · 第一周结束",
+			"第8天 · 第一周结束",
 			"第一周已经过去。雨还没有停。收音机说救援在来，邻居说没有看到。你把最后一点食物分了五份，每份都不够。\n\n五个人还在。这已经是第一周的胜利。\n\n当前版本到此结束，后续内容将在下个版本继续。",
 			["结束当前版本"]
 		)
@@ -1974,7 +1958,7 @@ func _show_rain_day_one_summary() -> void:
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
-		"暴雨第1天 · 夜间结算",
+		"第2天 · 夜间结算",
 		"供水和供电开始出现问题。后续几天情况可能继续恶化。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。"))
@@ -1995,7 +1979,7 @@ func _show_rain_day_two_summary() -> void:
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
-		"暴雨第2天 · 夜间结算",
+		"第3天 · 夜间结算",
 		"水质出现异常，停电后恢复但不稳定。一楼低处渗水可能在明天发生。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。"))
@@ -2016,7 +2000,7 @@ func _show_rain_day_three_summary() -> void:
 		{"name": "一楼低处", "value": str(summary.get("garage", "未知"))},
 	]
 	hud.show_day_summary(
-		"暴雨第3天 · 夜间结算",
+		"第4天 · 夜间结算",
 		"一楼低处渗水的结果将在明天显现。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。")),
@@ -2043,7 +2027,7 @@ func _show_rain_day_four_summary() -> void:
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
-		"暴雨第4天 · 夜间结算",
+		"第5天 · 夜间结算",
 		"正式停电，水质异常。一楼已无法正常居住。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。")),
@@ -2069,7 +2053,7 @@ func _show_rain_day_five_summary() -> void:
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
-		"暴雨第5天 · 夜间结算",
+		"第6天 · 夜间结算",
 		"停水停电持续。老人的健康开始出问题。通信彻底中断。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。")),
@@ -2095,7 +2079,7 @@ func _show_rain_day_six_summary() -> void:
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
-		"暴雨第6天 · 夜间结算",
+		"第7天 · 夜间结算",
 		"食物即将见底。全楼彻底停电停水。伴侣的承受力接近极限。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。")),
@@ -2121,7 +2105,7 @@ func _show_rain_day_seven_summary() -> void:
 		{"name": "设施变化", "value": str(summary.get("changes", "无"))},
 	]
 	hud.show_day_summary(
-		"暴雨第7天 · 夜间结算",
+		"第8天 · 夜间结算",
 		"第一周结束。救援没有来。收音机和邻居说了相反的话。食物几乎耗尽。",
 		rows,
 		str(summary.get("note", "夜里暴雨没有停。")),

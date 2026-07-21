@@ -57,7 +57,7 @@ const FAMILY_NAMES := {
 }
 
 var phase_id: String = "pre_rain_day_3"
-var day_label: String = "暴雨前第3天"
+var day_label: String = "暴雨前"
 var time_label: String = "上午8:05"
 var weather_label: String = "阴 · 尚未下雨"
 var time_segment: String = "morning"
@@ -109,7 +109,7 @@ var experiment_start_snapshot: Dictionary = {}
 
 func reset_prologue() -> void:
 	phase_id = "pre_rain_day_3"
-	day_label = "暴雨前第3天"
+	day_label = "暴雨前"
 	time_label = "上午8:05"
 	weather_label = "阴 · 尚未下雨"
 	time_segment = "morning"
@@ -400,7 +400,7 @@ func settle_day_one() -> Dictionary:
 
 func begin_day_one() -> void:
 	phase_id = "pre_rain_day_1_morning"
-	day_label = "暴雨前第1天"
+	day_label = "第1天"
 	time_label = "上午07:00"
 	time_segment = "morning"
 	weather_label = "零星小雨 · 风势增强"
@@ -409,7 +409,7 @@ func begin_day_one() -> void:
 
 func begin_rain_day_one() -> void:
 	phase_id = "rain_day_1_morning"
-	day_label = "暴雨第1天"
+	day_label = "第2天"
 	time_label = "上午07:00"
 	time_segment = "morning"
 	weather_label = "暴雨 · 红色预警"
