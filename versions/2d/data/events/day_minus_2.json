@@ -161,7 +161,6 @@
             {"type": "set_flag", "id": "prep_water"},
             {"type": "set_preparation", "value": "water"},
             {"type": "add_water", "amount": 12.0},
-            {"type": "schedule_event", "event_id": "d1_water_prepared", "trigger_phase": "pre_rain_day_1_morning"},
             {"type": "set_phase", "value": "pre_rain_day_2_notices"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
             {"type": "set_weather", "value": "低云 · 风向不定"}
@@ -176,7 +175,6 @@
             {"type": "set_preparation", "value": "power"},
             {"type": "add_backup_power", "amount": 12},
             {"type": "member_stat", "member": "teen", "stat": "morale", "amount": 3},
-            {"type": "schedule_event", "event_id": "d1_power_prepared", "trigger_phase": "pre_rain_day_1_morning"},
             {"type": "set_phase", "value": "pre_rain_day_2_notices"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
             {"type": "set_weather", "value": "低云 · 风向不定"}
@@ -190,7 +188,6 @@
             {"type": "set_flag", "id": "prep_route"},
             {"type": "set_preparation", "value": "route"},
             {"type": "set_flag", "id": "vehicle_route_checked"},
-            {"type": "schedule_event", "event_id": "d1_route_prepared", "trigger_phase": "pre_rain_day_1_morning"},
             {"type": "set_phase", "value": "pre_rain_day_2_notices"},
             {"type": "set_time", "label": "中午12:40", "segment": "daytime"},
             {"type": "set_weather", "value": "低云 · 风向不定"}
@@ -313,54 +310,6 @@
         }
       ],
       "merge": "pre_rain_day_2_bedtime"
-    },
-    {
-      "id": "d1_water_prepared",
-      "title": "昨晚留下的水",
-      "type": "delayed",
-      "day": "暴雨前第1天",
-      "phase": "pre_rain_day_1_morning",
-      "location": "厨房",
-      "once": true,
-      "conditions": {"phase": "pre_rain_day_1_morning", "required_flags": ["prep_water"]},
-      "clues": ["提前准备会在后续事件中产生回报"],
-      "text": "清晨，储水容器仍安静地排在墙边。水压暂时正常，但你不必再花今天的行动时间准备这些水。",
-      "choices": [
-        {"id": "continue", "label": "开始新的一天", "result": "屋外开始落下零星雨点。", "effects": [{"type": "set_flag", "id": "water_preparation_recalled"}]}
-      ],
-      "merge": "v0.7_pickup_setup"
-    },
-    {
-      "id": "d1_power_prepared",
-      "title": "充满电的设备",
-      "type": "delayed",
-      "day": "暴雨前第1天",
-      "phase": "pre_rain_day_1_morning",
-      "location": "大孩子房",
-      "once": true,
-      "conditions": {"phase": "pre_rain_day_1_morning", "required_flags": ["prep_power"]},
-      "clues": ["提前准备会在后续事件中产生回报"],
-      "text": "清晨，备用设备都保持满电。大孩子出门前确认了手机声音，你今天暂时不必寻找插座和充电线。",
-      "choices": [
-        {"id": "continue", "label": "开始新的一天", "result": "屋外开始落下零星雨点。", "effects": [{"type": "set_flag", "id": "power_preparation_recalled"}]}
-      ],
-      "merge": "v0.7_pickup_setup"
-    },
-    {
-      "id": "d1_route_prepared",
-      "title": "地图上的两条路线",
-      "type": "delayed",
-      "day": "暴雨前第1天",
-      "phase": "pre_rain_day_1_morning",
-      "location": "车库",
-      "once": true,
-      "conditions": {"phase": "pre_rain_day_1_morning", "required_flags": ["prep_route"]},
-      "clues": ["提前准备会在后续事件中产生回报"],
-      "text": "汽车已经朝向出口，地图上保留着学校、社区和两条回家路线。真正的路况仍要等出发时判断。",
-      "choices": [
-        {"id": "continue", "label": "开始新的一天", "result": "屋外开始落下零星雨点。", "effects": [{"type": "set_flag", "id": "route_preparation_recalled"}]}
-      ],
-      "merge": "v0.7_pickup_setup"
     }
   ]
 }

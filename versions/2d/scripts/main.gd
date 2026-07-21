@@ -132,7 +132,6 @@ var current_target: InteractionObject
 var pending_action: Dictionary = {}
 var game_started: bool = false
 var pending_day_transition: String = ""
-var processing_day_one_morning: bool = false
 var _last_completed_event_id: String = ""
 var _auto_chain_mode: bool = false
 var current_room_id: String = ""
@@ -185,11 +184,8 @@ func _process(delta: float) -> void:
 	if current_target != null and current_target.object_id == "garage_drain" and GameState.phase_id == "rain_day_3_garage":
 		prompt = "查看入户门缝渗水"
 	if current_target != null and current_target.object_id == "car" and _ready_for_store():
-		prompt = "从玄关出发去社区超市"
-	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
-		prompt = "从玄关出发接人"
-	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "pre_rain_day_1_after_pickup":
-		prompt = "从玄关再次出发"
+		prompt = "开车去社区超市"
+	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
 	if current_target != null and current_target.object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
 		prompt = "从玄关冒雨出发"
 	if current_target != null and current_target.object_id == "day_planner":
@@ -325,24 +321,21 @@ func _inspect_object(object_id: String) -> void:
 		_open_day_two_weather_event()
 		return
 	if object_id == "car" and GameState.phase_id == "pre_rain_day_1_dispatch":
-		_open_database_event("d1_dispatch")
+		pending_action = {"type": "travel_to_second_store"}
+		hud.show_dialogue(
+			"外出装备",
+			"知道了天气情况，知道该买什么。趁路面还能走，去一趟超市。",
+			["开车去超市", "今天不去了"]
+		)
 		return
 	if object_id == "garage_drain" and GameState.phase_id == "rain_day_3_garage":
 		_open_database_event("r3_garage_flood")
 		return
-	if object_id == "car" and GameState.phase_id == "pre_rain_day_1_after_pickup":
-		pending_action = {"type": "travel_to_second_store"}
-		hud.show_dialogue(
-			"玄关外出装备",
-			"外出装备已经整理好，还能再完成一趟独立外出事件。超市还没关门，但雨天商品可能开始限购或缺货。要再去一次吗？",
-			["开车去超市", "今天不再出门"]
-		)
-		return
 	if object_id == "car" and GameState.phase_id == "rain_day_1_dispatch":
 		pending_action = {"type": "travel_to_third_store"}
 		hud.show_dialogue(
-			"玄关外出装备",
-			"雨还在下，但短暂减弱了一些。外出行动仍有风险，超市可能已经缺货大半。",
+			"外出装备",
+			"雨还在下，但短暂减弱了一些。超市可能已经缺货大半，这是最后一次敢出门的机会。",
 			["冒雨去超市", "还是不出门了"]
 		)
 		return
@@ -412,10 +405,7 @@ func _on_choice_selected(index: int) -> void:
 	if action_type == "close":
 		hud.hide_dialogue()
 		pending_action.clear()
-		if processing_day_one_morning:
-			_process_day_one_morning_queue()
-		else:
-			_check_phase_scheduled_event()
+		_check_phase_scheduled_event()
 		if _auto_chain_mode:
 			_auto_trigger_phase_event()
 		return
@@ -727,26 +717,18 @@ func _debug_skip_to_day_one() -> void:
 	GameState.flags["day_two_settled"] = true
 	GameState.begin_day_one()
 	GameState.flags["prep_water"] = true
-	GameState.schedule_event("d1_water_prepared", "pre_rain_day_1_morning")
 	current_floor = 1
 	world.build_floor(current_floor)
 	player.global_position = Vector2(790.0, 735.0)
 	pending_action.clear()
-	processing_day_one_morning = true
 	_update_hud()
-	_process_day_one_morning_queue()
+	_open_database_event("d1_morning_start", true)
 
 
 func _debug_skip_to_rain_day_one() -> void:
 	_debug_skip_to_day_one()
 	EventManager.apply_choice("d1_morning_start", 0, true)
-	EventManager.apply_choice("d1_dispatch", 0, true)
-	EventManager.apply_choice("d1_first_route", 0, true)
-	EventManager.apply_choice("d1_first_arrival", 0, true)
-	EventManager.apply_choice("d1_second_route", 0, true)
-	EventManager.apply_choice("d1_second_arrival", 0, true)
 	GameState.flags["second_shopping_complete"] = true
-	GameState.settle_day_one()
 	GameState.begin_rain_day_one()
 	current_floor = 1
 	world.build_floor(current_floor)
@@ -1817,8 +1799,7 @@ func _on_day_transition_blackout() -> void:
 func _on_day_transition_finished() -> void:
 	if pending_day_transition == "day_one":
 		pending_day_transition = ""
-		processing_day_one_morning = true
-		_process_day_one_morning_queue()
+		_open_database_event("d1_morning_start", true)
 		return
 	if pending_day_transition == "rain_day_one":
 		pending_day_transition = ""
