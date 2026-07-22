@@ -19,8 +19,10 @@ const SHOP_ITEMS := {
 	"eggs": {"name": "鸡蛋", "price": 0, "slots": 1, "food": 1},
 	"dry_biscuits": {"name": "干饼干", "price": 0, "slots": 1, "food": 2},
 	"seeds": {"name": "蔬菜种子", "price": 20, "slots": 1},
+	"water_container": {"name": "水桶", "price": 12, "slots": 1},
 	"shotgun": {"name": "老式猎枪", "price": 0, "slots": 2},
 	"ammo": {"name": "猎枪子弹", "price": 0, "slots": 1},
+	"empty_bottle": {"name": "空瓶", "price": 0, "slots": 1},
 }
 
 const SECOND_SHOP_OVERRIDES := {
@@ -999,9 +1001,27 @@ func _consume_water_reserve(requested_liters: float) -> float:
 		if _consume_item_anywhere("bottled_water", 1) <= 0:
 			break
 		loose_water_liters += 6.0
+		add_item_to_storage("empty_bottle", 1, "pantry")
 	var served := minf(loose_water_liters, requested_liters)
 	loose_water_liters -= served
 	return served
+
+
+func fill_container_at_faucet() -> String:
+	if water_supply_state == "off":
+		return "停水了，水龙头拧不出水。"
+	var containers := _consume_item_anywhere("water_container", 1)
+	var bottles := _consume_item_anywhere("empty_bottle", 1)
+	if containers <= 0 and bottles <= 0:
+		return "没有容器了。需要水桶或空瓶才能接水。"
+	if containers > 0:
+		loose_water_liters += 10.0
+		add_item_to_storage("water_container", 1, "pantry")
+		return "用水桶接了10升自来水。"
+	if bottles > 0:
+		loose_water_liters += 3.0
+		return "用空瓶接了3升自来水。空瓶用掉了。"
+	return "接水失败。"
 
 
 func _consume_item_anywhere(item_id: String, requested: int) -> int:
@@ -1254,7 +1274,7 @@ func complete_shopping() -> bool:
 func _store_purchased_item(item_id: String) -> void:
 	if item_id in ["vegetables", "milk", "meat", "eggs"]:
 		fridge_storage[item_id] = int(fridge_storage.get(item_id, 0)) + 1
-	elif item_id in ["batteries", "power_bank", "basic_medicine"]:
+	elif item_id in ["batteries", "power_bank", "basic_medicine", "shotgun", "ammo"]:
 		utility_storage[item_id] = int(utility_storage.get(item_id, 0)) + 1
 	else:
 		pantry_storage[item_id] = int(pantry_storage.get(item_id, 0)) + 1

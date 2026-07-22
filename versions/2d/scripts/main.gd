@@ -103,9 +103,9 @@ const STORE_SHELVES := {
 	},
 	"shelf_daily":
 	{
-		"name": "瓶装水",
-		"text": "瓶装水摆在货架旁边，没有人抢购。",
-		"items": ["bottled_water"],
+		"name": "瓶装水和水桶",
+		"text": "瓶装水摆在货架旁边。旁边有几个塑料水桶。",
+		"items": ["bottled_water", "water_container"],
 	},
 	"shelf_power":
 	{

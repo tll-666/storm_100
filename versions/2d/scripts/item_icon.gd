@@ -47,6 +47,10 @@ func _draw() -> void:
 			_draw_eggs()
 		"seeds":
 			_draw_seeds()
+		"water_container":
+			_draw_water_container()
+		"empty_bottle":
+			_draw_empty_bottle()
 		"shotgun":
 			_draw_shotgun()
 		"ammo":
@@ -174,6 +178,20 @@ func _draw_shotgun() -> void:
 	draw_rect(Rect2(20, 30, 48, 8), Color("3a2a1e"), true)
 	draw_rect(Rect2(20, 28, 16, 12), Color("5a4030"), true)
 	draw_rect(Rect2(56, 31, 10, 6), Color("2a1a14"), true)
+
+
+func _draw_water_container() -> void:
+	draw_rect(Rect2(26, 22, 24, 38), Color("4a8a9a"), true)
+	draw_rect(Rect2(22, 20, 32, 6), Color("5a9aaa"), true)
+	draw_rect(Rect2(30, 30, 16, 20), Color("6abac8"), true)
+	draw_string(ThemeDB.fallback_font, Vector2(30, 52), "桶", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color("c8e0e8"))
+
+
+func _draw_empty_bottle() -> void:
+	draw_rect(Rect2(30, 25, 18, 34), Color("506070"), true)
+	draw_rect(Rect2(33, 18, 12, 8), Color("607080"), true)
+	draw_rect(Rect2(32, 30, 14, 20), Color("404850"), true)
+	draw_string(ThemeDB.fallback_font, Vector2(28, 52), "空", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("8898a8"))
 
 
 func _draw_ammo() -> void:
