@@ -985,7 +985,13 @@ func _settle_family_needs(nutrition_gain: int) -> Dictionary:
 			health_loss += 6
 		if health_loss > 0:
 			_adjust_member_stat(member_id, "health", -health_loss)
-	return {"water_text": water_text}
+	var morale_penalty := settle_morale_penalty()
+	var result: Dictionary = {"water_text": water_text}
+	if morale_penalty.breakdown > 0:
+		result["morale_penalty"] = "%d人崩溃" % morale_penalty.breakdown
+	if morale_penalty.dead > 0:
+		result["morale_dead"] = "%d人精神死亡" % morale_penalty.dead
+	return result
 
 
 func _consume_water_reserve(requested_liters: float) -> float:
@@ -1037,17 +1043,50 @@ func _set_container_storage(container_id: String, storage: Dictionary) -> void:
 
 func _default_family_states() -> Dictionary:
 	return {
-		"player": {"health": 100, "hunger": 82, "thirst": 80, "morale": 70},
-		"partner": {"health": 100, "hunger": 80, "thirst": 78, "morale": 72},
-		"teen": {"health": 98, "hunger": 84, "thirst": 82, "morale": 68},
-		"child": {"health": 96, "hunger": 86, "thirst": 84, "morale": 76},
-		"elder": {"health": 84, "hunger": 78, "thirst": 76, "morale": 66},
+		"player": {"health": 100, "hunger": 100, "thirst": 100, "morale": 100},
+		"partner": {"health": 100, "hunger": 100, "thirst": 100, "morale": 100},
+		"teen": {"health": 100, "hunger": 100, "thirst": 100, "morale": 100},
+		"child": {"health": 100, "hunger": 100, "thirst": 100, "morale": 100},
+		"elder": {"health": 100, "hunger": 100, "thirst": 100, "morale": 100},
 	}
 
 
 func _ensure_family_states() -> void:
 	if family_states.is_empty():
 		family_states = _default_family_states()
+
+
+func morale_state(member_id: String) -> String:
+	_ensure_family_states()
+	if not family_states.has(member_id):
+		return "normal"
+	var morale := int((family_states[member_id] as Dictionary).get("morale", 100))
+	if morale < 20:
+		return "dead"
+	if morale < 40:
+		return "breakdown"
+	if morale < 60:
+		return "sluggish"
+	return "normal"
+
+
+func member_can_act(member_id: String) -> bool:
+	var state := morale_state(member_id)
+	return state == "normal" or state == "sluggish"
+
+
+func settle_morale_penalty() -> Dictionary:
+	_ensure_family_states()
+	var breakdown_count := 0
+	var dead_count := 0
+	for member_id in FAMILY_ORDER:
+		var state := morale_state(member_id)
+		if state == "breakdown":
+			_adjust_member_stat(member_id, "health", -2)
+			breakdown_count += 1
+		elif state == "dead":
+			dead_count += 1
+	return {"breakdown": breakdown_count, "dead": dead_count}
 
 
 func _adjust_member_stat(member_id: String, stat_id: String, delta: int) -> void:
