@@ -667,10 +667,17 @@ func _interactions_for_floor(floor_number: int) -> Array:
 				"id": "master_bed",
 				"position": Vector2(650, 275),
 				"prompt": "查看主卧床铺",
-				"category": "time_action",
-				"name": "主卧床铺"
-			},
-		]
+			"category": "time_action",
+			"name": "主卧床铺"
+		},
+		{
+			"id": "window_bedroom",
+			"position": Vector2(520, 200),
+			"prompt": "检查主卧窗户",
+			"category": "inspect",
+			"name": "主卧窗户"
+		},
+	]
 	return [
 		{
 			"id": "partner",
@@ -764,5 +771,12 @@ func _interactions_for_floor(floor_number: int) -> Array:
 			"prompt": "在餐桌旁安排接下来的时间",
 			"category": "time_action",
 			"name": "餐桌"
+		},
+		{
+			"id": "window_living",
+			"position": Vector2(890, 400),
+			"prompt": "检查客厅窗户",
+			"category": "inspect",
+			"name": "客厅窗户"
 		},
 	]
