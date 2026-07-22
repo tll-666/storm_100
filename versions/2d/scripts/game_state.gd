@@ -685,7 +685,8 @@ func settle_rain_day_seven() -> Dictionary:
 		meal_parts.append("鱼罐头")
 		nutrition_gain += 2
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "几乎见底的存粮"
-	update_utilities_for_day(8)\n	var water_result := _settle_family_needs(nutrition_gain)
+	update_utilities_for_day(8)
+	var water_result := _settle_family_needs(nutrition_gain)
 	for member_id in FAMILY_ORDER:
 		_adjust_member_stat(member_id, "morale", -2)
 	if has_flag("trusted_radio_evacuation"):
@@ -721,7 +722,8 @@ func begin_experiment_day(day: int) -> void:
 	time_segment = "morning"
 	weather_label = experiment_weather(safe_day)
 	flags["rain_day_%d_started" % safe_day] = true
-	update_utilities_for_day(8)\n	set_environment_state("kitchen_faucet", "off")
+	update_utilities_for_day(8)
+	set_environment_state("kitchen_faucet", "off")
 	enable_continuous_clock(420.0)
 	if experiment_start_snapshot.is_empty():
 		experiment_start_snapshot = resource_snapshot()
