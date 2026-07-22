@@ -18,6 +18,9 @@ signal survival_manual_requested
 signal debug_action_selected(action_id: String)
 signal event_browser_preview_requested(event_id: String)
 signal event_browser_reset_requested(event_id: String)
+signal ration_food_cycle_requested(member_id: String, direction: int)
+signal ration_water_toggle_requested(member_id: String)
+signal ration_confirm_requested
 
 var root: Control
 var top_date_label: Label
@@ -63,6 +66,10 @@ var debug_overlay: ColorRect
 var event_browser: StormEventBrowser
 var minimap: HouseMiniMap
 var minimap_room_label: Label
+var ration_overlay: ColorRect
+var ration_resource_label: Label
+var ration_food_labels: Dictionary = {}
+var ration_water_buttons: Dictionary = {}
 
 
 func _ready() -> void:
@@ -181,6 +188,7 @@ func _build_interface() -> void:
 	_build_utility_controls()
 	_build_minimap()
 	_build_item_grid_overlay()
+	_build_ration_overlay()
 	_build_day_summary_overlay()
 	_build_day_transition_overlay()
 	_build_family_overlay()
@@ -322,6 +330,96 @@ func _build_item_grid_overlay() -> void:
 	footer.add_child(item_grid_primary_button)
 
 
+func _build_ration_overlay() -> void:
+	ration_overlay = ColorRect.new()
+	ration_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ration_overlay.color = Color(0.012, 0.022, 0.027, 0.92)
+	ration_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	ration_overlay.visible = false
+	root.add_child(ration_overlay)
+
+	var panel := PanelContainer.new()
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -520.0
+	panel.offset_right = 520.0
+	panel.offset_top = -320.0
+	panel.offset_bottom = 320.0
+	panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("18252b"), Color("bd9d61"), 14, 2)
+	)
+	ration_overlay.add_child(panel)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	panel.add_child(content)
+	var title := _make_label("中午12:00 · 今日食物与饮水分配", 25, Color("f2d18a"))
+	content.add_child(title)
+	var note := _make_label(
+		"每名成员每天最多进食一次、饮水一次。确认前可以反复调整；确认后今天不能重新分配。",
+		13,
+		Color("becacd")
+	)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(note)
+	ration_resource_label = _make_label("剩余食物与直饮水", 14, Color("8fc4d3"))
+	content.add_child(ration_resource_label)
+	content.add_child(HSeparator.new())
+
+	var members := [
+		{"id": "player", "name": "玩家"},
+		{"id": "partner", "name": "伴侣"},
+		{"id": "teen", "name": "大孩子"},
+		{"id": "child", "name": "小孩子"},
+		{"id": "elder", "name": "老人"},
+	]
+	for raw_member in members:
+		var member: Dictionary = raw_member
+		var member_id := str(member.get("id", ""))
+		var row_panel := PanelContainer.new()
+		row_panel.add_theme_stylebox_override(
+			"panel", _panel_style(Color(0.07, 0.11, 0.13, 0.9), Color(0.27, 0.36, 0.39, 0.8), 8)
+		)
+		content.add_child(row_panel)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 9)
+		row_panel.add_child(row)
+		var name_label := _make_label(str(member.get("name", member_id)), 15, Color("e9eee9"))
+		name_label.custom_minimum_size.x = 90.0
+		row.add_child(name_label)
+		var previous_button := Button.new()
+		previous_button.text = "◀"
+		previous_button.custom_minimum_size = Vector2(42, 38)
+		previous_button.pressed.connect(_on_ration_food_cycle.bind(member_id, -1))
+		row.add_child(previous_button)
+		var food_label := _make_label("不进食", 14, Color("e0bd78"))
+		food_label.custom_minimum_size.x = 250.0
+		food_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		food_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(food_label)
+		ration_food_labels[member_id] = food_label
+		var next_button := Button.new()
+		next_button.text = "▶"
+		next_button.custom_minimum_size = Vector2(42, 38)
+		next_button.pressed.connect(_on_ration_food_cycle.bind(member_id, 1))
+		row.add_child(next_button)
+		var water_button := Button.new()
+		water_button.text = "不饮水"
+		water_button.custom_minimum_size = Vector2(150, 38)
+		water_button.pressed.connect(_on_ration_water_toggle.bind(member_id))
+		row.add_child(water_button)
+		ration_water_buttons[member_id] = water_button
+
+	var confirm_button := Button.new()
+	confirm_button.text = "确认今日分配"
+	confirm_button.custom_minimum_size = Vector2(0, 50)
+	confirm_button.add_theme_font_size_override("font_size", 16)
+	confirm_button.pressed.connect(_on_ration_confirm_pressed)
+	content.add_child(confirm_button)
+
+
 func _build_day_summary_overlay() -> void:
 	day_summary_overlay = ColorRect.new()
 	day_summary_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -349,7 +447,7 @@ func _build_day_summary_overlay() -> void:
 	panel.add_child(content)
 	var kicker := _make_label("一天结束", 13, Color("9fb5bc"))
 	content.add_child(kicker)
-	day_summary_title = _make_label("暴雨前第3天 · 夜间结算", 27, Color("f2d18a"))
+	day_summary_title = _make_label("第0天 · 准备日结算", 27, Color("f2d18a"))
 	content.add_child(day_summary_title)
 	day_summary_subtitle = _make_label("今天的重要行动已经完成。", 14, Color("c9d3d5"))
 	day_summary_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -392,13 +490,13 @@ func _build_day_transition_overlay() -> void:
 	transition_card.alignment = BoxContainer.ALIGNMENT_CENTER
 	transition_card.add_theme_constant_override("separation", 13)
 	transition_overlay.add_child(transition_card)
-	transition_date_label = _make_label("暴雨前第2天", 36, Color("f1e9da"))
+	transition_date_label = _make_label("暴雨第1天", 36, Color("f1e9da"))
 	transition_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	transition_card.add_child(transition_date_label)
 	transition_time_label = _make_label("上午07:10", 20, Color("e6bd70"))
 	transition_time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	transition_card.add_child(transition_time_label)
-	transition_detail_label = _make_label("距离预报中的强降雨，还有两天。", 14, Color("9fb0b5"))
+	transition_detail_label = _make_label("连续自然时间与家庭生存循环开始。", 14, Color("9fb0b5"))
 	transition_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	transition_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	transition_card.add_child(transition_detail_label)
@@ -458,7 +556,7 @@ func _build_family_overlay() -> void:
 	family_cards.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_child(family_cards)
 	var note := _make_label(
-		"数值会在每天结算时变化。正常情况下食物和水自动平均分配，严重短缺时才让玩家决定优先顺序。",
+		"每天中午为五名角色分别选择一次食物和1L饮水；确认前可反复调整，确认后当天不再重复进食或饮水。",
 		12,
 		Color("899a9f")
 	)
@@ -511,7 +609,7 @@ func _build_survival_manual_overlay() -> void:
 	manual_objective_label.custom_minimum_size.y = 54.0
 	content.add_child(manual_objective_label)
 	var navigation_note := _make_label(
-		"探索提示：右上角简图只记录到过的房间；离开房间后，其中的人物和物品不会继续提供实时信息。T可快捷前往已开放的主要地点，且不推进时间。",
+		"可前往地点：一楼客厅（窗户、收音机）、厨房（水龙头、冰箱、食品柜、灶台）、厕所、玄关（配电箱）；二楼主卧（睡觉）、二楼厕所、封闭窗边（接雨和预处理）。T可在主要地点间快捷移动且不推进时间。",
 		13,
 		Color("aebdc1")
 	)
@@ -630,8 +728,6 @@ func _build_debug_overlay() -> void:
 		["go_store", "直接进入第一次购物"],
 		["after_shop", "跳到第一次购物回家后"],
 		["evening_bed", "跳到当天晚上并传送到主卧"],
-		["day_two", "直接进入暴雨前第2天"],
-		["day_one", "直接进入暴雨前第1天"],
 		["rain_day_one", "直接进入暴雨第1天"],
 		["rain_day_two", "直接进入暴雨第2天"],
 		["rain_day_three", "直接进入暴雨第3天"],
@@ -639,14 +735,6 @@ func _build_debug_overlay() -> void:
 		["rain_day_five", "直接进入暴雨第5天"],
 		["rain_day_six", "直接进入暴雨第6天"],
 		["rain_day_seven", "直接进入暴雨第7天"],
-		["rain_day_eight", "直接进入暴雨第8天"],
-		["rain_day_nine", "直接进入暴雨第9天"],
-		["rain_day_ten", "直接进入暴雨第10天"],
-		["rain_day_eleven", "直接进入暴雨第11天"],
-		["rain_day_twelve", "直接进入暴雨第12天"],
-		["rain_day_thirteen", "直接进入暴雨第13天"],
-		["rain_day_fourteen", "直接进入暴雨第14天"],
-		["rain_day_fifteen", "直接进入暴雨第15天"],
 		["faucet_prototype", "检查原型：切换水龙头状态"],
 		["event_browser", "打开事件浏览器（查看全部分支）"],
 		["reset", "重置本次测试"],
@@ -778,6 +866,28 @@ func hide_item_grid() -> void:
 	item_grid_overlay.visible = false
 
 
+func show_rationing(rows: Array, food_portions: int, potable_liters: float) -> void:
+	ration_resource_label.text = "可分配食物：%d份　　直饮水：%.1fL" % [food_portions, potable_liters]
+	for raw_row in rows:
+		if not (raw_row is Dictionary):
+			continue
+		var row: Dictionary = raw_row
+		var member_id := str(row.get("id", ""))
+		if ration_food_labels.has(member_id):
+			(ration_food_labels[member_id] as Label).text = str(row.get("food", "不进食"))
+		if ration_water_buttons.has(member_id):
+			(ration_water_buttons[member_id] as Button).text = str(row.get("water", "不饮水"))
+	ration_overlay.visible = true
+	ration_overlay.move_to_front()
+	dialogue_panel.visible = false
+	item_grid_overlay.visible = false
+	prompt_panel.visible = false
+
+
+func hide_rationing() -> void:
+	ration_overlay.visible = false
+
+
 func show_day_summary(
 	title: String, subtitle: String, rows: Array, note: String, extra: Dictionary = {}
 ) -> void:
@@ -824,12 +934,15 @@ func hide_day_summary() -> void:
 
 func show_family_status(members: Array, household: Dictionary) -> void:
 	family_household_label.text = (
-		"供水：%s　　供电：%s　　食物：%s　　储备饮水：%s　　备用电力：%s　　背包：%s"
+		"供水：%s　供电：%s　燃气：%s　食物：%s　直饮水：%s　原水：%s\n马桶：%s　备用电力：%s　背包：%s"
 		% [
 			str(household.get("water", "未知")),
 			str(household.get("power", "未知")),
+			str(household.get("gas", "未知")),
 			str(household.get("food", "0份")),
 			str(household.get("water_reserve", "0升")),
+			str(household.get("raw_water", "0升")),
+			str(household.get("toilet", "未知")),
 			str(household.get("backup_power", "0格")),
 			str(household.get("bag", "0/6格")),
 		]
@@ -865,9 +978,12 @@ func show_survival_manual(objective: String, inspection_entries: Array) -> void:
 				str(entry.get("checked_at", "尚未检查")),
 			]
 		)
-	manual_records_label.text = (
-		"\n\n".join(lines) if not lines.is_empty() else "尚未检查任何环境对象。"
-	)
+	var facility_guide := "固定循环：上午自由检查 → 中午逐人分配食物和1L饮水 → 下午处理储水、净水、厕所和房屋问题 → 20:00后可在主卧结束今天。\n水龙头与冰箱属于可重复设施；靠近其他地点出现“查看”时，按E才会发现当天事件。"
+	manual_records_label.text = facility_guide
+	if not lines.is_empty():
+		manual_records_label.text += "\n\n已确认记录\n" + "\n\n".join(lines)
+	else:
+		manual_records_label.text += "\n\n尚未检查任何环境对象。"
 	manual_overlay.visible = true
 	manual_overlay.move_to_front()
 	prompt_panel.visible = false
@@ -899,6 +1015,20 @@ func _add_family_card(member: Dictionary) -> void:
 	_add_member_metric(box, "饱腹", int(member.get("hunger", 80)), Color("d2ad68"))
 	_add_member_metric(box, "水分", int(member.get("thirst", 80)), Color("68abc2"))
 	_add_member_metric(box, "精神", int(member.get("morale", 70)), Color("b08bc0"))
+	var toilet_need := int(member.get("toilet_need", 0))
+	var toilet_text := "如厕需求：正常"
+	if toilet_need >= 150:
+		toilet_text = "如厕需求：憋得太久"
+	elif toilet_need >= 100:
+		toilet_text = "如厕需求：急需"
+	elif toilet_need >= 50:
+		toilet_text = "如厕需求：有需要"
+	var activity := str(member.get("activity", ""))
+	if activity == "toilet":
+		toilet_text = "正在使用厕所"
+	var toilet_label := _make_label(toilet_text, 12, Color("8fc4d3"))
+	toilet_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(toilet_label)
 	var lowest := mini(
 		int(member.get("health", 100)),
 		mini(int(member.get("hunger", 100)), int(member.get("thirst", 100)))
@@ -1045,7 +1175,7 @@ func _add_item_grid_cell(entry: Dictionary, clickable: bool) -> void:
 
 	var item_id := str(entry.get("id", ""))
 	var icon: StormItemIcon = ITEM_ICON_SCRIPT.new()
-	icon.configure(item_id, int(entry.get("count", 1)))
+	icon.configure(str(entry.get("icon_id", item_id)), int(entry.get("count", 1)))
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(icon)
 	var name_label := _make_label(str(entry.get("name", item_id)), 14, Color("eef2ed"))
@@ -1117,6 +1247,8 @@ func hide_dialogue() -> void:
 
 
 func close_top_overlay() -> void:
+	if ration_overlay != null and ration_overlay.visible:
+		return
 	if day_summary_overlay != null and day_summary_overlay.visible:
 		return
 	if transition_overlay != null and transition_overlay.visible:
@@ -1148,6 +1280,7 @@ func is_blocking() -> bool:
 		(intro_overlay != null and intro_overlay.visible)
 		or (dialogue_panel != null and dialogue_panel.visible)
 		or (item_grid_overlay != null and item_grid_overlay.visible)
+		or (ration_overlay != null and ration_overlay.visible)
 		or (day_summary_overlay != null and day_summary_overlay.visible)
 		or (transition_overlay != null and transition_overlay.visible)
 		or (family_overlay != null and family_overlay.visible)
@@ -1185,6 +1318,18 @@ func _on_item_grid_primary_pressed() -> void:
 func _on_item_grid_close_pressed() -> void:
 	hide_item_grid()
 	item_grid_closed.emit()
+
+
+func _on_ration_food_cycle(member_id: String, direction: int) -> void:
+	ration_food_cycle_requested.emit(member_id, direction)
+
+
+func _on_ration_water_toggle(member_id: String) -> void:
+	ration_water_toggle_requested.emit(member_id)
+
+
+func _on_ration_confirm_pressed() -> void:
+	ration_confirm_requested.emit()
 
 
 func _on_day_summary_confirmed() -> void:

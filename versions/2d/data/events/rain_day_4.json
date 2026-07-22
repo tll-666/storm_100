@@ -1,230 +1,28 @@
-﻿{
-  "version": 1,
+{
+  "version": 2,
   "events": [
     {
       "id": "r4_morning_start",
-      "title": "暴雨第4天 · 水在身后",
+      "title": "暴雨第4天",
       "type": "fixed",
       "day": "暴雨第4天",
       "phase": "rain_day_4_morning",
-      "location": "二楼楼梯口",
+      "location": "家中",
       "once": true,
-      "conditions": {
-        "phase": "rain_day_4_morning",
-        "required_flags": ["rain_day_three_started"]
-      },
-      "clues": ["一楼已开始进水", "车库的结果摆在眼前", "今天必须面对水和食物的双重问题"],
-      "text": "第四天早晨。你站在二楼楼梯口往下看，一楼的阴影里浮着一层反光。昨天处理完车库的事，但水不会因为你做了一个选择就停下来。灯还是灭的，冰箱已经不冷了。",
-      "text_variants": [
-        {
-          "required_flags": ["garage_seal_recalled"],
-          "text": "第四天早晨。门缝还堵着，但排水口的倒灌声没有停。楼下的水声从车库方向传上来，像一间屋子在地下呼吸。灯还是灭的，冰箱已经不冷了。"
-        },
-        {
-          "required_flags": ["garage_move_recalled"],
-          "text": "第四天早晨。物资都在楼上，楼下只剩积水。工具架上那排空位提醒你昨天做了一个好决定。但厨房水管传来一声闷响——这个家还在坏。"
-        },
-        {
-          "required_flags": ["garage_ignore_recalled"],
-          "text": "第四天早晨。楼下比昨天又多积了一层水。伴侣没说话，但经过你身边时脚步比平时重。你知道那是什么意思。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "face_day",
-          "label": "下楼看看",
-          "result": "一楼的地面踩下去噗噗响。水正从看不见的地方渗上来。",
-          "effects": [
-            {"type": "set_flag", "id": "rain_day_four_started"},
-            {"type": "set_phase", "value": "rain_day_4_afternoon"},
-            {"type": "set_time", "label": "上午07:45", "segment": "morning"},
-            {"type": "set_weather", "value": "暴雨 · 一楼地面积水"}
-          ]
-        }
-      ],
-      "merge": "rain_day_4_afternoon"
-    },
-    {
-      "id": "r4_water_sputter",
-      "title": "厨房的水",
-      "type": "room",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_afternoon",
-      "location": "一楼厨房",
-      "once": true,
-      "conditions": {
-        "phase": "rain_day_4_afternoon",
-        "required_flags": ["rain_day_four_started"]
-      },
-      "clues": ["水管正在退化", "一楼供水优先受影响"],
-      "text": "你拧开厨房水龙头，出来的不是水，是一段噗噗喷气声。过了几秒，才开始流出细流，颜色发黄。水槽旁边老人昨天洗碗留下的筷子上还挂着两滴水珠。",
-      "text_variants": [
-        {
-          "required_flags": ["garage_moved_supplies"],
-          "text": "厨房水龙头发出咔咔声。你想起昨天已经把储物搬到楼上，至少吃的不怕了。但水的问题比车库严重。龙头流出的黄水在白色水槽里特别刺眼。"
-        },
-        {
-          "required_flags": ["prep_water"],
-          "text": "厨房水龙头细得像线。还好墙边摆着前天储的十几升清水，暂时不用拆瓶装水。但清水是有限的——你知道龙头不会再流出透明的东西了。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "catch_trickle",
-          "label": "接一些存着",
-          "result": "你用几个空瓶接了约三升黄水。不能喝，但冲厕所够用。伴侣从你身后走过，看了一眼水瓶的颜色，什么也没问就开始帮忙拧瓶盖。",
-          "effects": [
-            {"type": "set_flag", "id": "caught_yellow_water"},
-            {"type": "add_water", "amount": 3.0},
-            {"type": "set_phase", "value": "rain_day_4_moving"},
-            {"type": "set_time", "label": "上午11:30", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "seal_valve",
-          "label": "关掉一楼水阀",
-          "result": "你关掉一楼的进水阀，拧紧的瞬间管道里发出最后一声咕噜。至少水不会在管道里发臭。伴侣看了看你关阀门的手，说：「关了好。省得半夜漏了没人听见。」",
-          "effects": [
-            {"type": "set_flag", "id": "first_floor_valve_closed"},
-            {"type": "set_phase", "value": "rain_day_4_moving"},
-            {"type": "set_time", "label": "上午11:30", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "ignore_water",
-          "label": "先不管",
-          "result": "你拧上龙头。水停了，但水槽底那层黄印子还在。厨房地面又湿了一块。老人从楼梯口探出头，看了一眼地面，什么都没说就又转回去了。",
-          "effects": [
-            {"type": "set_flag", "id": "water_ignored_day4"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2},
-            {"type": "set_phase", "value": "rain_day_4_moving"},
-            {"type": "set_time", "label": "上午11:30", "segment": "daytime"}
-          ]
-        }
-      ],
-      "merge": "rain_day_4_moving"
-    },
-    {
-      "id": "r4_move_upstairs",
-      "title": "一楼还能住吗",
-      "type": "family",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_moving",
-      "location": "一楼客厅",
-      "once": true,
-      "conditions": {
-        "phase": "rain_day_4_moving"
-      },
-      "clues": ["一楼地面开始渗水", "沙发和电器有泡水风险"],
-      "text": "一楼客厅踩上去已经能印出水痕。沙发腿是湿的。电视柜后面的墙根颜色深了一圈。老人从楼梯口探出头，只说了三个字：「当年也这样。」伴侣蹲下来摸了一把地面，手指是湿的。",
-      "text_variants": [
-        {
-          "required_flags": ["first_floor_valve_closed"],
-          "text": "关了水阀之后至少不会从水管往外漏了。但墙根和地板缝里还在往外渗——水不是从家里来的，是从地底。老人从楼梯口探出头：「当年也这样。一楼先湿，然后是墙。」"
-        },
-        {
-          "required_flags": ["garage_ignored"],
-          "text": "车库没处理，今天连客厅地面也开始渗水了。老人从楼梯口探出头：「当年第一件事就是堵住低的地方。堵不住就往高搬。」伴侣蹲在地上摸了一把，站起来时手在膝盖上蹭了两下，像是想把什么东西蹭掉。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "move_immediately",
-          "label": "全家把被褥和生活用品搬上楼",
-          "result": "大孩子和伴侣把沙发垫和被子扛上二楼。小孩子抱着自己的枕头跟在后面，枕头角拖着地面湿了一道印。老人自己拎了一把椅子——那把椅子现在在二楼窗户旁边，他一个人坐着看雨。",
-          "effects": [
-            {"type": "set_flag", "id": "moved_to_second_floor"},
-            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": -1},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -2},
-            {"type": "set_phase", "value": "rain_day_4_evening"},
-            {"type": "set_time", "label": "下午16:00", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "move_partial",
-          "label": "只搬电器和药物，人再住一夜",
-          "result": "电视和冰箱插头拔下来搬到高处。床铺还在楼下。伴侣拍了拍枕头说：「今天晚上会不会睡到一半水进来。」不是问句。你把药箱和充电宝拎上了楼，但枕头还留在楼下沙发上。",
-          "effects": [
-            {"type": "set_flag", "id": "partial_move_upstairs"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -1},
-            {"type": "set_phase", "value": "rain_day_4_evening"},
-            {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
-            {"type": "schedule_event", "event_id": "r5_partial_move_consequence", "trigger_phase": "rain_day_5_morning"}
-          ]
-        },
-        {
-          "id": "shelve_decision",
-          "label": "不做决定",
-          "result": "老人没再说什么，慢慢走回楼上。伴侣看了你一眼，去厨房收拾了。一楼还是那样湿着。你站在客厅中间，听到了什么声音——是墙根往外渗水的细细的声响。",
-          "effects": [
-            {"type": "set_flag", "id": "shelved_move_decision"},
-            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": -2},
-            {"type": "set_phase", "value": "rain_day_4_evening"},
-            {"type": "set_time", "label": "下午16:00", "segment": "daytime"},
-            {"type": "schedule_event", "event_id": "r5_move_delayed_consequence", "trigger_phase": "rain_day_5_morning"}
-          ]
-        }
-      ],
-      "merge": "rain_day_4_evening"
-    },
-    {
-      "id": "r4_evening_dinner",
-      "title": "配给的第一夜",
-      "type": "family",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_evening",
-      "location": "二楼",
-      "once": true,
-      "conditions": {
-        "phase": "rain_day_4_evening"
-      },
-      "clues": ["第一次正式讨论配给", "老人开始省自己的份量"],
-      "text": "晚饭在二楼吃的。五个人围在茶几上，饭菜比昨天又少了一点。小孩子问「还能吃泡面吗」，没人回答。老人把自己那份推了一半到大孩子碗里。推盘子的声音在安静的屋子里特别响。",
-      "text_variants": [
-        {
-          "required_flags": ["moved_to_second_floor"],
-          "text": "二楼第一次做了五口人的晚饭。搬东西搬出一身汗，但围坐的时候没人说话。小孩子在数今天走了多少趟楼梯。老人把自己的饭推出去一半。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "start_rationing",
-          "label": "从今晚开始定量分配",
-          "result": "你报了一遍目前还剩多少食物。伴侣拿出手机计算器——手机快没电了，计算器是最后一个还能打开的应用。没有人反对，但也没有人说话。老人点了点头。",
-          "effects": [
-            {"type": "set_flag", "id": "rationing_started"},
-            {"type": "add_clue", "id": "food_management_begun"},
-            {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 1},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -1},
-            {"type": "set_phase", "value": "rain_day_4_settlement"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
-          ]
-        },
-        {
-          "id": "keep_sharing",
-          "label": "让大家自己拿，不配给",
-          "result": "「现在还不用。」伴侣把筷子放下。「你真觉得够了？」「先这样。」饭吃完后各人默默散开。老人那份饭只吃了一半，另一半在他碗里凉了。你看见大孩子拿走了那半碗。",
-          "effects": [
-            {"type": "set_flag", "id": "rationing_delayed"},
-            {"type": "member_stat", "member": "elder", "stat": "health", "amount": -2},
-            {"type": "member_stat", "member": "child", "stat": "hunger", "amount": -2},
-            {"type": "set_phase", "value": "rain_day_4_settlement"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
-          ]
-        },
-        {
-          "id": "silent_dinner",
-          "label": "什么也不说",
-          "result": "沉默地吃完饭。筷子碰碗的声音比平时多——因为每个人都在刮碗底。老人没再推自己的饭，但吃得比谁都慢。大孩子最后一个离席，把你那份剩下的也吃了。你没拦。",
-          "effects": [
-            {"type": "set_flag", "id": "silent_dinner_day4"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3},
-            {"type": "set_phase", "value": "rain_day_4_settlement"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
-          ]
-        }
-      ],
-      "merge": "rain_day_4_settlement"
+      "conditions": {"phase": "rain_day_4_morning", "survival_day": 4},
+      "clues": ["外部电网中断", "自来水不可直饮"],
+      "text": "清晨，外部电网已经中断。水龙头仍会出水，但从今天起只能作为自来水原水，必须烧开或经过简单净化才能饮用。地图暂时保持正常亮度，停电只影响设备。",
+      "choices": [{
+        "id": "begin",
+        "label": "开始今天",
+        "result": "冰箱不再制冷，易变质食品开始按各自保质期倒计时。",
+        "effects": [
+          {"type": "set_flag", "id": "rain_day_four_started"},
+          {"type": "set_phase", "value": "rain_day_4_free"},
+          {"type": "set_weather", "value": "暴雨 · 停电 / 自来水不可直饮"}
+        ]
+      }],
+      "merge": "rain_day_4_free"
     }
   ]
 }

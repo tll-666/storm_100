@@ -1,253 +1,28 @@
-﻿{
-  "version": 1,
+{
+  "version": 2,
   "events": [
     {
-      "id": "r5_morning",
-      "title": "暴雨第5天 · 水在涨",
+      "id": "r5_morning_start",
+      "title": "暴雨第5天",
       "type": "fixed",
       "day": "暴雨第5天",
       "phase": "rain_day_5_morning",
-      "location": "二楼楼梯口",
+      "location": "家中",
       "once": true,
-      "conditions": {"phase": "rain_day_5_morning"},
-      "clues": ["一楼水位继续上升", "今早手机信号只剩一格", "真正的封闭开始了"],
-      "text": "第五天。从二楼往下看，水已经漫过第一级楼梯台阶。手机屏幕右上角只剩一格信号，打开社区群，最后一条消息停在昨天下午。外面的雨没有变小——它只是不打算停。",
-      "text_variants": [
-        {
-          "required_flags": ["moved_to_second_floor"],
-          "text": "第五天。从二楼往下看，水已经漫过第一级楼梯台阶。好在昨天搬得及时，东西都在楼上。小孩子趴在被子上画画，老人裹着毯子靠在窗边。手机只剩一格信号。"
-        },
-        {
-          "required_flags": ["rationing_started"],
-          "text": "第五天。水漫过楼梯第一级。昨天开始定量之后，至少每个人对自己剩多少心里有数。伴侣在阳台收了半桶雨水放在墙角——又多了一种水需要管理。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "proceed",
-          "label": "上楼看家人",
-          "result": "二楼。大孩子在窗口举着手机找信号。小孩子趴在茶几上画画。老人坐在角落的椅子上，裹着毯子。伴侣在阳台收了半桶雨水。每个人在一个角落，都不远，但像是隔了什么。",
-          "effects": [
-            {"type": "set_flag", "id": "rain_day_five_started"},
-            {"type": "set_phase", "value": "rain_day_5_midday"},
-            {"type": "set_time", "label": "上午08:00", "segment": "morning"},
-            {"type": "set_weather", "value": "暴雨 · 一楼已进水"}
-          ]
-        }
-      ],
-      "merge": "rain_day_5_midday"
-    },
-    {
-      "id": "r5_partial_move_consequence",
-      "title": "昨晚没搬完的代价",
-      "type": "delayed",
-      "day": "暴雨第5天",
-      "phase": "rain_day_5_morning",
-      "location": "一楼",
-      "once": true,
-      "conditions": {"phase": "rain_day_5_morning", "required_flags": ["partial_move_upstairs"]},
-      "clues": ["拖延的代价"],
-      "text": "一楼剩下的被褥底下一层潮气。沙发腿泡在水里，昨晚没搬的电器插头全都浸了水。老人把一条毯子拧了拧，水滴滴答答掉在地板上，每一声都在帮你做算术——多少东西还能用。",
-      "choices": [
-        {
-          "id": "continue",
-          "label": "先把湿掉的扔了",
-          "result": "几条毯子和一个插座直接进了黑色塑料袋。伴侣蹲在旁边帮你分，动作快得像要抢在什么东西前面。",
-          "effects": [
-            {"type": "set_flag", "id": "damage_from_delay"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3}]
-        }
-      ],
-      "merge": "rain_day_5_morning"
-    },
-    {
-      "id": "r5_move_delayed_consequence",
-      "title": "昨天没决定的代价",
-      "type": "delayed",
-      "day": "暴雨第5天",
-      "phase": "rain_day_5_morning",
-      "location": "一楼",
-      "once": true,
-      "conditions": {"phase": "rain_day_5_morning", "required_flags": ["shelved_move_decision"]},
-      "clues": ["犹豫的代价更大"],
-      "text": "一楼水位比昨天高了半掌。沙发像一条搁浅的船歪在水里。老人指着被泡的沙发说：「当年搬家那天，要是早走半小时，也不用从窗户翻。你这跟当年一样——不是没能力搬，是觉得还不到时候。」伴侣蹲在地上摸了一下电视机的角，站起来没说话。",
-      "choices": [
-        {
-          "id": "continue",
-          "label": "接受这个结果",
-          "result": "人没受伤，但好几件东西废了。老人最后那句话在你脑子里转——不是责备，是陈述事实。",
-          "effects": [
-            {"type": "set_flag", "id": "major_damage_from_hesitation"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -4}]
-        }
-      ],
-      "merge": "rain_day_5_morning"
-    },
-    {
-      "id": "r5_child_drawing",
-      "title": "孩子在画什么",
-      "type": "family",
-      "day": "暴雨第5天",
-      "phase": "rain_day_5_midday",
-      "location": "二楼茶几",
-      "once": true,
-      "conditions": {"phase": "rain_day_5_midday"},
-      "clues": ["孩子的画比大人诚实", "小孩用画记录恐惧"],
-      "text": "小孩子趴在茶几上画画。画纸上是五个人挤在一个小房子里，外面全是蓝色的竖线。没有太阳。房子的门画在了屋顶上。他画得很认真，连每个人衣服的颜色都涂了——穿黄色的是他自己，红色是你。",
-      "text_variants": [
-        {
-          "required_flags": ["comforted_child_rain"],
-          "text": "小孩子又在画。这次画里五个人是牵着手的。外面还是蓝色竖线，但房子里多了几笔黄色的光——从窗户里透出来的。他抬头看了你一眼，快速把你加进了画里——那个红色的人旁边多了一个穿蓝色的人。"
-        },
-        {
-          "required_flags": ["child_left_alone"],
-          "text": "小孩子画的房子底下多了很多圈圈。你问是什么，他说：「水。水在底下。」然后继续往上加蓝色的竖线。纸上的房子越来越小，底下的圈越来越多。他没有抬头看你。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "draw_with_child",
-          "label": "坐下来一起画",
-          "result": "你也趴下来，在他旁边空白处画了一棵树。小孩子看了看你画的树，给你递了一支黄色蜡笔。「树要有太阳。」你说没有黄色的太阳。他在你的树上画了一个小小的黄圈。",
-          "effects": [
-            {"type": "set_flag", "id": "drew_with_child_day5"},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 3},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": 1},
-            {"type": "schedule_event", "event_id": "r9_child_gift", "trigger_phase": "rain_day_9_midday"}
-          ]
-        },
-        {
-          "id": "ask_about_drawing",
-          "label": "问他画了什么",
-          "result": "他指着画上穿红色衣服的人：「你。」又指着最小的那个：「我。」然后指着屋顶上的门：「门在楼上。水进不来。」他不说害怕——他画了一个不需要解释害怕的房间。",
-          "effects": [
-            {"type": "set_flag", "id": "child_explained_drawing"},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 1},
-            {"type": "add_clue", "id": "child_door_on_roof"}
-          ]
-        },
-        {
-          "id": "praise_and_leave",
-          "label": "画得真好，然后走开",
-          "result": "你摸了摸他的头走开了。厨房还有事。他继续画。这一张的最上面加了一团灰色的东西——像是云，也像是什么压在屋顶上的重量。",
-          "effects": [
-            {"type": "set_flag", "id": "child_drawing_alone_day5"},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": -1}
-          ]
-        }
-      ],
-      "merge": "r5_family_hub"
-    },
-    {
-      "id": "r5_elder_cough",
-      "title": "老人的咳嗽",
-      "type": "family",
-      "day": "暴雨第5天",
-      "phase": "rain_day_5_midday",
-      "location": "二楼老人休息处",
-      "once": true,
-      "conditions": {"phase": "rain_day_5_midday"},
-      "clues": ["老人身体开始出问题", "潮湿加重慢性病"],
-      "text": "老人今天一直在角落咳嗽。干咳，每次咳完要喘几秒。问他怎么样，他说「没事，老毛病」。但说话时手在抖。伴侣拿着药箱过来蹲在旁边，什么都没说就放了杯水在旁边。",
-      "choices": [
-        {
-          "id": "give_medicine",
-          "label": "给老人吃药",
-          "result": "你找出药箱里最后一板感冒药。老人看了看药，推回来一半：「留着。」你坚持让他吃了。「你自己都不够干嘛给我。」老人接水的时候眼睛没看你，但声音安静下来了。",
-          "effects": [
-            {"type": "set_flag", "id": "elder_got_medicine_day5"},
-            {"type": "member_stat", "member": "elder", "stat": "health", "amount": 5},
-            {"type": "schedule_event", "event_id": "r8_elder_no_medicine", "trigger_phase": "rain_day_8_morning"}
-          ]
-        },
-        {
-          "id": "check_medicine",
-          "label": "看看药还剩多少",
-          "result": "药箱里感冒药只剩一板，退烧药只有两颗。你犹豫了一下，放回去了。关药箱盖子的时候啪嗒响了一声。老人看着你放回去的动作，没有说什么。但咳嗽声比刚才更重了。",
-          "effects": [
-            {"type": "set_flag", "id": "medicine_conserved_day5"},
-            {"type": "member_stat", "member": "elder", "stat": "health", "amount": -3}]
-        },
-        {
-          "id": "ask_partner",
-          "label": "和伴侣商量",
-          "result": "「给他吃吧，老人扛不住。」伴侣已经把药拿过来了——她/他刚才去拿的药，你还在犹豫的时候她/他已经做了。老人吃完咳了一阵，小声对伴侣说：「你们俩倒是商量得挺快。」",
-          "effects": [
-            {"type": "set_flag", "id": "elder_got_medicine_day5"},
-            {"type": "member_stat", "member": "elder", "stat": "health", "amount": 5},
-            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": 1}
-          ]
-        }
-      ],
-      "merge": "r5_family_hub"
-    },
-    {
-      "id": "r5_teen_phone",
-      "title": "大孩子找不到信号了",
-      "type": "family",
-      "day": "暴雨第5天",
-      "phase": "rain_day_5_midday",
-      "location": "二楼阳台窗口",
-      "once": true,
-      "conditions": {"phase": "rain_day_5_midday"},
-      "clues": ["通信中断意味着完全孤立", "大孩子最依赖手机", "离线消息可能是最后的外部信息"],
-      "text": "大孩子从早上就举着手机在阳台找信号。屏幕一直显示「无服务」。你走近时他把手机翻了过去，好像不想让你看到结果。窗外只有雨和灰色的天。",
-      "choices": [
-        {
-          "id": "sit_with_teen",
-          "label": "在他旁边坐一会",
-          "result": "「什么时候能有信号。」不像问句。你在他旁边坐下。他隔了很久才说：「学校群里有人发了一个定位，说那里有船。但消息发到一半就断了。」他把发了一半的地址指给你看——在排水河下游，过了桥第三个路口。",
-          "effects": [
-            {"type": "set_flag", "id": "talked_with_teen_day5"},
-            {"type": "member_stat", "member": "teen", "stat": "morale", "amount": 2},
-            {"type": "add_clue", "id": "someone_sent_location"}
-          ]
-        },
-        {
-          "id": "suggest_radio",
-          "label": "让他试试收音机",
-          "result": "「手机没信号可以听收音机。」大孩子翻出一个旧的收音机，调了半天，只有沙沙声。他把收音机放在窗台上，没关。「放着吧。万一什么时候响了呢。」",
-          "effects": [
-            {"type": "set_flag", "id": "teen_tried_radio"},
-            {"type": "add_clue", "id": "radio_static_only"},
-            {"type": "schedule_event", "event_id": "r7_radio_surprise", "trigger_phase": "rain_day_7_morning"}
-          ]
-        },
-        {
-          "id": "leave_alone",
-          "label": "让他自己待着",
-          "result": "大孩子把手机放进口袋，对着窗外站了很久。你转身走开的时候，他小声说了一句话——「第几天了。」——你没听清是不是问句。",
-          "effects": [
-            {"type": "set_flag", "id": "teen_left_alone_day5"},
-            {"type": "member_stat", "member": "teen", "stat": "morale", "amount": -3}
-          ]
-        }
-      ],
-      "merge": "r5_family_hub"
-    },
-    {
-      "id": "r5_evening_hub",
-      "title": "第五天的尾巴",
-      "type": "fixed",
-      "day": "暴雨第5天",
-      "phase": "r5_family_hub",
-      "location": "二楼",
-      "once": true,
-      "conditions": {"phase": "r5_family_hub"},
-      "clues": ["第五天即将结束", "晚上的结算会进一步消耗资源"],
-      "text": "傍晚。二楼每个人在各自的位置上安静下来。小孩子把蜡笔排好收进盒子。大孩子还在窗台旁边没动。老人的咳嗽从房间深处传出来，每咳一声，伴侣就把杯里的凉水换一次。",
-      "choices": [
-        {
-          "id": "end_day",
-          "label": "结束这一天",
-          "result": "你在楼梯口站了一会。楼下还是水。楼上五个人五个角落。但都在。",
-          "effects": [
-            {"type": "set_phase", "value": "rain_day_5_settlement"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
-          ]
-        }
-      ],
-      "merge": "rain_day_5_settlement"
+      "conditions": {"phase": "rain_day_5_morning", "survival_day": 5},
+      "clues": ["停电持续", "最后一天有自来水原水"],
+      "text": "停电仍在继续。水龙头今天还会流出不能直饮的自来水原水；从明天开始，管道将彻底无水。",
+      "choices": [{
+        "id": "begin",
+        "label": "开始今天",
+        "result": "家中所有空容器都可能决定明天还能留下多少水。",
+        "effects": [
+          {"type": "set_flag", "id": "rain_day_five_started"},
+          {"type": "set_phase", "value": "rain_day_5_free"},
+          {"type": "set_weather", "value": "暴雨 · 停电 / 自来水不可直饮"}
+        ]
+      }],
+      "merge": "rain_day_5_free"
     }
   ]
 }

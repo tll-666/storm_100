@@ -1,42 +1,4 @@
-﻿{
+{
   "version": 2,
-  "events": [
-    {
-      "id": "r8_elder_no_medicine", "title": "潮气里的咳嗽", "type": "family", "day": "暴雨第8天", "phase": "rain_day_8_morning", "location": "二楼", "once": true,
-      "conditions": {"phase": "rain_day_8_morning", "required_flags": ["medicine_conserved_day5"]},
-      "clues": ["咳嗽与潮湿生活区有关，不是老人专属药物线"],
-      "text": "老人早晨咳了几声，离开漏水墙角后便缓下来。他指了指湿被褥：『先换地方，别急着吃药。』问题在房间，不在药箱。",
-      "choices": [{"id": "move_chair", "label": "把休息位置移到干燥处", "result": "椅子和毯子被移到走廊内侧。咳嗽没有立刻消失，但今晚不再靠着湿墙。", "effects": [{"type": "set_flag", "id": "elder_moved_from_damp_wall"}]}],
-      "merge": "rain_day_8_morning"
-    },
-    {
-      "id": "r8_food_spoilage", "title": "冰箱里的酸味", "type": "room", "day": "暴雨第8天", "phase": "rain_day_8_morning", "location": "一楼厨房", "once": true,
-      "conditions": {"phase": "rain_day_8_morning"},
-      "clues": ["断电后的生鲜已经不能继续原样保存"],
-      "text": "冰箱门一开，酸味先涌出来。肉和菜还没有完全坏，但已经到了今天不处理、明天就只能扔的程度。",
-      "choices": [
-        {"id": "cook_now", "label": "用一升净水彻底煮熟", "result": "坏的部分被切掉，剩下的煮成一锅。付出饮水，换回了两份还能保存一天的熟食。", "effects": [{"type": "add_water", "amount": -1.0}, {"type": "add_item", "item": "cooked_food", "amount": 2, "storage": "pantry"}, {"type": "set_flag", "id": "saved_fridge_food"}, {"type": "set_phase", "value": "rain_day_8_midday"}]},
-        {"id": "discard", "label": "全部丢掉，不冒险", "result": "冰箱被清空。损失看得见，但今晚不会有人因为侥幸吃坏肚子。", "effects": [{"type": "set_flag", "id": "discarded_spoiled_food"}, {"type": "set_phase", "value": "rain_day_8_midday"}]}
-      ],
-      "merge": "rain_day_8_midday"
-    },
-    {
-      "id": "r8_dry_corner", "title": "最后一个干燥角落", "type": "room", "day": "暴雨第8天", "phase": "rain_day_8_midday", "location": "二楼", "once": true,
-      "conditions": {"phase": "rain_day_8_midday"},
-      "clues": ["可用空间比房屋总面积更重要"],
-      "text": "二楼只有主卧门口还闻不到霉味。食物、被褥和五个人不可能全塞进去，必须先决定这里保护什么。",
-      "choices": [
-        {"id": "protect_food", "label": "先把食物和净水搬进来", "result": "干燥角落成了物资区。睡觉更挤，但食品不会继续贴着湿墙。", "effects": [{"type": "set_flag", "id": "dry_zone_supplies"}, {"type": "set_room_state", "room": "kitchen", "state": "damp"}, {"type": "set_phase", "value": "rain_day_8_evening"}]},
-        {"id": "protect_bedding", "label": "先保住全家的床铺", "result": "五个人今晚至少能睡在干被褥上。食物仍留在走廊柜子里，需要之后再处理。", "effects": [{"type": "set_flag", "id": "dry_zone_bedding"}, {"type": "set_room_state", "room": "elder_bedroom", "state": "damp"}, {"type": "set_phase", "value": "rain_day_8_evening"}]}
-      ],
-      "merge": "rain_day_8_evening"
-    },
-    {
-      "id": "r8_evening_close", "title": "第二周第一夜", "type": "fixed", "day": "暴雨第8天", "phase": "rain_day_8_evening", "location": "二楼", "once": true,
-      "conditions": {"phase": "rain_day_8_evening"}, "clues": ["第8天结束"],
-      "text": "屋子没有变大，但干燥的那一小块有了用途。第二周从重新安排一平方米开始。",
-      "choices": [{"id": "end", "label": "结束这一天", "result": "你在纸上画下第八道记号。", "effects": [{"type": "set_phase", "value": "rain_day_8_settlement"}]}],
-      "merge": "rain_day_8_settlement"
-    }
-  ]
+  "events": []
 }

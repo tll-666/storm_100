@@ -1,189 +1,28 @@
-﻿{
-  "version": 1,
+{
+  "version": 2,
   "events": [
     {
-      "id": "r6_morning_dark",
-      "title": "暴雨第6天 · 没有光的早晨",
+      "id": "r6_morning_start",
+      "title": "暴雨第6天",
       "type": "fixed",
       "day": "暴雨第6天",
       "phase": "rain_day_6_morning",
-      "location": "二楼",
+      "location": "家中",
       "once": true,
-      "conditions": {"phase": "rain_day_6_morning"},
-      "clues": ["连续停电第三天", "手电筒电池只剩最后两对", "灰暗改变了每个人的作息"],
-      "text": "第六天。电停了第三天，屋里已经不习惯有光了。白天靠窗外透进来的灰色天光辨认彼此。手电筒电池剩最后两对，你把它们放在了每个人都知道的位置——在伸手就能够到的鞋盒里。",
-      "text_variants": [
-        {
-          "required_flags": ["prep_power"],
-          "text": "第六天。停电第三天，但备用电池和充电宝撑过了最暗的几个晚上。至少手电筒还能亮。大孩子早上起来第一件事是检查充电宝的剩余电量——还有七格。他小声说：「能撑。」"
-        },
-        {
-          "required_flags": ["used_radio_during_outage"],
-          "text": "第六天。前两天收音机播过说还要停电。现在它也不响了。你的电池只剩收音机用过的那些。老人说当年点煤油灯过了三个月的冬。没人接话。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "begin_day",
-          "label": "开始这一天",
-          "result": "灰色天光从阳台窗帘缝隙透进来。家人的轮廓在暗处各自坐着。没有人开手电——好像在比赛谁更能忍黑。",
-          "effects": [
-            {"type": "set_flag", "id": "rain_day_six_started"},
-            {"type": "set_phase", "value": "rain_day_6_midday"},
-            {"type": "set_time", "label": "上午07:50", "segment": "morning"},
-            {"type": "set_weather", "value": "暴雨 · 全楼断电"}
-          ]
-        }
-      ],
-      "merge": "rain_day_6_midday"
-    },
-    {
-      "id": "r6_food_count",
-      "title": "盘点",
-      "type": "family",
-      "day": "暴雨第6天",
-      "phase": "rain_day_6_midday",
-      "location": "二楼储物角",
-      "once": true,
-      "conditions": {"phase": "rain_day_6_midday"},
-      "clues": ["食物消耗比预期快", "五个人比四个人消耗量大得多"],
-      "text": "你把所有食物从柜子里搬出来清点。分配方案在脑子里过了一遍又一遍，数字越来越紧。伴侣凑过来看你在纸上写的数，说：「你没算你自己。」你在纸上写了四个人的量。确实是四个人。",
-      "text_variants": [
-        {
-          "required_flags": ["rationing_started"],
-          "text": "定量分了两天，比预期吃掉了更多。小孩子正在长身体，昨晚偷偷抓了一把饼干，伴侣看到了但是帮你捡起了地上的碎渣。你在纸上划掉了一格饼干。"
-        },
-        {
-          "required_flags": ["rationing_delayed"],
-          "text": "没定量分，米袋已经瘪进去一小半。老人看你在纸上算，说：「当年赈灾粥，一人一天一碗，活了十三天。」你在纸上多写了几个数字——按一碗算，大约能撑多久。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "tighten_ration",
-          "label": "再减少每人份量",
-          "result": "「每个人减到八成。」你把新数字写在纸上。大孩子瞥了一眼，没抗议——他已经学会了在这件事上不开口。小孩子在画画的间隙抬头看了一下你的笔。纸上那些被划掉的数字像是从筷子上刮掉的饭粒。",
-          "effects": [
-            {"type": "set_flag", "id": "tight_rationing_day6"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2},
-            {"type": "schedule_event", "event_id": "r10_hunger_peak", "trigger_phase": "rain_day_10_morning"},
-            {"type": "set_phase", "value": "rain_day_6_tension"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "equal_share",
-          "label": "五个人平均分",
-          "result": "你把数字摊出来给每个人看。老人看了一眼：「第十天以后呢？」「……会有的。」老人没有追问。他把纸折了放进口袋。你知道他不是要答案——他是要你承认自己也不知道答案。",
-          "effects": [
-            {"type": "set_flag", "id": "equal_rationing_day6"},
-            {"type": "member_stat", "member": "elder", "stat": "morale", "amount": 1},
-            {"type": "member_stat", "member": "teen", "stat": "morale", "amount": -1},
-            {"type": "set_phase", "value": "rain_day_6_tension"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"}
-          ]
-        },
-        {
-          "id": "adult_sacrifice",
-          "label": "大人减，孩子正常",
-          "result": "「大人少吃点，孩子不变。」伴侣没有说话，把自己那份推到小孩子面前。大孩子看到，把自己的推了一半到伴侣面前。三个人在桌子上推盘子——那些盘子其实都没什么东西，推的是心意。老人把自己那份也往前推了三寸。",
-          "effects": [
-            {"type": "set_flag", "id": "adult_sacrifice_day6"},
-            {"type": "member_stat", "member": "player", "stat": "hunger", "amount": -5},
-            {"type": "member_stat", "member": "partner", "stat": "hunger", "amount": -5},
-            {"type": "member_stat", "member": "elder", "stat": "hunger", "amount": -5},
-            {"type": "member_stat", "member": "child", "stat": "morale", "amount": 1},
-            {"type": "schedule_event", "event_id": "r11_elder_collapse", "trigger_phase": "rain_day_11_morning"},
-            {"type": "set_phase", "value": "rain_day_6_tension"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"}
-          ]
-        }
-      ],
-      "merge": "rain_day_6_tension"
-    },
-    {
-      "id": "r6_partner_despair",
-      "title": "一个人在阳台",
-      "type": "family",
-      "day": "暴雨第6天",
-      "phase": "rain_day_6_tension",
-      "location": "二楼阳台",
-      "once": true,
-      "conditions": {"phase": "rain_day_6_tension"},
-      "clues": ["伴侣也有极限", "婚姻在灾难中会崩断也会焊死"],
-      "text": "你在阳台找到伴侣。她/他坐在湿漉漉的塑料椅上，对着楼下的雨发呆。你走过去时发现了地上一根抽了一半的烟——你记得伴侣以前不抽烟。伴侣没有看你，继续看雨。雨声大到两个人的沉默都听不见了。",
-      "text_variants": [
-        {
-          "required_flags": ["adult_sacrifice_day6"],
-          "text": "伴侣抬起头，眼睛是红的。不是因为伤心，是因为饿。「我不确定我能一直这样撑下去。」声音很平静，但每个字都是称过的——在开口之前已经吞回去过很多遍。"
-        },
-        {
-          "required_flags": ["equal_rationing_day6"],
-          "text": "伴侣没有看你，继续看雨。「第几天了。」「六。」「我感觉像六十。」烟熄了。没有第二根。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "hold_hand",
-          "label": "什么也别说，坐在旁边",
-          "result": "你坐在伴侣旁边，两个人的肩膀没有碰到。雨声很大。过了很久，伴侣把烟掐了。「回去吧，冷。」但在门口站住，回头看了你一眼。那个眼神不是一个问题，是一个坐标——确认你还在那里。",
-          "effects": [
-            {"type": "set_flag", "id": "partner_shared_moment"},
-            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": 3},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": 2},
-            {"type": "set_phase", "value": "rain_day_6_evening"},
-            {"type": "set_time", "label": "下午17:30", "segment": "evening"}
-          ]
-        },
-        {
-          "id": "say_reassure",
-          "label": "告诉伴侣一定能撑过去",
-          "result": "「我们五个人在一起。」伴侣笑了一下，不是开心的那种。「你说得对。」但说这句话的方式像是在念台词——她/他在努力配合你，努力相信一个连你自己都不太确定的东西。",
-          "effects": [
-            {"type": "set_flag", "id": "partner_reassured_hollow"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2},
-            {"type": "set_phase", "value": "rain_day_6_evening"},
-            {"type": "set_time", "label": "下午17:30", "segment": "evening"}
-          ]
-        },
-        {
-          "id": "say_tough",
-          "label": "别垮，全家都在看你",
-          "result": "伴侣站起来，把烟头往地上一碾。「知道了。」进了屋。门关上之后，阳台只剩你和雨。你站在那里想，刚才那句话到底是给别人打气还是在给自己打气。可能都有。可能哪个都没打着。",
-          "effects": [
-            {"type": "set_flag", "id": "partner_shut_down_day6"},
-            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": -3},
-            {"type": "schedule_event", "event_id": "r12_partner_cold", "trigger_phase": "rain_day_12_morning"},
-            {"type": "set_phase", "value": "rain_day_6_evening"},
-            {"type": "set_time", "label": "下午17:30", "segment": "evening"}
-          ]
-        }
-      ],
-      "merge": "rain_day_6_evening"
-    },
-    {
-      "id": "r6_evening_close",
-      "title": "第六夜",
-      "type": "fixed",
-      "day": "暴雨第6天",
-      "phase": "rain_day_6_evening",
-      "location": "二楼",
-      "once": true,
-      "conditions": {"phase": "rain_day_6_evening"},
-      "clues": ["第六天结束", "明天开始第二周"],
-      "text": "第六夜。老人咳嗽的频率慢了一些——也可能是你已经习惯了。伴侣从阳台回来之后没有再提任何话。小孩子在纸上画了六条蓝色的线，每条线旁边标着数字。大孩子把手机关了——不是没电，是不想看了。",
-      "choices": [
-        {
-          "id": "end_day",
-          "label": "结束这一天",
-          "result": "你在屋里走了一圈。五个人都在。这已经是一件值得记住的事了。",
-          "effects": [
-            {"type": "set_phase", "value": "rain_day_6_settlement"},
-            {"type": "set_time", "label": "晚上20:30", "segment": "night"}
-          ]
-        }
-      ],
-      "merge": "rain_day_6_settlement"
+      "conditions": {"phase": "rain_day_6_morning", "survival_day": 6},
+      "clues": ["彻底停水", "冲厕开始消耗水箱"],
+      "text": "水龙头只剩管道声，已经彻底停水。从今天起，每次自动如厕会消耗马桶水箱2L；雨水必须经过专门净化流程才能进入饮水分配。",
+      "choices": [{
+        "id": "begin",
+        "label": "开始今天",
+        "result": "直饮、净水和冲厕现在会争夺有限的容器与原水。",
+        "effects": [
+          {"type": "set_flag", "id": "rain_day_six_started"},
+          {"type": "set_phase", "value": "rain_day_6_free"},
+          {"type": "set_weather", "value": "暴雨 · 停水停电"}
+        ]
+      }],
+      "merge": "rain_day_6_free"
     }
   ]
 }

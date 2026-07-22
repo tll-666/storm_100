@@ -49,6 +49,18 @@ func _draw() -> void:
 			_draw_seeds()
 		"water_container":
 			_draw_water_container()
+		"dry_biscuits":
+			_draw_biscuits()
+		"duct_tape":
+			_draw_duct_tape()
+		"basic_toolkit":
+			_draw_toolkit()
+		"portable_purifier":
+			_draw_purifier(false)
+		"gravity_purifier":
+			_draw_purifier(true)
+		"portable_filter", "gravity_filter":
+			_draw_filter(item_id == "gravity_filter")
 		"empty_bottle":
 			_draw_empty_bottle()
 		"shotgun":
@@ -192,6 +204,43 @@ func _draw_empty_bottle() -> void:
 	draw_rect(Rect2(33, 18, 12, 8), Color("607080"), true)
 	draw_rect(Rect2(32, 30, 14, 20), Color("404850"), true)
 	draw_string(ThemeDB.fallback_font, Vector2(28, 52), "空", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("8898a8"))
+
+
+func _draw_biscuits() -> void:
+	for offset in [Vector2(0, 0), Vector2(7, 8)]:
+		draw_rect(Rect2(Vector2(22, 22) + offset, Vector2(31, 25)), Color("caa967"), true)
+		for x in [29.0, 39.0, 49.0]:
+			draw_circle(Vector2(x, 30) + offset, 1.4, Color("755c37"))
+
+
+func _draw_duct_tape() -> void:
+	draw_circle(Vector2(38, 38), 21, Color("8d9698"))
+	draw_circle(Vector2(38, 38), 11, Color("29343a"))
+	draw_arc(Vector2(38, 38), 16, -1.1, 1.0, 16, Color("d8dede"), 4.0)
+
+
+func _draw_toolkit() -> void:
+	draw_rect(Rect2(17, 29, 44, 30), Color("b34d3f"), true)
+	draw_rect(Rect2(27, 19, 24, 12), Color("71372f"), false, 4.0)
+	draw_rect(Rect2(34, 39, 9, 7), Color("e0bd68"), true)
+
+
+func _draw_purifier(gravity: bool) -> void:
+	if gravity:
+		draw_rect(Rect2(22, 17, 32, 19), Color("75a9ad"), true)
+		draw_rect(Rect2(25, 40, 26, 20), Color("4a757b"), true)
+		draw_line(Vector2(38, 36), Vector2(38, 42), Color("d6e8e5"), 3.0)
+	else:
+		draw_rect(Rect2(27, 24, 23, 34), Color("5d9096"), true)
+		draw_line(Vector2(38, 24), Vector2(38, 14), Color("d6e8e5"), 4.0)
+		draw_line(Vector2(29, 14), Vector2(47, 14), Color("d6e8e5"), 4.0)
+
+
+func _draw_filter(gravity: bool) -> void:
+	var width := 38.0 if gravity else 24.0
+	draw_rect(Rect2(38.0 - width * 0.5, 18.0, width, 42.0), Color("d9dfd8"), true)
+	for y in [25.0, 34.0, 43.0, 52.0]:
+		draw_line(Vector2(40.0 - width * 0.4, y), Vector2(36.0 + width * 0.4, y), Color("6c8b8e"), 2.0)
 
 
 func _draw_ammo() -> void:

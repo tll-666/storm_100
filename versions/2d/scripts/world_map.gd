@@ -14,6 +14,8 @@ var rain_drops: Array[Vector2] = []
 var rain_velocities: Array[float] = []
 var darkness_alpha: float = 0.0
 var active_room_id: String = ""
+var npc_visual_targets: Dictionary = {}
+var npc_tweens: Dictionary = {}
 
 
 func _ready() -> void:
@@ -36,6 +38,11 @@ func _init_rain() -> void:
 
 func build_floor(floor_number: int) -> void:
 	current_floor = floor_number
+	for raw_tween in npc_tweens.values():
+		if raw_tween is Tween and raw_tween.is_valid():
+			raw_tween.kill()
+	npc_tweens.clear()
+	npc_visual_targets.clear()
 	for child in collision_root.get_children():
 		child.free()
 	for child in interaction_root.get_children():
@@ -106,8 +113,13 @@ func _update_interaction_visibility() -> void:
 		if not child is InteractionObject:
 			continue
 		var object: InteractionObject = child
-		# 室内取消战争迷雾，所有房间的互动点始终可见。
-		object.visible = true
+		# 室内取消战争迷雾。正在二楼如厕的NPC不会同时留在一楼。
+		var upstairs_toilet := (
+			object.category == "npc"
+			and GameState
+			and str(GameState.npc_activities.get(object.object_id, "")) == "toilet"
+		)
+		object.visible = not upstairs_toilet or current_floor == 2
 
 
 func get_nearest_interactable(origin: Vector2, maximum_distance: float = 92.0) -> InteractionObject:
@@ -140,8 +152,22 @@ func reposition_npcs(phase_id: String) -> void:
 		var obj: InteractionObject = child
 		if obj.category != "npc":
 			continue
+		var target: Vector2 = obj.position
 		if npc_positions.has(obj.object_id):
-			obj.position = npc_positions[obj.object_id]
+			target = npc_positions[obj.object_id]
+		if GameState and str(GameState.npc_activities.get(obj.object_id, "")) == "toilet":
+			target = Vector2(1260.0, 210.0)
+		var previous_target: Vector2 = npc_visual_targets.get(obj.object_id, Vector2(-9999.0, -9999.0))
+		if previous_target.distance_to(target) > 1.0:
+			npc_visual_targets[obj.object_id] = target
+			if npc_tweens.has(obj.object_id):
+				var old_tween: Tween = npc_tweens[obj.object_id]
+				if old_tween.is_valid():
+					old_tween.kill()
+			var tween := obj.create_tween()
+			tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+			tween.tween_property(obj, "position", target, 0.8)
+			npc_tweens[obj.object_id] = tween
 	_update_interaction_visibility()
 
 
@@ -220,12 +246,8 @@ func _update_rain(delta: float) -> void:
 
 
 func _update_darkness() -> void:
-	var target_alpha := 0.0
-	if GameState and GameState.power_supply_state == "off":
-		target_alpha = 0.72
-	elif GameState and GameState.power_supply_state == "unstable":
-		target_alpha = 0.35
-	darkness_alpha = lerp(darkness_alpha, target_alpha, 0.05)
+	# 固定照明暂不进入玩法；停电只影响设备，不把地图整体压黑。
+	darkness_alpha = lerp(darkness_alpha, 0.0, 0.2)
 
 
 func _draw() -> void:
@@ -240,7 +262,30 @@ func _draw() -> void:
 	for furniture in _furniture_for_floor(current_floor):
 		_draw_furniture(furniture)
 	_draw_floor_details()
+	_draw_toilet_privacy_overlay()
 	_draw_weather_effects()
+
+
+func _draw_toilet_privacy_overlay() -> void:
+	if (
+		not GameState
+		or GameState.toilet_occupied_by.is_empty()
+		or current_floor != GameState.toilet_occupied_floor
+	):
+		return
+	var rect := Rect2(1120.0, 100.0, 300.0, 220.0) if current_floor == 2 else Rect2(900.0, 100.0, 220.0, 240.0)
+	draw_rect(rect.grow(-8.0), Color(0.18, 0.24, 0.27, 0.68), true)
+	draw_rect(rect.grow(-8.0), Color(0.72, 0.82, 0.83, 0.7), false, 3.0)
+	var member_name := str(GameState.FAMILY_NAMES.get(GameState.toilet_occupied_by, "家人"))
+	draw_string(
+		ThemeDB.fallback_font,
+		rect.position + Vector2(24.0, 42.0),
+		"厕所使用中 · %s" % member_name,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		18,
+		Color(0.92, 0.96, 0.95, 0.95)
+	)
 
 
 func _draw_weather_effects() -> void:
@@ -629,6 +674,13 @@ func _interactions_for_floor(floor_number: int) -> Array:
 				"name": "楼梯"
 			},
 			{
+				"id": "upstairs_bathroom",
+				"position": Vector2(1260, 210),
+				"prompt": "查看二楼厕所",
+				"category": "inspect",
+				"name": "二楼厕所"
+			},
+			{
 				"id": "balcony_drain",
 				"position": Vector2(690, 745),
 				"prompt": "检查窗边接水区",
@@ -729,6 +781,13 @@ func _interactions_for_floor(floor_number: int) -> Array:
 			"prompt": "检查厨房水龙头",
 			"category": "inspect",
 			"name": "厨房水龙头"
+		},
+		{
+			"id": "stove",
+			"position": Vector2(710, 220),
+			"prompt": "使用灶台或净水设备",
+			"category": "inspect",
+			"name": "厨房灶台"
 		},
 		{
 			"id": "pantry",

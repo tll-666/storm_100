@@ -135,10 +135,59 @@ func _conditions_met(raw_conditions: Variant) -> bool:
 			return false
 	if int(conditions.get("min_clues", 0)) > GameState.clues.size():
 		return false
+	var required_day := int(conditions.get("survival_day", -1))
+	if required_day >= 0 and GameState.current_survival_day() != required_day:
+		return false
+	if conditions.has("min_clock") and GameState.clock_minutes < float(conditions.get("min_clock", 0.0)):
+		return false
+	if conditions.has("max_clock") and GameState.clock_minutes > float(conditions.get("max_clock", 1440.0)):
+		return false
 	for item_id in conditions.get("required_items", []):
 		if not GameState.storage_has_any([str(item_id)]):
 			return false
 	return true
+
+
+func available_event_for_interaction(interaction_id: String) -> String:
+	for raw_event in all_events():
+		var data: Dictionary = raw_event
+		if str(data.get("interaction_id", "")) != interaction_id:
+			continue
+		var event_id := str(data.get("id", ""))
+		if is_available(event_id):
+			return event_id
+	return ""
+
+
+func _choice_conditions_met(raw_conditions: Variant) -> bool:
+	if not _conditions_met(raw_conditions):
+		return false
+	if not (raw_conditions is Dictionary):
+		return true
+	var conditions: Dictionary = raw_conditions
+	var amounts: Dictionary = conditions.get("required_item_amounts", {})
+	for raw_id in amounts:
+		var item_id := str(raw_id)
+		var required := int(amounts[raw_id])
+		var available := 0
+		for storage in [GameState.fridge_storage, GameState.pantry_storage, GameState.utility_storage]:
+			available += int(storage.get(item_id, 0))
+		for inventory_id in GameState.inventory:
+			if str(inventory_id) == item_id:
+				available += 1
+		if available < required:
+			return false
+	return true
+
+
+func available_choices(event_id: String) -> Array:
+	var result: Array = []
+	var choices: Array = event_data(event_id).get("choices", [])
+	for index in range(choices.size()):
+		var choice: Dictionary = choices[index]
+		if _choice_conditions_met(choice.get("conditions", {})):
+			result.append({"index": index, "label": str(choice.get("label", "继续"))})
+	return result
 
 
 func resolved_text(event_id: String) -> String:
@@ -179,6 +228,8 @@ func apply_choice(event_id: String, choice_index: int, force: bool = false) -> D
 		return {"ok": false, "error": "事件没有选项。"}
 	var safe_index := clampi(choice_index, 0, choices.size() - 1)
 	var choice: Dictionary = choices[safe_index]
+	if not _choice_conditions_met(choice.get("conditions", {})):
+		return {"ok": false, "error": "缺少这个选项需要的物品或条件。"}
 	for raw_effect in choice.get("effects", []):
 		if raw_effect is Dictionary:
 			_apply_effect(raw_effect)
@@ -187,8 +238,11 @@ func apply_choice(event_id: String, choice_index: int, force: bool = false) -> D
 	GameState.event_log.append(
 		{
 			"event_id": event_id,
+			"title": str(data.get("title", event_id)),
 			"choice_id": str(choice.get("id", safe_index)),
+			"choice_label": str(choice.get("label", "继续")),
 			"phase": GameState.phase_id,
+			"survival_day": GameState.current_survival_day(),
 		}
 	)
 	GameState.remove_scheduled_event(event_id)
@@ -221,7 +275,7 @@ func _apply_effect(effect: Dictionary) -> void:
 				str(effect.get("member", "")), str(effect.get("stat", "")), int(effect.get("amount", 0))
 			)
 		"add_water":
-			GameState.loose_water_liters = maxf(0.0, GameState.loose_water_liters + float(effect.get("amount", 0.0)))
+			GameState.add_potable_water(float(effect.get("amount", 0.0)))
 		"add_backup_power":
 			GameState.prepared_power_units += int(effect.get("amount", 0))
 		"add_item":
@@ -240,6 +294,17 @@ func _apply_effect(effect: Dictionary) -> void:
 			GameState.schedule_event(
 				str(effect.get("event_id", "")), str(effect.get("trigger_phase", ""))
 			)
+		"set_room_state":
+			GameState.room_function_states[str(effect.get("room", ""))] = str(effect.get("state", "normal"))
+		"schedule_consequence":
+			GameState.schedule_consequence(
+				str(effect.get("id", "")), int(effect.get("due_day", GameState.current_survival_day() + 1))
+			)
+		"mark_hidden_event":
+			var hidden_id := str(effect.get("id", ""))
+			var hidden_state: Dictionary = GameState.hidden_event_states.get(hidden_id, {})
+			hidden_state[str(effect.get("field", "discovered"))] = effect.get("value", true)
+			GameState.hidden_event_states[hidden_id] = hidden_state
 
 
 func scheduled_event_for_phase(phase_id: String) -> String:
@@ -337,4 +402,7 @@ func _effects_summary(raw_effects: Variant) -> String:
 			"set_environment_state": parts.append("%s→%s" % [str(effect.get("object", "环境")), str(effect.get("state", "状态"))])
 			"member_stat": parts.append("%s的%s%+d" % [str(effect.get("member", "")), str(effect.get("stat", "")), int(effect.get("amount", 0))])
 			"schedule_event": parts.append("安排:%s" % str(effect.get("event_id", "")))
+			"set_room_state": parts.append("%s房间→%s" % [str(effect.get("room", "环境")), str(effect.get("state", "状态"))])
+			"schedule_consequence": parts.append("第%d天回响:%s" % [int(effect.get("due_day", 0)), str(effect.get("id", ""))])
+			"mark_hidden_event": parts.append("记录隐藏状态:%s" % str(effect.get("id", "")))
 	return "；".join(parts) if not parts.is_empty() else "无"

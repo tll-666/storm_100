@@ -1,5 +1,5 @@
-﻿{
-  "version": 1,
+{
+  "version": 2,
   "events": [
     {
       "id": "r3_morning_start",
@@ -9,155 +9,20 @@
       "phase": "rain_day_3_morning",
       "location": "家中",
       "once": true,
-      "conditions": {"phase": "rain_day_3_morning"},
-      "clues": ["水质异常", "车库地势最低"],
-      "text": "第三天了。水有异味，刷牙得用瓶装水。楼下车库方向传来不正常的声音。",
-      "text_variants": [
-        {
-          "required_clues": ["drain_echo"],
-          "text": "第三天了。水有异味。第二天在车库听到的排水管回声，现在有答案了——水在倒灌。"
-        }
-      ],
-      "choices": [
-        {
-          "id": "go_check",
-          "label": "下楼看车库",
-          "result": "脚踩到地面时，门缝位置已经渗出水了。",
-          "effects": [
-            {"type": "set_flag", "id": "rain_day_three_started"},
-            {"type": "set_phase", "value": "rain_day_3_garage"},
-            {"type": "set_time", "label": "上午07:15", "segment": "morning"},
-            {"type": "set_weather", "value": "暴雨 · 车库渗水"}
-          ]
-        }
-      ],
-      "merge": "r3_garage_flood"
-    },
-    {
-      "id": "r3_garage_flood",
-      "title": "车库渗水",
-      "type": "room",
-      "day": "暴雨第3天",
-      "phase": "rain_day_3_garage",
-      "location": "一楼车库",
-      "once": true,
-      "conditions": {"phase": "rain_day_3_garage"},
-      "clues": ["水从门缝和排水口进", "物资可能被淹"],
-      "text": "车库地面一层薄水。门缝在渗，排水口在倒灌。车还在里面，工具架底部开始受潮。",
-      "choices": [
-        {
-          "id": "seal_door",
-          "label": "封堵门缝",
-          "result": "胶带和毛巾塞住门缝，进水慢了。但排水口的倒灌堵不住。",
-          "effects": [
-            {"type": "set_flag", "id": "garage_sealed_door"},
-            {"type": "set_phase", "value": "rain_day_3_evening"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -2},
-            {"type": "schedule_event", "event_id": "r3_garage_result_sealed", "trigger_phase": "rain_day_4_morning"}
-          ]
-        },
-        {
-          "id": "bail_water",
-          "label": "用桶往外舀水",
-          "result": "一上午不停舀水，水位暂时没涨。但雨不停就得一直舀。",
-          "effects": [
-            {"type": "set_flag", "id": "garage_bailed_water"},
-            {"type": "set_phase", "value": "rain_day_3_evening"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
-            {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3},
-            {"type": "member_stat", "member": "partner", "stat": "morale", "amount": 1},
-            {"type": "schedule_event", "event_id": "r3_garage_result_bailed", "trigger_phase": "rain_day_4_morning"}
-          ]
-        },
-        {
-          "id": "move_supplies",
-          "label": "搬物资上楼",
-          "result": "放弃控水，全家把工具和储物往楼上搬。东西不会泡了，但水继续涨。",
-          "effects": [
-            {"type": "set_flag", "id": "garage_moved_supplies"},
-            {"type": "set_phase", "value": "rain_day_3_evening"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
-            {"type": "schedule_event", "event_id": "r3_garage_result_moved", "trigger_phase": "rain_day_4_morning"}
-          ]
-        },
-        {
-          "id": "do_nothing",
-          "label": "先不处理",
-          "result": "水位还不算太高。但水不会自己退。",
-          "effects": [
-            {"type": "set_flag", "id": "garage_ignored"},
-            {"type": "set_phase", "value": "rain_day_3_evening"},
-            {"type": "set_time", "label": "中午12:00", "segment": "daytime"},
-            {"type": "schedule_event", "event_id": "r3_garage_result_ignored", "trigger_phase": "rain_day_4_morning"}
-          ]
-        }
-      ],
-      "merge": "rain_day_3_evening"
-    },
-    {
-      "id": "r3_garage_result_sealed",
-      "title": "封堵的结果",
-      "type": "delayed",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_morning",
-      "location": "车库",
-      "once": true,
-      "conditions": {"phase": "rain_day_4_morning", "required_flags": ["garage_sealed_door"]},
-      "clues": ["封堵短期有效"],
-      "text": "门缝还堵着，但排水口倒灌更严重了。水位还是在涨，只是慢了点。",
-      "choices": [
-        {"id": "continue", "label": "继续", "result": "至少赢得了时间。", "effects": [{"type": "set_flag", "id": "garage_seal_recalled"}]}
-      ],
-      "merge": "rain_day_4_merge"
-    },
-    {
-      "id": "r3_garage_result_bailed",
-      "title": "排水的结果",
-      "type": "delayed",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_morning",
-      "location": "车库",
-      "once": true,
-      "conditions": {"phase": "rain_day_4_morning", "required_flags": ["garage_bailed_water"]},
-      "clues": ["排水延缓了但没法持久"],
-      "text": "昨天舀了一上午，水位一度回落。夜里雨没停，今早又涨回来了。体力白费一半。",
-      "choices": [
-        {"id": "continue", "label": "继续", "result": "水能控制，但不可能一直舀。", "effects": [{"type": "set_flag", "id": "garage_bail_recalled"}]}
-      ],
-      "merge": "rain_day_4_merge"
-    },
-    {
-      "id": "r3_garage_result_moved",
-      "title": "转移的结果",
-      "type": "delayed",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_morning",
-      "location": "车库",
-      "once": true,
-      "conditions": {"phase": "rain_day_4_morning", "required_flags": ["garage_moved_supplies"]},
-      "clues": ["物资安全"],
-      "text": "今早车库水更深了，工具架下半截泡在水里。但重要物资都在楼上，没损失。",
-      "choices": [
-        {"id": "continue", "label": "继续", "result": "做了正确的决定。", "effects": [{"type": "set_flag", "id": "garage_move_recalled"}]}
-      ],
-      "merge": "rain_day_4_merge"
-    },
-    {
-      "id": "r3_garage_result_ignored",
-      "title": "没处理的结果",
-      "type": "delayed",
-      "day": "暴雨第4天",
-      "phase": "rain_day_4_morning",
-      "location": "车库",
-      "once": true,
-      "conditions": {"phase": "rain_day_4_morning", "required_flags": ["garage_ignored"]},
-      "clues": ["不处理导致损失"],
-      "text": "今早水没过脚踝了。工具架泡烂了，储物柜里几件东西也坏了。伴侣没说话，但脸色不好看。",
-      "choices": [
-        {"id": "continue", "label": "继续", "result": "昨天要是处理一下就好了。", "effects": [{"type": "set_flag", "id": "garage_ignore_recalled"}, {"type": "member_stat", "member": "player", "stat": "morale", "amount": -3}]}
-      ],
-      "merge": "rain_day_4_merge"
+      "conditions": {"phase": "rain_day_3_morning", "survival_day": 3},
+      "clues": ["市政水电仍正常"],
+      "text": "暴雨进入第3天。自来水今天仍可直接饮用，外部电网也仍在工作；这是两项市政供应同时正常的最后一天。",
+      "choices": [{
+        "id": "begin",
+        "label": "开始今天",
+        "result": "时间开始自然流动。可以利用今天继续储水，并检查食物和房屋状态。",
+        "effects": [
+          {"type": "set_flag", "id": "rain_day_three_started"},
+          {"type": "set_phase", "value": "rain_day_3_free"},
+          {"type": "set_weather", "value": "暴雨 · 水电仍正常"}
+        ]
+      }],
+      "merge": "rain_day_3_free"
     }
   ]
 }
