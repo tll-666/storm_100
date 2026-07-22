@@ -436,9 +436,8 @@ func settle_rain_day_one() -> Dictionary:
 		meal_parts.append("蔬菜")
 		nutrition_gain += 6
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
-	water_supply_state = "low"
+	update_utilities_for_day(2)
 	var water_result := _settle_family_needs(nutrition_gain)
-	power_supply_state = "unstable"
 	for member_id in FAMILY_ORDER:
 		_adjust_member_stat(member_id, "morale", -2)
 	var note := "暴雨整夜没停。凌晨时分水压开始下降，电力也出现短暂闪烁。这只是开始。"
@@ -473,7 +472,7 @@ func settle_rain_day_two() -> Dictionary:
 		meal_parts.append("方便面")
 		nutrition_gain += 4
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "家中剩余的简单食物"
-	water_supply_state = "unsafe"
+	update_utilities_for_day(3)
 	var water_result := _settle_family_needs(nutrition_gain)
 	if has_flag("used_radio_during_outage"):
 		_adjust_member_stat("elder", "morale", 2)
@@ -554,8 +553,7 @@ func settle_rain_day_four() -> Dictionary:
 		meal_parts.append("鱼罐头")
 		nutrition_gain += 4
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "越来越少的存粮"
-	water_supply_state = "unsafe"
-	power_supply_state = "off"
+	update_utilities_for_day(5)
 	var water_result := _settle_family_needs(nutrition_gain)
 	for member_id in FAMILY_ORDER:
 		_adjust_member_stat(member_id, "morale", -2)
@@ -604,8 +602,7 @@ func settle_rain_day_five() -> Dictionary:
 		meal_parts.append("鱼罐头")
 		nutrition_gain += 3
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "越来越少的存粮"
-	water_supply_state = "off"
-	power_supply_state = "off"
+	update_utilities_for_day(6)
 	var water_result := _settle_family_needs(nutrition_gain)
 	for member_id in FAMILY_ORDER:
 		_adjust_member_stat(member_id, "morale", -1)
@@ -644,8 +641,7 @@ func settle_rain_day_six() -> Dictionary:
 		meal_parts.append("鱼罐头")
 		nutrition_gain += 3
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "几乎见底的存粮"
-	water_supply_state = "off"
-	power_supply_state = "off"
+	update_utilities_for_day(7)
 	var water_result := _settle_family_needs(nutrition_gain)
 	for member_id in FAMILY_ORDER:
 		_adjust_member_stat(member_id, "morale", -3)
@@ -689,9 +685,7 @@ func settle_rain_day_seven() -> Dictionary:
 		meal_parts.append("鱼罐头")
 		nutrition_gain += 2
 	var meal_text := "、".join(meal_parts) if not meal_parts.is_empty() else "几乎见底的存粮"
-	water_supply_state = "off"
-	power_supply_state = "off"
-	var water_result := _settle_family_needs(nutrition_gain)
+	update_utilities_for_day(8)\n	var water_result := _settle_family_needs(nutrition_gain)
 	for member_id in FAMILY_ORDER:
 		_adjust_member_stat(member_id, "morale", -2)
 	if has_flag("trusted_radio_evacuation"):
@@ -727,9 +721,7 @@ func begin_experiment_day(day: int) -> void:
 	time_segment = "morning"
 	weather_label = experiment_weather(safe_day)
 	flags["rain_day_%d_started" % safe_day] = true
-	water_supply_state = "off"
-	power_supply_state = "off"
-	set_environment_state("kitchen_faucet", "off")
+	update_utilities_for_day(8)\n	set_environment_state("kitchen_faucet", "off")
 	enable_continuous_clock(420.0)
 	if experiment_start_snapshot.is_empty():
 		experiment_start_snapshot = resource_snapshot()
@@ -1107,6 +1099,19 @@ func settle_morale_penalty() -> Dictionary:
 		elif state == "dead":
 			dead_count += 1
 	return {"breakdown": breakdown_count, "dead": dead_count}
+
+
+func update_utilities_for_day(day_number: int) -> void:
+	if day_number >= 3:
+		water_supply_state = "off"
+	else:
+		water_supply_state = "normal"
+	if day_number >= 7:
+		power_supply_state = "off"
+	elif day_number >= 5:
+		power_supply_state = "unstable"
+	else:
+		power_supply_state = "normal"
 
 
 func _adjust_member_stat(member_id: String, stat_id: String, delta: int) -> void:
