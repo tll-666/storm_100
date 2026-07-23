@@ -19,7 +19,7 @@
         "effects": [
           {"type": "set_flag", "id": "rain_day_seven_started"},
           {"type": "set_phase", "value": "rain_day_7_free"},
-          {"type": "set_weather", "value": "暴雨 · 停水停电持续"}
+          {"type": "set_weather", "value": "中雨 · 停水停电持续"}
         ]
       }],
       "merge": "rain_day_7_free"

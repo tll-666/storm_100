@@ -19,7 +19,7 @@
         "effects": [
           {"type": "set_flag", "id": "rain_day_four_started"},
           {"type": "set_phase", "value": "rain_day_4_free"},
-          {"type": "set_weather", "value": "暴雨 · 停电 / 自来水不可直饮"}
+          {"type": "set_weather", "value": "大雨 · 停电 / 自来水不可直饮"}
         ]
       }],
       "merge": "rain_day_4_free"
